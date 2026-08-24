@@ -43,6 +43,18 @@ export function login(
   return toSession(row)
 }
 
+export function setAdminCode(db: Database.Database, adminCode: string): { ok: true } | { ok: false; error: string } {
+  const code = adminCode.trim()
+  if (code.length < 4) {
+    return { ok: false, error: 'El código admin debe tener al menos 4 caracteres' }
+  }
+  if (hasAdminCode(db)) {
+    return { ok: false, error: 'Esta carpeta ya tiene un código admin configurado' }
+  }
+  setMeta(db, ADMIN_CODE_META, sha256(code))
+  return { ok: true }
+}
+
 export function createUser(
   db: Database.Database,
   payload: { email: string; password: string; role: Role; adminCode: string }
@@ -63,12 +75,13 @@ export function createUser(
   }
 
   const storedHash = getMeta(db, ADMIN_CODE_META)
-  const receivedHash = sha256(adminCode)
-
   if (!storedHash) {
-    // Primera creación: el código admin queda fijado en esta carpeta de datos
-    setMeta(db, ADMIN_CODE_META, receivedHash)
-  } else if (storedHash !== receivedHash) {
+    return {
+      error: 'No hay código admin en esta carpeta. Configúralo en el setup inicial.',
+      status: 500
+    }
+  }
+  if (storedHash !== sha256(adminCode)) {
     return { error: 'Código admin incorrecto', status: 403 }
   }
 

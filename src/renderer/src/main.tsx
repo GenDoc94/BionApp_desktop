@@ -83,8 +83,8 @@ function Main() {
   if (!dbReady) {
     return (
       <SetupPage
-        onDone={async (path) => {
-          await window.api.setDataFolder(path);
+        onDone={async (path, adminCode) => {
+          await window.api.setDataFolder(path, adminCode);
           setDbReady(true);
         }}
       />

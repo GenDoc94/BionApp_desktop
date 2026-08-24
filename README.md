@@ -1,13 +1,11 @@
 # BionApp desktop
 
-Versión de escritorio de BionApp (Electron + SQLite), con la misma UI que la versión online y la misma estructura de datos.
+Versión de escritorio de BionApp (**Electron + SQLite**). Misma UI y esquema de datos que la versión online (`BionApp_online`), sin Supabase ni Vercel.
 
-Arquitectura inspirada en AppFéresis:
+## Requisitos
 
-- **electron-vite** (`src/main`, `src/preload`, `src/renderer`, `src/shared`)
-- **better-sqlite3** solo en el proceso principal
-- IPC tipado vía `window.api` (preload + contextBridge)
-- Carpeta de datos configurable (red/local) con `bionapp.sqlite` + `documentos/`
+- Node.js 20+
+- Windows (empaquetado portable)
 
 ## Arranque
 
@@ -16,24 +14,24 @@ npm install
 npm run dev
 ```
 
-Primera ejecución: elige la carpeta de datos compartida. Luego crea el primer usuario (el código admin que uses queda fijado en esa carpeta).
+Primera ejecución: elige carpeta de datos + código admin. Ahí se crea `bionapp.sqlite` y `documentos/`.
 
-## Empaquetado Windows (portable)
+## Scripts
 
-```bash
-npm run dist
-```
+| Comando | Uso |
+|---------|-----|
+| `npm run dev` | Desarrollo |
+| `npm run build` | Compilar main/preload/renderer |
+| `npm run dist` | Portable `release/BionApp.exe` |
+| `npm run db:pull-supabase` | Importar datos desde el proyecto online (app cerrada) |
+| `npm test` | Tests unitarios del renderer |
 
-Salida: `release/BionApp.exe`
+## Arquitectura
 
-## Datos
+- `src/main` — Electron + better-sqlite3 + IPC
+- `src/preload` — `window.api`
+- `src/renderer` — React (UI)
+- `src/shared` — tipos compartidos
+- `resources/` — icono de la app
 
-| Online (Supabase) | Desktop (SQLite) |
-|-------------------|------------------|
-| Postgres + Auth + Edge Function | `bionapp.sqlite` + usuarios locales (bcrypt) |
-| Jerarquía Muestras→…→Chips | Misma, con FK CASCADE |
-| Media/SD/CV por triggers PG | Calculados al escribir (Lectura / Lecturas_Marcado) |
-| Embeds PostgREST (`DDx`, `DMuestra`, `Tags`) | JOINs equivalentes en la capa IPC |
-| Documentos vía Vite `/api/documentos` | Carpeta `documentos/` en la carpeta de datos |
-
-La versión online sigue en el repo `BionApp_online`.
+Para sincronizar código de UI con la versión online, conviene un `shared`/monorepo a medio plazo. Los datos se copian puntual con `db:pull-supabase` (no hay sync en tiempo real).

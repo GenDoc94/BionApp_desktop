@@ -11,8 +11,8 @@ import type {
 const api = {
   getState: (): Promise<AppConfigState> => ipcRenderer.invoke('app:getState'),
   pickDataFolder: (): Promise<string | null> => ipcRenderer.invoke('app:pickDataFolder'),
-  setDataFolder: (path: string): Promise<AppConfigState> =>
-    ipcRenderer.invoke('app:setDataFolder', path),
+  setDataFolder: (path: string, adminCode?: string): Promise<AppConfigState> =>
+    ipcRenderer.invoke('app:setDataFolder', path, adminCode),
 
   login: (email: string, password: string) => ipcRenderer.invoke('auth:login', email, password),
   logout: () => ipcRenderer.invoke('auth:logout'),

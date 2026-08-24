@@ -25,6 +25,13 @@ export type DbFilter =
   | { type: 'neq'; column: string; value: unknown }
   | { type: 'in'; column: string; value: unknown[] }
   | { type: 'is'; column: string; value: null }
+  | { type: 'ilike'; column: string; value: string }
+  | { type: 'lt'; column: string; value: unknown }
+  | { type: 'lte'; column: string; value: unknown }
+  | { type: 'gt'; column: string; value: unknown }
+  | { type: 'gte'; column: string; value: unknown }
+  | { type: 'not_is'; column: string; value: null }
+  | { type: 'not_eq'; column: string; value: unknown }
 
 export type DbOrder = { column: string; ascending: boolean }
 
@@ -38,6 +45,10 @@ export interface DbRequest {
   order?: DbOrder[]
   data?: Record<string, unknown> | Record<string, unknown>[]
   onConflict?: string
+  limit?: number
+  offset?: number
+  /** Tras insert/update/upsert/delete, devolver filas (Prefer: return=representation). */
+  returning?: boolean
 }
 
 export interface DbResponse {

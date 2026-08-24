@@ -4,7 +4,7 @@ import fs from 'fs'
 import Store from 'electron-store'
 import type Database from 'better-sqlite3'
 import { dbPathFor, initSchema, openDatabase } from './db'
-import { hasAdminCode, hasUsers, createUser, login, toAuthUser } from './auth'
+import { hasAdminCode, hasUsers, createUser, login, setAdminCode, toAuthUser } from './auth'
 import { executeDbRequest } from './query'
 import * as docs from './documentos'
 import type {
@@ -92,6 +92,8 @@ function broadcastAuth(user: AuthUser | null): void {
 function createWindow(): void {
   Menu.setApplicationMenu(null)
 
+  const iconPath = join(__dirname, '../../resources/icon.ico')
+
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 860,
@@ -99,7 +101,7 @@ function createWindow(): void {
     minHeight: 700,
     show: false,
     title: 'BionApp',
-    icon: join(__dirname, '../../resources/icon.ico'),
+    icon: iconPath,
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -135,10 +137,18 @@ function registerIpc(): void {
     return result.filePaths[0]
   })
 
-  ipcMain.handle('app:setDataFolder', (_e, dataPath: string) => {
+  ipcMain.handle('app:setDataFolder', (_e, dataPath: string, adminCode?: string) => {
     session = null
     broadcastAuth(null)
-    return connectDataPath(dataPath)
+    const state = connectDataPath(dataPath)
+    const database = ensureDb()
+    if (!hasAdminCode(database)) {
+      const result = setAdminCode(database, String(adminCode ?? ''))
+      if (!result.ok) {
+        throw new Error(result.error)
+      }
+    }
+    return getState()
   })
 
   ipcMain.handle('auth:login', (_e, email: string, password: string) => {
@@ -229,6 +239,9 @@ function registerIpc(): void {
 }
 
 app.whenReady().then(() => {
+  if (process.platform === 'win32') {
+    app.setAppUserModelId('es.hospital.bionapp')
+  }
   registerIpc()
   const saved = store.get('dataPath')
   if (saved && fs.existsSync(saved)) {

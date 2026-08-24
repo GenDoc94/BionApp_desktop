@@ -1,1 +1,0 @@
--- Sin datos semilla: la primera muestra y los catálogos se crean desde la app.

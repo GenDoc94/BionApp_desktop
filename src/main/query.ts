@@ -123,24 +123,34 @@ function enrichRow(table: string, row: Record<string, unknown>): Record<string, 
   return next
 }
 
-function buildWhere(
-  filters: DbFilter[] | undefined,
-  alias: string
-): { sql: string; params: unknown[] } {
-  if (!filters?.length) return { sql: '', params: [] }
-  const parts: string[] = []
-  const params: unknown[] = []
-  for (const f of filters) {
-    const col = `${alias}.${quoteId(f.column)}`
-    if (f.type === 'eq') {
+function colRef(alias: string, column: string): string {
+  return alias ? `${alias}.${quoteId(column)}` : quoteId(column)
+}
+
+function appendFilter(
+  f: DbFilter,
+  alias: string,
+  parts: string[],
+  params: unknown[]
+): void {
+  const col = colRef(alias, f.column)
+  switch (f.type) {
+    case 'eq':
       parts.push(`${col} = ?`)
       params.push(f.value)
-    } else if (f.type === 'neq') {
+      break
+    case 'neq':
+    case 'not_eq':
       parts.push(`${col} != ?`)
       params.push(f.value)
-    } else if (f.type === 'is') {
+      break
+    case 'is':
       parts.push(`${col} IS NULL`)
-    } else if (f.type === 'in') {
+      break
+    case 'not_is':
+      parts.push(`${col} IS NOT NULL`)
+      break
+    case 'in': {
       const vals = f.value ?? []
       if (vals.length === 0) {
         parts.push('0 = 1')
@@ -148,9 +158,50 @@ function buildWhere(
         parts.push(`${col} IN (${vals.map(() => '?').join(',')})`)
         params.push(...vals)
       }
+      break
     }
+    case 'ilike':
+      // PostgREST ILIKE; en SQLite LIKE + NOCASE cubre ASCII (emails, etc.)
+      parts.push(`${col} LIKE ? COLLATE NOCASE`)
+      params.push(f.value)
+      break
+    case 'lt':
+      parts.push(`${col} < ?`)
+      params.push(f.value)
+      break
+    case 'lte':
+      parts.push(`${col} <= ?`)
+      params.push(f.value)
+      break
+    case 'gt':
+      parts.push(`${col} > ?`)
+      params.push(f.value)
+      break
+    case 'gte':
+      parts.push(`${col} >= ?`)
+      params.push(f.value)
+      break
+    default:
+      throw new Error(`Filtro no soportado: ${(f as DbFilter).type}`)
   }
+}
+
+function buildWhere(
+  filters: DbFilter[] | undefined,
+  alias: string
+): { sql: string; params: unknown[] } {
+  if (!filters?.length) return { sql: '', params: [] }
+  const parts: string[] = []
+  const params: unknown[] = []
+  for (const f of filters) appendFilter(f, alias, parts, params)
   return { sql: ` WHERE ${parts.join(' AND ')}`, params }
+}
+
+function buildFilterClause(filters: DbFilter[]): { sql: string; params: unknown[] } {
+  const parts: string[] = []
+  const params: unknown[] = []
+  for (const f of filters) appendFilter(f, '', parts, params)
+  return { sql: parts.join(' AND '), params }
 }
 
 function buildOrder(order: DbOrder[] | undefined, alias: string): string {
@@ -232,8 +283,19 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
 
     if (req.action === 'select') {
       const parsed = parseSelect(req.select)
+      let limitSql = ''
+      if (typeof req.limit === 'number' && Number.isFinite(req.limit) && req.limit >= 0) {
+        limitSql += ` LIMIT ${Math.floor(req.limit)}`
+        if (typeof req.offset === 'number' && Number.isFinite(req.offset) && req.offset > 0) {
+          limitSql += ` OFFSET ${Math.floor(req.offset)}`
+        }
+      } else if (typeof req.offset === 'number' && Number.isFinite(req.offset) && req.offset > 0) {
+        limitSql += ` LIMIT -1 OFFSET ${Math.floor(req.offset)}`
+      }
       const rows = db
-        .prepare(`SELECT ${alias}.* FROM ${quoteId(req.table)} ${alias}${whereSql}${orderSql}`)
+        .prepare(
+          `SELECT ${alias}.* FROM ${quoteId(req.table)} ${alias}${whereSql}${orderSql}${limitSql}`
+        )
         .all(...whereParams) as Record<string, unknown>[]
       attachEmbeds(db, req.table, rows, parsed.embeds)
       if (!parsed.star && parsed.columns.length) {
@@ -283,58 +345,21 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
       const cols = tableColumns(db, req.table)
       const keys = Object.keys(row).filter((k) => cols.includes(k) && row[k] !== undefined)
       if (!keys.length) return fail('update sin columnas')
-      const parts: string[] = []
-      const params: unknown[] = keys.map((k) => row[k])
-      for (const f of req.filters) {
-        if (f.type === 'eq') {
-          parts.push(`${quoteId(f.column)} = ?`)
-          params.push(f.value)
-        } else if (f.type === 'neq') {
-          parts.push(`${quoteId(f.column)} != ?`)
-          params.push(f.value)
-        } else if (f.type === 'is') {
-          parts.push(`${quoteId(f.column)} IS NULL`)
-        } else if (f.type === 'in') {
-          const vals = f.value ?? []
-          if (!vals.length) parts.push('0 = 1')
-          else {
-            parts.push(`${quoteId(f.column)} IN (${vals.map(() => '?').join(',')})`)
-            params.push(...vals)
-          }
-        }
-      }
+      const { sql: whereSqlBare, params: whereParams } = buildFilterClause(req.filters)
+      const setParams = keys.map((k) => row[k])
       db.prepare(
-        `UPDATE ${quoteId(req.table)} SET ${keys.map((k) => `${quoteId(k)} = ?`).join(', ')} WHERE ${parts.join(' AND ')}`
-      ).run(...params)
+        `UPDATE ${quoteId(req.table)} SET ${keys.map((k) => `${quoteId(k)} = ?`).join(', ')} WHERE ${whereSqlBare}`
+      ).run(...setParams, ...whereParams)
       const updated = db
-        .prepare(`SELECT * FROM ${quoteId(req.table)} WHERE ${parts.join(' AND ')}`)
-        .all(...params.slice(keys.length)) as Record<string, unknown>[]
+        .prepare(`SELECT * FROM ${quoteId(req.table)} WHERE ${whereSqlBare}`)
+        .all(...whereParams) as Record<string, unknown>[]
       return ok(updated)
     }
 
     if (req.action === 'delete') {
       if (!req.filters?.length) return fail('delete sin filtro rechazado')
-      const parts: string[] = []
-      const params: unknown[] = []
-      for (const f of req.filters) {
-        if (f.type === 'eq') {
-          parts.push(`${quoteId(f.column)} = ?`)
-          params.push(f.value)
-        } else if (f.type === 'in') {
-          const vals = f.value ?? []
-          if (!vals.length) parts.push('0 = 1')
-          else {
-            parts.push(`${quoteId(f.column)} IN (${vals.map(() => '?').join(',')})`)
-            params.push(...vals)
-          }
-        } else if (f.type === 'is') {
-          parts.push(`${quoteId(f.column)} IS NULL`)
-        } else if (f.type === 'neq') {
-          parts.push(`${quoteId(f.column)} != ?`)
-          params.push(f.value)
-        }
-      }
-      db.prepare(`DELETE FROM ${quoteId(req.table)} WHERE ${parts.join(' AND ')}`).run(...params)
+      const { sql: whereSqlBare, params } = buildFilterClause(req.filters)
+      db.prepare(`DELETE FROM ${quoteId(req.table)} WHERE ${whereSqlBare}`).run(...params)
       return ok(null)
     }
 

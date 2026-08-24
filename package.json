@@ -12,7 +12,8 @@
     "preview": "electron-vite preview",
     "dist": "npm run build && electron-builder --win portable",
     "postinstall": "electron-builder install-app-deps",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:pull-supabase": "node scripts/pull-supabase-to-sqlite.mjs"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.2",
@@ -31,6 +32,7 @@
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "@tailwindcss/vite": "^4.3.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^7.6.12",
