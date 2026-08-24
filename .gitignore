@@ -1,0 +1,47 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+/dist
+
+#notes
+/notes
+
+# Protocolos locales (carpeta gestionada desde Opciones → Documentos)
+/documentos/*
+!/documentos/.gitkeep
+
+# Datos de instalación en modo local (config + secretos; no confundir con documentos/)
+/datos/*
+!/datos/.gitkeep
+!/datos/README.md
+
+# misc
+.DS_Store
+.env
+.env.*
+!.env.example
+.env.local
+.setup-secrets.tmp
+.env.development.local
+.env.test.local
+.env.production.local
+.xlsx
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+/out
+/release
+/data-local
+*.sqlite
+*.sqlite-*

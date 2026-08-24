@@ -1,0 +1,355 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+  --background: #ffffff;
+  --foreground: oklch(0.145 0 0);
+  --card: #ffffff;
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #030213;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.0058 264.53);
+  --secondary-foreground: #030213;
+  --muted: #ececf0;
+  --muted-foreground: #717182;
+  --accent: #e9ebef;
+  --accent-foreground: #030213;
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 0, 0, 0.1);
+  --input: transparent;
+  --input-background: #f3f3f5;
+  --switch-background: #cbced4;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: #030213;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Paleta verde BionApp (éxito / completado / cuantificado) */
+  --bion-green-950: #14532d;
+  --bion-green-900: #166534;
+  --bion-green-800: #15803d;
+  --bion-green-600: #16a34a;
+  --bion-green-500: #22c55e;
+  --bion-green-400: #4ade80;
+  --bion-green-300: #86efac;
+  --bion-green-200: #bbf7d0;
+
+  --bion-success-fill: var(--bion-green-500);
+  --bion-success-solid: var(--bion-green-600);
+  --bion-success-solid-hover: var(--bion-green-800);
+  --bion-success-solid-border: var(--bion-green-600);
+  --bion-success-on-solid: #ffffff;
+  --bion-success-surface: color-mix(in oklab, var(--bion-green-200) 55%, var(--input-background));
+  --bion-success-surface-muted: color-mix(in oklab, var(--bion-green-200) 50%, var(--muted));
+  --bion-success-border: color-mix(in oklab, var(--bion-green-400) 35%, var(--border));
+  --bion-success-field-text: var(--foreground);
+  --bion-success-text: var(--bion-green-800);
+  --bion-success-card-border: color-mix(in oklab, var(--bion-success-fill) 40%, var(--border));
+  --bion-success-card-bg: color-mix(in oklab, var(--bion-success-fill) 10%, var(--card));
+  --bion-success-chart: var(--bion-success-fill);
+
+  /* Paleta ámbar BionApp (en proceso / estado 2 / avisos) */
+  --bion-amber-950: #451a03;
+  --bion-amber-900: #78350f;
+  --bion-amber-800: #92400e;
+  --bion-amber-600: #d97706;
+  --bion-amber-500: #f59e0b;
+  --bion-amber-400: #fbbf24;
+  --bion-amber-300: #fcd34d;
+  --bion-amber-200: #fde68a;
+  --bion-amber-100: #fef3c7;
+
+  --bion-warn-fill: #facc15;
+  --bion-warn-text: var(--bion-amber-800);
+  --bion-warn-card-border: color-mix(in oklab, var(--bion-amber-500) 40%, var(--border));
+  --bion-warn-card-bg: color-mix(in oklab, var(--bion-amber-500) 10%, var(--card));
+  --bion-warn-chart: var(--bion-amber-400);
+  --bion-warn-surface: color-mix(in oklab, var(--bion-amber-100) 65%, var(--card));
+  --bion-warn-surface-muted: color-mix(in oklab, var(--bion-amber-100) 55%, var(--muted));
+  --bion-warn-border: color-mix(in oklab, var(--bion-amber-400) 35%, var(--border));
+  --bion-warn-field-text: var(--foreground);
+  --bion-warn-alert-bg: color-mix(in oklab, var(--bion-amber-100) 70%, var(--card));
+  --bion-warn-alert-border: color-mix(in oklab, var(--bion-amber-500) 35%, var(--border));
+  --bion-warn-alert-text: var(--bion-amber-900);
+  --bion-warn-alert-text-muted: var(--bion-amber-800);
+  --bion-warn-panel-border: color-mix(in oklab, var(--bion-amber-500) 32%, var(--border));
+  --bion-warn-panel-bg: color-mix(in oklab, var(--bion-amber-100) 50%, var(--card));
+  --bion-warn-panel-title: color-mix(in oklab, var(--bion-amber-800) 70%, var(--foreground));
+
+  /* Paleta roja BionApp (fallidas / estado 1 / error) */
+  --bion-red-950: #450a0a;
+  --bion-red-900: #7f1d1d;
+  --bion-red-800: #991b1b;
+  --bion-red-600: #dc2626;
+  --bion-red-500: #ef4444;
+  --bion-red-400: #f87171;
+  --bion-red-300: #fca5a5;
+  --bion-red-200: #fecaca;
+  --bion-red-100: #fee2e2;
+
+  --bion-danger-fill: var(--bion-red-500);
+  --bion-danger-text: var(--bion-red-800);
+  --bion-danger-card-border: color-mix(in oklab, var(--bion-red-500) 40%, var(--border));
+  --bion-danger-card-bg: color-mix(in oklab, var(--bion-red-500) 10%, var(--card));
+  --bion-danger-chart: var(--bion-red-400);
+  --bion-danger-surface: color-mix(in oklab, var(--bion-red-100) 65%, var(--card));
+  --bion-danger-border: color-mix(in oklab, var(--bion-red-400) 35%, var(--border));
+  --bion-danger-field-text: var(--foreground);
+  --bion-danger-alert-bg: color-mix(in oklab, var(--bion-red-100) 70%, var(--card));
+  --bion-danger-alert-border: color-mix(in oklab, var(--bion-red-500) 30%, var(--border));
+  --bion-danger-alert-text: var(--bion-red-900);
+
+  /* Paleta azul BionApp (marcado / acciones secundarias / cálculos) */
+  --bion-blue-950: #172554;
+  --bion-blue-900: #1e3a8a;
+  --bion-blue-800: #1e40af;
+  --bion-blue-700: #1d4ed8;
+  --bion-blue-600: #2563eb;
+  --bion-blue-500: #3b82f6;
+  --bion-blue-400: #60a5fa;
+  --bion-blue-300: #93c5fd;
+  --bion-blue-200: #bfdbfe;
+  --bion-blue-100: #dbeafe;
+  --bion-sky-100: #e0f2fe;
+
+  --bion-info-fill: var(--bion-blue-500);
+  --bion-info-solid: var(--bion-blue-600);
+  --bion-info-solid-hover: var(--bion-blue-800);
+  --bion-info-solid-border: var(--bion-blue-600);
+  --bion-info-on-solid: #ffffff;
+  --bion-info-text: var(--bion-blue-800);
+  --bion-info-panel-border: color-mix(in oklab, var(--bion-blue-400) 32%, var(--border));
+  --bion-info-panel-bg: color-mix(in oklab, var(--bion-blue-100) 48%, var(--card));
+  --bion-info-panel-title: color-mix(in oklab, var(--bion-blue-700) 75%, var(--foreground));
+  --bion-info-surface: color-mix(in oklab, var(--bion-sky-100) 55%, var(--input-background));
+  --bion-info-border: color-mix(in oklab, var(--bion-blue-400) 35%, var(--border));
+  --bion-info-field-text: var(--foreground);
+  --bion-info-tab-bg: color-mix(in oklab, var(--bion-blue-100) 70%, var(--card));
+  --bion-info-tab-border: color-mix(in oklab, var(--bion-blue-400) 45%, var(--border));
+  --bion-info-tab-text: var(--bion-blue-900);
+
+  --bion-neutral-muted: #a3a3a3;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.168 0.014 258);
+  --foreground: oklch(0.94 0.008 258);
+  --card: oklch(0.205 0.018 258);
+  --card-foreground: oklch(0.94 0.008 258);
+  --popover: oklch(0.22 0.018 258);
+  --popover-foreground: oklch(0.94 0.008 258);
+  --primary: oklch(0.62 0.13 234);
+  --primary-foreground: oklch(0.98 0.005 258);
+  --secondary: oklch(0.25 0.018 258);
+  --secondary-foreground: oklch(0.9 0.01 258);
+  --muted: oklch(0.24 0.016 258);
+  --muted-foreground: oklch(0.66 0.02 258);
+  --accent: oklch(0.28 0.022 258);
+  --accent-foreground: oklch(0.94 0.008 258);
+  --destructive: oklch(0.58 0.18 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.32 0.022 258);
+  --input: oklch(0.28 0.02 258);
+  --input-background: oklch(0.22 0.018 258);
+  --switch-background: oklch(0.38 0.02 258);
+  --ring: oklch(0.55 0.1 234);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: oklch(0.62 0.16 234);
+  --chart-2: oklch(0.68 0.14 162);
+  --chart-3: oklch(0.72 0.12 85);
+  --chart-4: oklch(0.65 0.18 305);
+  --chart-5: oklch(0.66 0.16 25);
+  --sidebar: oklch(0.19 0.016 258);
+  --sidebar-foreground: oklch(0.94 0.008 258);
+  --sidebar-primary: oklch(0.62 0.13 234);
+  --sidebar-primary-foreground: oklch(0.98 0.005 258);
+  --sidebar-accent: oklch(0.26 0.02 258);
+  --sidebar-accent-foreground: oklch(0.94 0.008 258);
+  --sidebar-border: oklch(0.32 0.022 258);
+  --sidebar-ring: oklch(0.55 0.1 234);
+
+  --bion-success-solid: color-mix(in oklab, var(--bion-green-900) 50%, var(--accent));
+  --bion-success-solid-hover: color-mix(in oklab, var(--bion-green-800) 58%, var(--accent));
+  --bion-success-solid-border: color-mix(in oklab, var(--bion-green-500) 28%, var(--border));
+  --bion-success-on-solid: color-mix(in oklab, var(--bion-green-200) 50%, var(--foreground));
+  --bion-success-surface: color-mix(in oklab, var(--bion-green-950) 22%, var(--input-background));
+  --bion-success-surface-muted: color-mix(in oklab, var(--bion-green-950) 18%, var(--muted));
+  --bion-success-border: color-mix(in oklab, var(--bion-green-500) 20%, var(--border));
+  --bion-success-field-text: color-mix(in oklab, var(--bion-green-200) 25%, var(--foreground));
+  --bion-success-text: var(--bion-green-300);
+  --bion-success-card-border: color-mix(in oklab, var(--bion-green-400) 22%, var(--border));
+  --bion-success-card-bg: color-mix(in oklab, var(--bion-green-900) 14%, var(--card));
+  --bion-success-chart: color-mix(in oklab, var(--bion-green-500) 45%, var(--bion-green-950));
+
+  --bion-warn-text: var(--bion-amber-300);
+  --bion-warn-card-border: color-mix(in oklab, var(--bion-amber-400) 22%, var(--border));
+  --bion-warn-card-bg: color-mix(in oklab, var(--bion-amber-900) 12%, var(--card));
+  --bion-warn-chart: color-mix(in oklab, var(--bion-amber-400) 45%, var(--bion-amber-950));
+  --bion-warn-surface: color-mix(in oklab, var(--bion-amber-950) 14%, var(--card));
+  --bion-warn-surface-muted: color-mix(in oklab, var(--bion-amber-950) 12%, var(--muted));
+  --bion-warn-border: color-mix(in oklab, var(--bion-amber-500) 20%, var(--border));
+  --bion-warn-field-text: color-mix(in oklab, var(--bion-amber-200) 25%, var(--foreground));
+  --bion-warn-alert-bg: color-mix(in oklab, var(--bion-amber-950) 28%, var(--card));
+  --bion-warn-alert-border: color-mix(in oklab, var(--bion-amber-600) 22%, var(--border));
+  --bion-warn-alert-text: color-mix(in oklab, var(--bion-amber-200) 55%, var(--foreground));
+  --bion-warn-alert-text-muted: color-mix(in oklab, var(--bion-amber-300) 45%, var(--foreground));
+  --bion-warn-panel-border: color-mix(in oklab, var(--bion-amber-600) 20%, var(--border));
+  --bion-warn-panel-bg: color-mix(in oklab, var(--bion-amber-950) 10%, var(--card));
+  --bion-warn-panel-title: color-mix(in oklab, var(--bion-amber-200) 55%, var(--foreground));
+
+  --bion-danger-text: var(--bion-red-300);
+  --bion-danger-card-border: color-mix(in oklab, var(--bion-red-400) 22%, var(--border));
+  --bion-danger-card-bg: color-mix(in oklab, var(--bion-red-900) 12%, var(--card));
+  --bion-danger-chart: color-mix(in oklab, var(--bion-red-400) 45%, var(--bion-red-950));
+  --bion-danger-surface: color-mix(in oklab, var(--bion-red-950) 14%, var(--card));
+  --bion-danger-border: color-mix(in oklab, var(--bion-red-500) 20%, var(--border));
+  --bion-danger-field-text: color-mix(in oklab, var(--bion-red-200) 25%, var(--foreground));
+  --bion-danger-alert-bg: color-mix(in oklab, var(--bion-red-950) 30%, var(--card));
+  --bion-danger-alert-border: color-mix(in oklab, var(--bion-red-600) 22%, var(--border));
+  --bion-danger-alert-text: color-mix(in oklab, var(--bion-red-200) 50%, var(--foreground));
+
+  --bion-info-solid: color-mix(in oklab, var(--bion-blue-900) 50%, var(--accent));
+  --bion-info-solid-hover: color-mix(in oklab, var(--bion-blue-800) 58%, var(--accent));
+  --bion-info-solid-border: color-mix(in oklab, var(--bion-blue-500) 28%, var(--border));
+  --bion-info-on-solid: color-mix(in oklab, var(--bion-blue-200) 50%, var(--foreground));
+  --bion-info-text: var(--bion-blue-300);
+  --bion-info-panel-border: color-mix(in oklab, var(--bion-blue-500) 20%, var(--border));
+  --bion-info-panel-bg: color-mix(in oklab, var(--bion-blue-950) 11%, var(--card));
+  --bion-info-panel-title: color-mix(in oklab, var(--bion-blue-300) 55%, var(--foreground));
+  --bion-info-surface: color-mix(in oklab, var(--bion-blue-950) 22%, var(--input-background));
+  --bion-info-border: color-mix(in oklab, var(--bion-blue-500) 20%, var(--border));
+  --bion-info-field-text: color-mix(in oklab, var(--bion-blue-200) 25%, var(--foreground));
+  --bion-info-tab-bg: color-mix(in oklab, var(--bion-blue-900) 45%, var(--accent));
+  --bion-info-tab-border: color-mix(in oklab, var(--bion-blue-500) 32%, var(--border));
+  --bion-info-tab-text: color-mix(in oklab, var(--bion-blue-200) 55%, var(--foreground));
+
+  --bion-neutral-muted: oklch(0.62 0.01 258);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/**
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}

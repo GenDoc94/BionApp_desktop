@@ -1,0 +1,2054 @@
+/* BionApp — estilos de aplicación (complementan globals.css) */
+
+/* --- Superficies (tema claro / oscuro vía variables) --- */
+.bionapp-subpage {
+  background-color: rgb(248 250 252);
+  color: var(--foreground);
+}
+
+.dark .bionapp-subpage {
+  background-color: var(--background);
+}
+
+.bionapp-panel {
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 5%, transparent);
+}
+
+.bionapp-panel--muestra {
+  /* Tono "info" (azul) para la tarjeta superior */
+  background-color: var(--bion-info-panel-bg);
+  border-color: var(--bion-info-panel-border);
+}
+
+.dark .bionapp-panel--muestra {
+  background-color: var(--bion-info-panel-bg);
+  border-color: var(--bion-info-panel-border);
+}
+
+.dark .bionapp-panel {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--border) 35%, transparent),
+    0 4px 14px color-mix(in oklab, black 22%, transparent);
+}
+
+.bionapp-panel-header {
+  background: color-mix(in oklab, var(--muted) 55%, var(--card));
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.bionapp-panel-footer {
+  background: color-mix(in oklab, var(--muted) 40%, var(--card));
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+.bionapp-inset-surface {
+  background-color: color-mix(in oklab, var(--muted) 60%, var(--card));
+  border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+  border-radius: var(--radius);
+}
+
+.bionapp-stat-card--ok,
+.bionapp-stat-card--warn,
+.bionapp-stat-card--danger {
+  border-radius: var(--radius);
+}
+
+.bionapp-stat-card--ok {
+  border-color: var(--bion-success-card-border);
+  background: var(--bion-success-card-bg);
+}
+
+.bionapp-stat-card--warn {
+  border-color: var(--bion-warn-card-border);
+  background: var(--bion-warn-card-bg);
+}
+
+.bionapp-stat-card--danger {
+  border-color: var(--bion-danger-card-border);
+  background: var(--bion-danger-card-bg);
+}
+
+/* Paleta semántica unificada: éxito / aviso / peligro */
+@layer components {
+  .bionapp-btn-green {
+    background-color: var(--bion-success-solid) !important;
+    color: var(--bion-success-on-solid) !important;
+    border: 1px solid color-mix(in oklab, var(--bion-success-solid-border) 80%, transparent) !important;
+  }
+
+  .bionapp-btn-green:hover {
+    background-color: var(--bion-success-solid-hover) !important;
+    border-color: color-mix(in oklab, var(--bion-success-solid-hover) 80%, transparent) !important;
+  }
+
+  .bionapp-chart-fill--ok {
+    background-color: var(--bion-success-chart);
+  }
+
+  .bionapp-chart-fill--warn {
+    background-color: var(--bion-warn-chart);
+  }
+
+  .bionapp-chart-fill--danger {
+    background-color: var(--bion-danger-chart);
+  }
+
+  .bionapp-text-success {
+    color: var(--bion-success-text);
+  }
+
+  .bionapp-text-warn {
+    color: var(--bion-warn-text);
+  }
+
+  .bionapp-text-danger {
+    color: var(--bion-danger-text);
+  }
+
+  .bionapp-text-warn-emphasis {
+    color: var(--bion-warn-alert-text);
+  }
+
+  .bionapp-alert-warn {
+    border: 1px solid var(--bion-warn-alert-border);
+    background: var(--bion-warn-alert-bg);
+    color: var(--bion-warn-alert-text);
+    border-radius: var(--radius);
+  }
+
+  .bionapp-alert-warn-muted {
+    color: var(--bion-warn-alert-text-muted);
+  }
+
+  .bionapp-alert-danger {
+    border: 1px solid var(--bion-danger-alert-border);
+    background: var(--bion-danger-alert-bg);
+    color: var(--bion-danger-alert-text);
+    border-radius: var(--radius);
+  }
+
+  .bionapp-row-warn {
+    background-color: var(--bion-warn-surface) !important;
+    border-color: var(--bion-warn-border) !important;
+  }
+
+  .bionapp-row-warn:hover {
+    background-color: var(--bion-warn-surface) !important;
+  }
+
+  .bionapp-swatch-warn {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: calc(var(--radius) - 6px);
+    background: var(--bion-warn-surface-muted);
+    border: 1px solid var(--bion-warn-border);
+    vertical-align: middle;
+  }
+
+  .bionapp-btn-icon-danger {
+    color: var(--bion-danger-fill) !important;
+  }
+
+  .bionapp-btn-icon-danger:hover {
+    color: var(--bion-danger-text) !important;
+  }
+
+  .bionapp-btn-info {
+    background-color: var(--bion-info-solid) !important;
+    color: var(--bion-info-on-solid) !important;
+    border: 1px solid color-mix(in oklab, var(--bion-info-solid-border) 80%, transparent) !important;
+  }
+
+  .bionapp-btn-info:hover {
+    background-color: var(--bion-info-solid-hover) !important;
+    border-color: color-mix(in oklab, var(--bion-info-solid-hover) 80%, transparent) !important;
+  }
+
+  .bionapp-campo-info {
+    background-color: var(--bion-info-surface) !important;
+    border-color: var(--bion-info-border) !important;
+    color: var(--bion-info-field-text);
+  }
+
+  .bionapp-text-info {
+    color: var(--bion-info-text);
+  }
+}
+
+/* Cálculos: dos bloques de pestañas (preparación vs dilución para marcaje) */
+.bionapp-calcs-tabs-panel {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+  background: var(--card);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+
+.bionapp-calcs-tabs-panel--prep {
+  border-color: color-mix(in oklab, var(--border) 90%, transparent);
+  background: color-mix(in oklab, var(--muted) 40%, var(--card));
+}
+
+.bionapp-calcs-tabs-panel--dilucion {
+  border-color: color-mix(in oklab, var(--border) 90%, transparent);
+  background: color-mix(in oklab, var(--muted) 40%, var(--card));
+}
+
+.bionapp-calcs-tabs-panel [data-slot="tabs-list"] {
+  width: 100%;
+}
+
+.bionapp-calcs-tabs-panel [data-slot="tabs-trigger"] {
+  flex: 0 1 auto;
+}
+
+.bionapp-calcs-tabs-panel [data-slot="tabs-trigger"][data-state="active"] {
+  background: var(--background);
+  color: var(--foreground);
+  border-color: color-mix(in oklab, var(--border) 85%, transparent);
+  box-shadow: 0 1px 3px color-mix(in oklab, var(--foreground) 12%, transparent);
+  font-weight: 600;
+}
+
+.bionapp-calcs-tabs-panel--prep [data-slot="tabs-trigger"][data-state="active"],
+.bionapp-calcs-tabs-panel--dilucion [data-slot="tabs-trigger"][data-state="active"] {
+  background: var(--bion-info-tab-bg);
+  border-color: var(--bion-info-tab-border);
+  color: var(--bion-info-tab-text);
+}
+
+/* Logo (login / alta de usuario): sin fondo, escala con la pantalla */
+.bionapp-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(92vw, 36rem);
+  max-width: 100%;
+}
+
+.bionapp-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: clamp(3rem, 14vh, 7.5rem);
+  object-fit: contain;
+}
+
+@media (min-width: 640px) {
+  .bionapp-logo {
+    max-height: clamp(3.5rem, 12vh, 8.5rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .bionapp-logo-wrap {
+    width: min(48vw, 40rem);
+  }
+
+  .bionapp-logo {
+    max-height: clamp(4rem, 11vh, 9.5rem);
+  }
+}
+
+/* Login: layout compacto sin scroll en viewports habituales */
+.bionapp-login {
+  gap: 0.75rem;
+  padding-block: 0.75rem;
+}
+
+.bionapp-login__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bionapp-login__credits {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.bionapp-login__credits-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.bionapp-login__credits-link:hover {
+  text-decoration: underline;
+}
+
+.bionapp-login__credits-link img {
+  height: 1em;
+  width: auto;
+  vertical-align: middle;
+}
+
+.bionapp-login__panel-head {
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+}
+
+.bionapp-login__form {
+  gap: 0.75rem;
+}
+
+.bionapp-login__field {
+  gap: 0.375rem;
+}
+
+.bionapp-login--dense .bionapp-login__form {
+  gap: 0.625rem;
+}
+
+.bionapp-login--dense .bionapp-login__field {
+  gap: 0.25rem;
+}
+
+.bionapp-login--dense .bionapp-login__logo {
+  max-height: clamp(2.5rem, 10vh, 5.75rem);
+}
+
+@media (min-width: 640px) {
+  .bionapp-login--dense .bionapp-login__logo {
+    max-height: clamp(2.75rem, 9vh, 6.25rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .bionapp-login--dense .bionapp-login__logo {
+    max-height: clamp(3rem, 8.5vh, 6.75rem);
+  }
+}
+
+/* --- Página principal --- */
+.bionapp-page {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.bionapp-shell {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  container-type: inline-size;
+  container-name: shell;
+}
+
+/* --- Cabecera: 3 filas (estrecho) → 2 filas → 1 fila (ancho) --- */
+.bionapp-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.bionapp-header-row--nav,
+.bionapp-header-user-meta,
+.bionapp-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Buscar, Ir, filtro y nueva muestra: siempre juntos al hacer wrap */
+.bionapp-nav-tools {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.bionapp-header-actions {
+  flex-wrap: nowrap;
+}
+
+.bionapp-header-user-meta {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 0.5rem 1.25rem;
+  padding-inline: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.bionapp-header-user-meta > span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* Tablet / escritorio estrecho: nav arriba; usuario + acciones abajo */
+@container shell (min-width: 640px) {
+  .bionapp-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    width: 100%;
+  }
+
+  .bionapp-header-row--nav {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bionapp-header-user-meta {
+    grid-column: 1;
+    grid-row: 2;
+    width: auto;
+    justify-self: start;
+    margin: 0;
+  }
+
+  .bionapp-header-actions {
+    grid-column: 2;
+    grid-row: 2;
+    width: auto;
+    justify-self: end;
+    margin: 0;
+  }
+}
+
+/* Ancho: una sola fila (nav | usuario | acciones) */
+@container shell (min-width: 1120px) {
+  .bionapp-header {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .bionapp-header-row--nav {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .bionapp-header-user-meta {
+    flex: 0 0 auto;
+    width: auto;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 1.5rem 2rem;
+    padding-inline: 0.75rem;
+    margin-inline: auto;
+  }
+
+  .bionapp-header-actions {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+}
+
+/* Ir, buscar petición y + muestra: misma altura y tamaño cuadrado en iconos */
+.bionapp-nav-mini-btn {
+  height: 1.75rem !important;
+  min-height: 1.75rem;
+  box-sizing: border-box;
+}
+
+.bionapp-nav-mini-btn--icon {
+  width: 1.75rem !important;
+  min-width: 1.75rem;
+  padding: 0 !important;
+}
+
+.bionapp-nav-mini-btn--text {
+  padding-left: 0.625rem !important;
+  padding-right: 0.625rem !important;
+}
+
+/* Fallback sin container queries */
+@supports not (container-type: inline-size) {
+  @media (min-width: 640px) {
+    .bionapp-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto auto;
+      align-items: center;
+      gap: 0.5rem 0.75rem;
+      width: 100%;
+    }
+
+    .bionapp-header-row--nav {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .bionapp-header-user-meta {
+      grid-column: 1;
+      grid-row: 2;
+      width: auto;
+      justify-self: start;
+      margin: 0;
+    }
+
+    .bionapp-header-actions {
+      grid-column: 2;
+      grid-row: 2;
+      width: auto;
+      justify-self: end;
+      margin: 0;
+    }
+  }
+
+  @media (min-width: 1120px) {
+    .bionapp-header {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.5rem 0.75rem;
+    }
+
+    .bionapp-header-row--nav {
+      flex: 0 0 auto;
+      width: auto;
+      min-width: 0;
+      justify-content: flex-start;
+    }
+
+    .bionapp-header-user-meta {
+      flex: 0 0 auto;
+      width: auto;
+      flex-wrap: nowrap;
+      justify-content: center;
+      gap: 1.5rem 2rem;
+      padding-inline: 0.75rem;
+      margin-inline: auto;
+    }
+
+    .bionapp-header-actions {
+      flex: 0 0 auto;
+      width: auto;
+      min-width: 0;
+      flex-wrap: nowrap;
+      margin-left: 0;
+      justify-content: flex-end;
+    }
+  }
+}
+
+/* Texto de botones solo si el contenedor tiene sitio; si no, solo icono */
+.bionapp-header-actions .bionapp-nav-label {
+  display: none;
+}
+
+@container shell (min-width: 1000px) {
+  .bionapp-header-actions .bionapp-nav-label {
+    display: inline;
+  }
+}
+
+@supports not (container-type: inline-size) {
+  @media (min-width: 1000px) {
+    .bionapp-header-actions .bionapp-nav-label {
+      display: inline;
+    }
+  }
+}
+
+/* --- Tarjetas de formulario (muestra / extracción) --- */
+.bionapp-card {
+  min-width: 0;
+  border-radius: var(--radius);
+}
+
+.bionapp-version-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in oklab, var(--foreground) 35%, transparent);
+}
+
+.bionapp-version-dialog {
+  width: min(100%, 28rem);
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: 0 16px 40px color-mix(in oklab, var(--foreground) 18%, transparent);
+}
+
+.bionapp-version-dialog__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.bionapp-version-dialog__subtitle {
+  margin: 0.875rem 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.bionapp-version-dialog__list {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.bionapp-version-dialog__meta {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}
+
+.bionapp-version-dialog__instructions {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bionapp-version-dialog__instructions code {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  background: color-mix(in oklab, var(--muted) 80%, transparent);
+}
+
+.bionapp-version-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.bionapp-login__version-btn {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+}
+
+.bionapp-login__version-btn:disabled {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+.bionapp-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .bionapp-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .bionapp-form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .bionapp-form-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.bionapp-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.5rem;
+  min-width: 0;
+}
+
+.bionapp-field > :not(label):not(.bionapp-field-label) {
+  min-width: 0;
+  flex: 1 1 5rem;
+  max-width: 100%;
+}
+
+.bionapp-field-label,
+.bionapp-field > label {
+  flex-shrink: 0;
+}
+
+/* Estado + Número BN en la misma celda del grid */
+.bionapp-field--estado-bn {
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  justify-self: stretch;
+  overflow: hidden;
+}
+
+.bionapp-field--estado-bn:has(.bionapp-tag-picker[open]) {
+  overflow: visible;
+  z-index: 30;
+}
+
+.bionapp-num-bn-cluster > .bionapp-tag-picker {
+  flex: 0 0 auto;
+}
+
+.bionapp-field--estado-bn > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.bionapp-num-bn-cluster {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.375rem;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.bionapp-muestra-tags {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.125rem;
+  min-width: 0;
+  flex: 1 1 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bionapp-muestra-tags::-webkit-scrollbar {
+  display: none;
+}
+
+.bionapp-num-bn {
+  border-radius: 9999px;
+  border-color: transparent;
+  background-color: rgb(15 23 42);
+  color: #fff;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dark .bionapp-num-bn {
+  background-color: color-mix(in oklab, var(--primary) 75%, var(--card));
+  color: var(--primary-foreground);
+}
+
+/* Fila de muestra: 6 columnas fijas; etiquetas hacen scroll dentro de la 1ª */
+@media (min-width: 1280px) {
+  .bionapp-panel--muestra > .bionapp-form-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .bionapp-panel--muestra > .bionapp-form-grid > .bionapp-field {
+    min-width: 0;
+  }
+}
+
+.bionapp-muestra-tag-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.bionapp-tag-picker {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.bionapp-tag-picker > summary {
+  list-style: none;
+}
+
+.bionapp-tag-picker > summary::-webkit-details-marker {
+  display: none;
+}
+
+.bionapp-tag-picker__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.bionapp-tag-picker__trigger:hover {
+  background: var(--muted);
+}
+
+.bionapp-tag-picker__trigger--icon {
+  gap: 0.125rem;
+  height: 1.375rem;
+  padding: 0 0.3rem;
+}
+
+.bionapp-tag-picker[open] > .bionapp-tag-picker__trigger {
+  background: var(--muted);
+}
+
+.bionapp-tag-picker__chevron {
+  opacity: 0.65;
+  transition: transform 0.15s ease;
+}
+
+.bionapp-tag-picker[open] .bionapp-tag-picker__chevron {
+  transform: rotate(180deg);
+}
+
+.bionapp-tag-picker__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: auto;
+  z-index: 50;
+  min-width: 11rem;
+  max-width: 16rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 8px 24px rgb(15 23 42 / 0.12);
+}
+
+.dark .bionapp-tag-picker__menu {
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+.bionapp-tag-picker__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.bionapp-tag-picker__item:hover {
+  background: var(--muted);
+}
+
+/* Medusa + botón copiar siempre en la misma línea */
+.bionapp-field--with-action {
+  flex-wrap: nowrap;
+}
+
+.bionapp-field--nowrap {
+  flex-wrap: nowrap;
+}
+
+.bionapp-field--nowrap > :not(label):not(.bionapp-field-label) {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.bionapp-field-control-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.bionapp-field--with-action .bionapp-field-control-row > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.bionapp-form-grid > .bionapp-span-full {
+  grid-column: 1 / -1;
+}
+
+.bionapp-form-grid > .bionapp-span-2,
+.bionapp-form-grid > .bionapp-span-4 {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 640px) {
+  .bionapp-form-grid > .bionapp-span-2 {
+    grid-column: span 1;
+  }
+
+  .bionapp-form-grid > .bionapp-span-4 {
+    grid-column: span 2;
+  }
+}
+
+@media (min-width: 1280px) {
+  .bionapp-form-grid > .bionapp-span-2 {
+    grid-column: span 2;
+  }
+
+  .bionapp-form-grid > .bionapp-span-4 {
+    grid-column: span 4;
+  }
+}
+
+/* Panel «Lectura de lo extraído» (matiz aviso) */
+.bionapp-lectura-extraido-panel {
+  container-type: inline-size;
+  container-name: lectura-extraido;
+  border: 1px solid var(--bion-warn-panel-border);
+  background: var(--bion-warn-panel-bg);
+  border-radius: var(--radius);
+}
+
+.bionapp-lectura-extraido-panel h3 {
+  color: var(--bion-warn-panel-title);
+}
+
+.bionapp-lectura-extraido-data {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.bionapp-lectura-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.625rem;
+  min-width: 0;
+}
+
+.bionapp-lectura-block--meta {
+  flex-wrap: nowrap;
+  align-items: center;
+  min-width: 0;
+}
+
+.bionapp-lectura-block--coment {
+  align-items: center;
+}
+
+.bionapp-lectura-block--coment .bionapp-lectura-item--coment {
+  width: 100%;
+}
+
+.bionapp-lectura-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.375rem;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.bionapp-lectura-item--fecha {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.bionapp-lectura-item--fecha input[type="date"],
+.bionapp-campo-fecha {
+  width: 8rem;
+  min-width: 0;
+  max-width: 100%;
+  flex: 0 0 auto;
+  padding-inline: 0.375rem 0.125rem;
+}
+
+.bionapp-campo-fecha::-webkit-calendar-picker-indicator {
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.bionapp-lectura-item--coment {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.25rem 0.375rem;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.bionapp-lectura-item--coment > :not(label) {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.bionapp-lectura-item--coment > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bionapp-lectura-stats-grupo {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.375rem 0.625rem;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/* Cuantificación D/C/I: ~3 dígitos sin hueco sobrante */
+.bionapp-campo-cuant {
+  width: 3.25rem;
+  min-width: 2.75rem;
+  max-width: 4rem;
+  flex-shrink: 0;
+  padding-inline: 0.375rem;
+}
+
+@container lectura-extraido (min-width: 36rem) and (max-width: 51.99rem) {
+  .bionapp-lectura-extraido-data {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    gap: 0.375rem 0.75rem;
+    align-items: center;
+  }
+
+  .bionapp-lectura-block--meta {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .bionapp-lectura-block--stats {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    row-gap: 0.25rem;
+  }
+
+  .bionapp-lectura-block--coment {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .bionapp-lectura-block--coment .bionapp-lectura-item--coment {
+    flex: 0 1 auto;
+    width: auto;
+    max-width: min(14rem, 38cqi);
+  }
+}
+
+@container lectura-extraido (min-width: 52rem) {
+  .bionapp-lectura-extraido-data {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem 1.25rem;
+  }
+
+  .bionapp-lectura-block--meta {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .bionapp-lectura-block--stats {
+    grid-column: 2;
+    grid-row: 1;
+    flex-wrap: wrap;
+    justify-content: center;
+    justify-self: center;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    row-gap: 0.25rem;
+  }
+
+  .bionapp-lectura-block--coment {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    width: auto;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .bionapp-lectura-block--coment .bionapp-lectura-item--coment {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: min(28cqi, 100%);
+  }
+}
+
+/* Legacy grid (si queda en otro sitio) */
+.bionapp-lectura-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+.bionapp-lectura-item--chips {
+  flex: 1 1 100%;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.bionapp-lectura-item--pn-group {
+  flex: 1 1 100%;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+/* Bloque Chips (marcado): una fila compacta por chip */
+.bionapp-chips-block {
+  container-type: inline-size;
+  container-name: chips;
+  width: 100%;
+  min-width: 0;
+}
+
+.bionapp-chip-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.bionapp-chip-item__head {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.bionapp-chip-item__nombre {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: min(9.5rem, 42cqi);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.35;
+}
+
+.bionapp-chip-fc-select {
+  width: 3.1rem;
+}
+
+.bionapp-chip-item__comentario {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 6rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bionapp-chip-item__head .bionapp-chip-comment {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 2.5rem;
+  max-width: none;
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+}
+
+.bionapp-chip-item__tail {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.bionapp-chip-add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.bionapp-chip-add-select {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.bionapp-chip-action-btn {
+  height: 1.75rem;
+  width: 2rem;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.bionapp-chips-block .bionapp-chip-item__head .bionapp-icon-btn {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Solo en columnas muy estrechas: comentario + eliminar en segunda línea */
+@container chips (max-width: 17rem) {
+  .bionapp-chip-item__head {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+  }
+
+  .bionapp-chip-item__tail {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}
+
+
+/* Campos de cuantificación DNA (solo media x̄ en extraído y marcado) */
+.bionapp-campo-media-valor {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: calc(var(--radius) - 4px);
+  background-color: var(--bion-success-surface-muted);
+  border: 1px solid var(--bion-success-border);
+  color: var(--bion-success-field-text);
+}
+
+/* Legacy: inputs DNA en Acciones (Leer extraído / marcado) */
+input.bionapp-campo-dna {
+  background-color: var(--bion-success-surface) !important;
+  border-color: var(--bion-success-border) !important;
+  color: var(--bion-success-field-text);
+}
+
+.bionapp-campo-dna-valor {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: calc(var(--radius) - 4px);
+  background-color: var(--bion-success-surface-muted);
+  border: 1px solid var(--bion-success-border);
+  color: var(--bion-success-field-text);
+}
+
+/* Lectura marcada: datos a la izquierda, chips a la derecha si el panel es ancho */
+.bionapp-marcado-panel {
+  margin-left: 0;
+  container-type: inline-size;
+  container-name: marcado;
+  min-width: 0;
+  border: 1px solid var(--bion-success-border);
+  background: color-mix(in oklab, var(--bion-success-surface-muted) 55%, var(--card));
+  border-radius: var(--radius);
+}
+
+.bionapp-marcado-panel h4 {
+  color: var(--bion-success-text);
+}
+
+@container shell (min-width: 1120px) {
+  .bionapp-marcado-panel {
+    padding: 0.375rem;
+  }
+
+  .bionapp-marcado-lm,
+  .bionapp-marcado-lm__stack {
+    gap: 0.25rem;
+  }
+
+  .bionapp-marcado-block {
+    gap: 0.25rem 0.5rem;
+  }
+
+  .bionapp-lectura-extraido-data {
+    gap: 0.375rem;
+  }
+}
+
+/* Lectura marcada: bloques apilados | medidas centrales | chips */
+.bionapp-marcado-lm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.bionapp-marcado-lm__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.bionapp-marcado-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.625rem;
+  min-width: 0;
+}
+
+.bionapp-marcado-block--head {
+  flex-wrap: nowrap;
+}
+
+.bionapp-marcado-block--comment {
+  align-items: center;
+}
+
+.bionapp-marcado-lote {
+  width: 100%;
+  min-width: 0;
+}
+
+@container marcado (min-width: 400px) {
+  .bionapp-marcado-lote {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr;
+    column-gap: 0.5rem;
+    row-gap: 0.375rem;
+    align-items: center;
+  }
+
+  .bionapp-marcado-block--pn {
+    display: contents;
+  }
+
+  .bionapp-marcado-block--pn > .bionapp-marcado-field {
+    display: contents;
+  }
+
+  .bionapp-marcado-lote .bionapp-marcado-field input,
+  .bionapp-marcado-lote .bionapp-marcado-field > span {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .bionapp-marcado-block--comment {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    align-items: center;
+  }
+
+  .bionapp-marcado-block--comment > :not(label) {
+    grid-column: 2 / -1;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+.bionapp-marcado-block--measures {
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 0.375rem 0.5rem;
+  padding: 0.125rem 0;
+}
+
+.bionapp-marcado-field {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.bionapp-marcado-field--fecha {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.bionapp-marcado-field--fecha input[type="date"] {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.bionapp-marcado-lm__chips {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding-top: 0.375rem;
+  border-top: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+}
+
+.bionapp-marcado-block--comment > :not(label) {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.bionapp-marcado-lm__comment-input {
+  flex: 1 1 12rem;
+  min-width: min(100%, 12rem);
+}
+
+/* Panel ancho: datos a la izquierda | chips a la derecha */
+@container marcado (min-width: 640px) {
+  .bionapp-marcado-lm {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(10.5rem, 34%);
+    gap: 0.5rem 0.75rem;
+    align-items: start;
+  }
+
+  .bionapp-marcado-lm__stack {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .bionapp-marcado-lm__chips {
+    grid-column: 2;
+    grid-row: 1;
+    padding-top: 0;
+    border-top: none;
+    align-self: stretch;
+  }
+}
+
+/* Medidas pueden partirse en 2 líneas si el bloque es muy estrecho */
+@container marcado (max-width: 639px) {
+  .bionapp-marcado-block--measures {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+  }
+}
+
+/* Panel muy ancho: meta+PN+coment | medidas (centro) | chips */
+@container marcado (min-width: 1100px) {
+  .bionapp-marcado-lm {
+    grid-template-columns: minmax(0, 1fr) auto minmax(11rem, 28%);
+    align-items: center;
+    gap: 0.5rem 1rem;
+  }
+
+  .bionapp-marcado-lm__stack {
+    display: contents;
+  }
+
+  .bionapp-marcado-block--head {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+  }
+
+  .bionapp-marcado-lote {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+  }
+
+  .bionapp-marcado-block--measures {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    padding: 0 0.5rem;
+  }
+
+  .bionapp-marcado-lm__chips {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+  }
+}
+
+/* Fallback si el navegador no soporta container queries */
+@supports not (container-type: inline-size) {
+  @media (min-width: 640px) {
+    .bionapp-marcado-lm {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(10.5rem, 38%);
+      gap: 0.5rem 0.75rem;
+      align-items: start;
+    }
+
+    .bionapp-marcado-lm__stack {
+      grid-column: 1;
+      grid-row: 1;
+      min-width: 0;
+    }
+
+    .bionapp-marcado-lm__chips {
+      grid-column: 2;
+      grid-row: 1;
+      width: 100%;
+      padding-top: 0;
+      border-top: none;
+    }
+  }
+
+  @media (min-width: 1100px) {
+    .bionapp-marcado-lm {
+      grid-template-columns: minmax(0, 1fr) auto minmax(11rem, 28%);
+      align-items: center;
+      column-gap: 1rem;
+    }
+
+    .bionapp-marcado-lm__stack {
+      display: contents;
+    }
+
+    .bionapp-marcado-block--head {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .bionapp-marcado-block--pn {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .bionapp-marcado-block--comment {
+      grid-column: 1;
+      grid-row: 3;
+    }
+
+    .bionapp-marcado-block--measures {
+      grid-column: 2;
+      grid-row: 1 / span 3;
+      align-self: center;
+    }
+
+    .bionapp-marcado-lm__chips {
+      grid-column: 3;
+      grid-row: 1 / span 3;
+    }
+  }
+
+  @media (min-width: 36rem) and (max-width: 51.99rem) {
+    .bionapp-lectura-extraido-data {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto auto;
+      gap: 0.375rem 0.75rem;
+      align-items: center;
+    }
+
+    .bionapp-lectura-block--stats {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+    }
+  }
+
+  @media (min-width: 52rem) {
+    .bionapp-lectura-extraido-data {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.5rem 1.25rem;
+    }
+
+    .bionapp-lectura-block--stats {
+      flex-wrap: wrap;
+      justify-content: center;
+      justify-self: center;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    .bionapp-lectura-item--coment {
+      flex-wrap: nowrap;
+    }
+  }
+}
+
+.bionapp-section-toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.bionapp-section-toolbar > h3,
+.bionapp-section-toolbar > h4 {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.bionapp-section-toolbar > .bionapp-section-toolbar__actions,
+.bionapp-section-toolbar > div:last-child {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* Inputs numéricos sin flechas del navegador */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Botones solo-icono (estado muestra, repetir chip) */
+.bionapp-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  appearance: none;
+}
+
+.bionapp-icon-btn:focus,
+.bionapp-icon-btn:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.bionapp-icon-btn svg {
+  display: block;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* En pantallas muy estrechas: evitar que el header salte a 4 filas */
+@media (max-width: 420px) {
+  .bionapp-registro-prefix {
+    display: none;
+  }
+}
+
+/* Panel flotante filtros (petición / pendientes) */
+.petic-search-floating,
+.bionapp-filtro-panel {
+  position: fixed;
+  z-index: 9999;
+  width: min(20rem, calc(100vw - 1.5rem));
+  max-width: calc(100vw - 1.5rem);
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  padding: 0.75rem;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.bionapp-filtro-panel__tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.125rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 35%, var(--popover));
+}
+
+.bionapp-filtro-panel__tab {
+  flex: 1 1 0;
+  min-width: 0;
+  border: none;
+  border-radius: calc(var(--radius) - 2px);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  padding: 0.375rem 0.35rem;
+  cursor: pointer;
+}
+
+.bionapp-filtro-tags__list {
+  max-height: 11rem;
+  overflow-y: auto;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: color-mix(in oklab, var(--muted) 20%, var(--popover));
+}
+
+.bionapp-filtro-panel__tab--active {
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+.bionapp-filtro-activo {
+  border: 1px solid var(--bion-info-panel-border);
+  background: var(--bion-info-panel-bg);
+  border-radius: var(--radius);
+  color: var(--foreground);
+}
+
+.bionapp-filtro-activo--warn {
+  border-color: var(--bion-warn-card-border);
+  background: var(--bion-warn-card-bg);
+}
+
+.bionapp-filtro-activo--success {
+  border-color: var(--bion-success-border);
+  background: var(--bion-success-surface-muted);
+}
+
+.bionapp-filtro-activo--danger {
+  border-color: var(--bion-danger-card-border);
+  background: var(--bion-danger-card-bg);
+}
+
+/* Semáforo cuantificación (Leer Extraído: Izq/Cen/Dcha; Leer Marcado: Izq_LM/Dcha_LM) */
+@layer components {
+  input.lectura-cuant-ok {
+    background-color: var(--bion-success-surface) !important;
+    border-color: var(--bion-success-border) !important;
+    color: var(--bion-success-field-text);
+  }
+
+  input.lectura-cuant-alto {
+    background-color: var(--bion-warn-surface-muted) !important;
+    border-color: var(--bion-warn-border) !important;
+    color: var(--bion-warn-field-text);
+  }
+
+  input.lectura-cuant-bajo {
+    background-color: var(--bion-danger-surface) !important;
+    border-color: var(--bion-danger-border) !important;
+    color: var(--bion-danger-field-text);
+  }
+}
+
+/* Chips — panel de cajetillas */
+.bionapp-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .bionapp-chip-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .bionapp-chip-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .bionapp-chip-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.bionapp-chip-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid var(--bion-border-subtle, #e2e8f0);
+  border-radius: 0.5rem;
+  background: var(--bion-panel-bg, #fff);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.bionapp-chip-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.bionapp-chip-card__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.bionapp-chip-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  flex-shrink: 0;
+}
+
+.bionapp-chip-fc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.bionapp-chip-fc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 4.25rem;
+  padding: 0.5rem 0.375rem;
+  border: 1px dashed var(--bion-border-subtle, #cbd5e1);
+  border-radius: 0.375rem;
+  background: var(--bion-surface-muted, #f8fafc);
+}
+
+.bionapp-chip-fc--ocupada {
+  border-style: solid;
+  border-color: var(--bion-success-border, #86efac);
+  background: var(--bion-success-surface, #f0fdf4);
+}
+
+.bionapp-chip-fc--repetir {
+  border-color: var(--bion-warn-border);
+  background: var(--bion-warn-surface);
+}
+
+.bionapp-chip-fc--repetir .bionapp-chip-fc__muestra {
+  color: var(--bion-warn-text);
+}
+
+.bionapp-chip-fc--btn {
+  width: 100%;
+  margin: 0;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.bionapp-chip-fc--btn:hover {
+  border-color: var(--bion-primary, #0f766e);
+  background: color-mix(
+    in oklab,
+    var(--bion-success-surface, #f0fdf4) 82%,
+    var(--bion-primary, #0f766e) 12%
+  );
+  box-shadow: 0 1px 4px rgb(15 118 110 / 0.14);
+}
+
+.bionapp-chip-fc--btn.bionapp-chip-fc--repetir:hover {
+  border-color: color-mix(in oklab, var(--bion-warn-fill) 45%, var(--bion-warn-border));
+  background: color-mix(in oklab, var(--bion-warn-surface) 78%, var(--bion-warn-fill) 14%);
+  box-shadow: 0 1px 4px color-mix(in oklab, var(--bion-warn-fill) 22%, transparent);
+}
+
+.bionapp-chip-fc--btn.bionapp-chip-fc--repetir:hover .bionapp-chip-fc__muestra {
+  color: var(--bion-warn-alert-text);
+}
+
+.bionapp-chip-fc--btn:active {
+  transform: scale(0.98);
+}
+
+.bionapp-chip-fc--btn:focus-visible {
+  outline: 2px solid var(--bion-primary, #0f766e);
+  outline-offset: 2px;
+}
+
+.bionapp-chip-fc__label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bion-text-muted, #64748b);
+  line-height: 1.2;
+}
+
+.bionapp-chip-fc__muestra {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--bion-primary, #0f766e);
+}
+
+.bionapp-chip-fc--btn:hover .bionapp-chip-fc__muestra {
+  color: var(--bion-primary-hover, #0d9488);
+}
+
+.bionapp-chip-fc__vacio {
+  font-size: 1rem;
+  color: var(--bion-text-muted, #94a3b8);
+  line-height: 1.2;
+}
+
+/* Preselección: formulario compacto y Dx estrecho */
+.bionapp-preselect-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.bionapp-preselect-add-field--petic {
+  flex: 0 0 7.5rem;
+  width: 7.5rem;
+}
+
+.bionapp-preselect-add-field--dx {
+  flex: 0 0 5.5rem;
+  width: 5.5rem;
+}
+
+.bionapp-preselect-add-field--coment {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.bionapp-preselect-add-field--btn {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.bionapp-preselect-dx-select {
+  width: 100%;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 2px);
+  background-color: var(--background);
+  padding-left: 0.5rem;
+  padding-right: 0.25rem;
+}
+
+.bionapp-preselect-coment-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
+  color: var(--bion-info-solid);
+  background: color-mix(in oklab, var(--bion-info-panel-bg) 70%, transparent);
+  border: 1px solid var(--bion-info-panel-border);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.bionapp-preselect-coment-btn:hover {
+  background: var(--bion-info-panel-bg);
+  border-color: color-mix(in oklab, var(--bion-info-solid) 35%, var(--bion-info-panel-border));
+}
+
+.bionapp-preselect-coment-btn:active {
+  transform: scale(0.96);
+}
+
+.bionapp-preselect-coment-cell--flash {
+  animation: bionapp-preselect-flash 1.8s ease;
+}
+
+@keyframes bionapp-preselect-flash {
+  0%,
+  100% {
+    box-shadow: none;
+    background-color: transparent;
+  }
+  20%,
+  60% {
+    box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--bion-info-solid) 45%, transparent);
+    background-color: var(--bion-info-panel-bg);
+  }
+}
