@@ -8,6 +8,7 @@ import {
   Database,
   Download,
   FileText,
+  FolderOutput,
   Loader2,
   Moon,
   PenLine,
@@ -31,6 +32,7 @@ import {
 } from "../lib/muestraEstadisticas";
 import EstadisticasApiladas from "../components/options/EstadisticasApiladas";
 import DocumentosTab from "../components/options/DocumentosTab";
+import ExportacionTab from "../components/options/ExportacionTab";
 import { getStoredTheme, setTheme } from "../lib/theme";
 import SubpageShell from "../components/SubpageShell";
 import { Button } from "../components/ui/button";
@@ -751,26 +753,41 @@ export default function Options() {
     <div className="space-y-4">
       <div className="bionapp-panel p-4">
         <div className="font-semibold mb-2">Añadir etiqueta</div>
-        <div className="flex flex-wrap gap-2 items-end">
-          <div className="min-w-[260px] flex-1">
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[200px] flex-1 relative z-10">
             <div className="text-xs text-slate-500 mb-1">Nombre (p. ej. Tesis, EC-XXX, QC…)</div>
             <Input
+              type="text"
+              autoComplete="off"
+              spellCheck={false}
               value={newTagName}
               onChange={(e) => setNewTagName(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
               placeholder="Nueva etiqueta…"
             />
           </div>
-          <div>
+          <div className="shrink-0 relative z-0">
             <div className="text-xs text-slate-500 mb-1">Color</div>
-            <input
-              type="color"
-              value={normalizeHexColor(newTagColor)}
-              onChange={(e) => setNewTagColor(e.target.value)}
-              className="h-9 w-12 rounded border border-input bg-input-background px-1"
+            <label
+              className="relative flex h-9 w-12 cursor-pointer overflow-hidden rounded border border-input"
               title="Color de etiqueta"
-            />
+            >
+              <span
+                className="pointer-events-none absolute inset-0"
+                style={{ backgroundColor: normalizeHexColor(newTagColor) }}
+                aria-hidden
+              />
+              <input
+                type="color"
+                value={normalizeHexColor(newTagColor)}
+                onChange={(e) => setNewTagColor(e.target.value)}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                tabIndex={-1}
+                aria-label="Color de etiqueta"
+              />
+            </label>
           </div>
-          <Button onClick={addTag} disabled={saving || !clampText(newTagName)}>
+          <Button onClick={addTag} disabled={saving || !clampText(newTagName)} className="shrink-0">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             Añadir
           </Button>
@@ -800,10 +817,14 @@ export default function Options() {
                     <td className="py-2 pr-3">
                       {isEditing ? (
                         <Input
+                          type="text"
+                          autoComplete="off"
+                          spellCheck={false}
                           value={tagEditName}
                           onChange={(e) => setTagEditName(e.target.value)}
-                          className="h-8 max-w-sm"
+                          className="h-8 max-w-sm relative z-10"
                           onKeyDown={(e) => {
+                            e.stopPropagation();
                             if (e.key === "Enter") saveTag();
                             if (e.key === "Escape") cancelEditTag();
                           }}
@@ -816,13 +837,24 @@ export default function Options() {
                       {isEditing ? (
                         <div className="flex items-center gap-2">
                           <Tag size={18} color={color} strokeWidth={2.25} />
-                          <input
-                            type="color"
-                            value={normalizeHexColor(tagEditColor)}
-                            onChange={(e) => setTagEditColor(e.target.value)}
-                            className="h-8 w-12 rounded border border-input bg-input-background px-1"
+                          <label
+                            className="relative flex h-8 w-12 cursor-pointer overflow-hidden rounded border border-input"
                             title="Color de etiqueta"
-                          />
+                          >
+                            <span
+                              className="pointer-events-none absolute inset-0"
+                              style={{ backgroundColor: color }}
+                              aria-hidden
+                            />
+                            <input
+                              type="color"
+                              value={normalizeHexColor(tagEditColor)}
+                              onChange={(e) => setTagEditColor(e.target.value)}
+                              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                              tabIndex={-1}
+                              aria-label="Color de etiqueta"
+                            />
+                          </label>
                         </div>
                       ) : (
                         <Tag size={18} color={color} strokeWidth={2.25} title={tag.Tag_Name} />
@@ -915,7 +947,7 @@ export default function Options() {
         <div className="mb-4 bionapp-alert-warn p-3 text-sm">
           <p className="font-semibold mb-1">Configuración inicial</p>
           <p>
-            En <strong>Añadir más variables</strong>, crea al menos un tipo de muestra y un diagnóstico.
+            En <strong>Variables</strong>, crea al menos un tipo de muestra y un diagnóstico.
             Luego pulsa <strong>Continuar a la base</strong>.
           </p>
           <p className="mt-2 text-xs bionapp-alert-warn-muted">
@@ -943,6 +975,14 @@ export default function Options() {
               <UserRound className="h-4 w-4" />
               Perfil
             </TabsTrigger>
+            <TabsTrigger value="variables" className="gap-1.5">
+              <Database className="h-4 w-4" />
+              Variables
+            </TabsTrigger>
+            <TabsTrigger value="etiquetas" className="gap-1.5">
+              <Tag className="h-4 w-4" />
+              Etiquetas
+            </TabsTrigger>
             <TabsTrigger value="estadisticas" className="gap-1.5">
               <BarChart3 className="h-4 w-4" />
               Estadísticas
@@ -951,13 +991,9 @@ export default function Options() {
               <FileText className="h-4 w-4" />
               Documentos
             </TabsTrigger>
-            <TabsTrigger value="variables" className="gap-1.5">
-              <Database className="h-4 w-4" />
-              Añadir más variables
-            </TabsTrigger>
-            <TabsTrigger value="etiquetas" className="gap-1.5">
-              <Tag className="h-4 w-4" />
-              Etiquetas
+            <TabsTrigger value="exportacion" className="gap-1.5">
+              <FolderOutput className="h-4 w-4" />
+              Exportación
             </TabsTrigger>
             <TabsTrigger value="apariencia" className="gap-1.5">
               <Sun className="h-4 w-4" />
@@ -965,7 +1001,7 @@ export default function Options() {
             </TabsTrigger>
             <TabsTrigger value="manual" className="gap-1.5">
               <BookOpen className="h-4 w-4" />
-              Manual de uso
+              Manual
             </TabsTrigger>
             <TabsTrigger value="autoria" className="gap-1.5">
               <PenLine className="h-4 w-4" />
@@ -1200,9 +1236,15 @@ export default function Options() {
             <DocumentosTab />
           </TabsContent>
 
+          <TabsContent value="exportacion">
+            <ExportacionTab />
+          </TabsContent>
+
           <TabsContent value="variables">{variablesContent}</TabsContent>
 
-          <TabsContent value="etiquetas">{tagsContent}</TabsContent>
+          <TabsContent value="etiquetas" tabIndex={-1}>
+            {tagsContent}
+          </TabsContent>
 
           <TabsContent value="apariencia">
             <div className="bionapp-panel p-4 space-y-4">
@@ -1320,8 +1362,8 @@ export default function Options() {
                     de los datos ya registrados.
                   </li>
                   <li>
-                    <strong>Opciones</strong>: perfil, estadísticas, documentos, catálogos (tipos de
-                    muestra y diagnósticos), etiquetas y apariencia.
+                    <strong>Opciones</strong>: perfil, variables, etiquetas, estadísticas,
+                    documentos, exportación, apariencia y manual.
                   </li>
                 </ul>
               </div>

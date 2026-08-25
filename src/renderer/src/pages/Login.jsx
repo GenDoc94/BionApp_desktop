@@ -127,12 +127,12 @@ export default function Login({ onLogin }) {
                 disabled={checkingUpdate}
                 title="Buscar actualizaciones en GitHub"
               >
-                {checkingUpdate ? "Buscando actualizaciones…" : `v${version} · Buscar actualizaciones`}
+                {checkingUpdate ? "Buscando actualizaciones…" : `v${version} (beta) · Buscar actualizaciones`}
               </button>
             </Badge>
           ) : (
             <Badge variant="default" className="text-xs mt-1.5">
-              v{version}
+              v{version} (beta)
             </Badge>
           )}
         </div>

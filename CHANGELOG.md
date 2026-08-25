@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.10
+
+- Añadiendo pestaña de exportación de datos.
+
 ## 3.0.9
 
 - Mejoras de software. User-friendly. Compatibilidad versión Desktop.

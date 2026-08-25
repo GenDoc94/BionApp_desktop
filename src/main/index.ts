@@ -6,6 +6,8 @@ import type Database from 'better-sqlite3'
 import { dbPathFor, initSchema, openDatabase } from './db'
 import { hasAdminCode, hasUsers, createUser, login, setAdminCode, toAuthUser } from './auth'
 import { executeDbRequest } from './query'
+import { exportDatabase } from './exportDb'
+import type { ExportFormat } from '../shared/types'
 import * as docs from './documentos'
 import type {
   AppConfigState,
@@ -90,7 +92,23 @@ function broadcastAuth(user: AuthUser | null): void {
 }
 
 function createWindow(): void {
-  Menu.setApplicationMenu(null)
+  const isMac = process.platform === 'darwin'
+  const template: Electron.MenuItemConstructorOptions[] = [
+    ...(isMac ? [{ role: 'appMenu' as const }] : []),
+    {
+      label: 'Editar',
+      submenu: [
+        { role: 'undo', label: 'Deshacer' },
+        { role: 'redo', label: 'Rehacer' },
+        { type: 'separator' },
+        { role: 'cut', label: 'Cortar' },
+        { role: 'copy', label: 'Copiar' },
+        { role: 'paste', label: 'Pegar' },
+        { role: 'selectAll', label: 'Seleccionar todo' }
+      ]
+    }
+  ]
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 
   const iconPath = join(__dirname, '../../resources/icon.ico')
 
@@ -216,6 +234,10 @@ function registerIpc(): void {
   })
 
   ipcMain.handle('db:request', (_e, req: DbRequest) => executeDbRequest(ensureDb(), req))
+
+  ipcMain.handle('export:database', async (_e, format: ExportFormat) => {
+    return exportDatabase(ensureDb(), ensureDataPath(), format, mainWindow)
+  })
 
   ipcMain.handle('docs:list', () => docs.listDocumentos(ensureDataPath()))
   ipcMain.handle('docs:upload', async (_e, name: string, data: ArrayBuffer) => {

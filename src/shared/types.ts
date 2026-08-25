@@ -1,5 +1,11 @@
 export type Role = 'user' | 'admin'
 
+export type ExportFormat = 'xlsx' | 'json' | 'sqlite'
+
+export type ExportResult =
+  | { ok: true; path: string; canceled?: undefined; error?: undefined }
+  | { ok: false; canceled?: boolean; error?: string; path?: undefined }
+
 export interface UserSession {
   id: string
   email: string
