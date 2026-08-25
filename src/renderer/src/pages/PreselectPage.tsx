@@ -616,8 +616,8 @@ function PreselectPage() {
     <SubpageShell title="Preselección" icon={ClipboardList} maxWidthClass="max-w-[1200px]">
       <Toaster position="bottom-right" />
       <p className="text-sm text-muted-foreground mb-4">
-        Peticiones interesantes para Bionano antes de crear la muestra. Puedes indicar el
-        diagnóstico (DDx); al crear el Nº Bionano pasará a Muestras con la misma petición y Dx.
+        Añade aquí las peticiones de muestras interesantes en cola para realizar OGM. Puedes indicar
+        diagnóstico. Al crear el NºBionano se meterá a la base con la misma petición y diagnóstico.
       </p>
 
       <div className="bionapp-panel bionapp-panel--muestra p-4 mb-6">

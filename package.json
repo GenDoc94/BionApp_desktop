@@ -1,10 +1,13 @@
 {
   "name": "bionapp-desktop",
-  "version": "3.0.8",
-  "description": "BionApp escritorio — Electron + SQLite",
+  "version": "3.0.9",
+  "description": "BionApp Desktop (beta)",
   "main": "./out/main/index.js",
-  "author": "Hematología",
-  "license": "UNLICENSED",
+  "author": {
+    "name": "GenDoc94",
+    "url": "https://github.com/GenDoc94"
+  },
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "electron-vite dev",
@@ -43,6 +46,7 @@
     "electron": "^33.3.1",
     "electron-builder": "^25.1.8",
     "electron-vite": "^2.3.0",
+    "resedit": "^1.7.2",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.7.3",
     "vite": "^5.4.14",
@@ -51,6 +55,7 @@
   "build": {
     "appId": "es.hospital.bionapp",
     "productName": "BionApp",
+    "copyright": "Copyright © GenDoc94",
     "directories": {
       "output": "release"
     },
@@ -58,6 +63,7 @@
       "out/**/*",
       "resources/**/*"
     ],
+    "afterPack": "./scripts/setWinExeMetadata.cjs",
     "win": {
       "target": [
         {
@@ -68,7 +74,7 @@
         }
       ],
       "icon": "resources/icon.ico",
-      "signAndEditExecutable": false
+      "signAndEditExecutable": true
     },
     "portable": {
       "artifactName": "BionApp.exe"

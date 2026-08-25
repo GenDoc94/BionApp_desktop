@@ -27,11 +27,11 @@ export default function SetupPage({
       <div className="w-full max-w-md bionapp-panel shadow-sm p-6 space-y-4">
         <div className="flex flex-col items-center gap-2">
           <img src={logo} alt="BionApp" className="h-14 w-auto" />
-          <h1 className="text-lg font-semibold">BionApp escritorio</h1>
+          <h1 className="text-lg font-semibold">BionApp escritorio (beta)</h1>
         </div>
         <p className="text-sm text-muted-foreground text-center">
-          Elige la carpeta compartida de datos. Si es una instalación nueva, define también el
-          código admin para crear usuarios.
+          Elige la carpeta que contendrá los datos y el código maestro para crear nuevos usuarios.
+          NO se podrá cambiar más adelante.
         </p>
 
         <Button
@@ -50,7 +50,7 @@ export default function SetupPage({
 
         <div className="space-y-2">
           <Label htmlFor="admin-code" className="text-xs">
-            Código admin (nuevo o vacío si la carpeta ya está configurada)
+            Código maestro (mín. 4 caracteres)
           </Label>
           <Input
             id="admin-code"
@@ -58,13 +58,13 @@ export default function SetupPage({
             autoComplete="new-password"
             value={adminCode}
             onChange={(e) => setAdminCode(e.target.value)}
-            placeholder="Código para crear usuarios"
+            placeholder="Código maestro"
             className="h-9 text-sm"
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="admin-code-confirm" className="text-xs">
-            Confirmar código admin
+            Confirmar código maestro
           </Label>
           <Input
             id="admin-code-confirm"
@@ -72,7 +72,7 @@ export default function SetupPage({
             autoComplete="new-password"
             value={adminCodeConfirm}
             onChange={(e) => setAdminCodeConfirm(e.target.value)}
-            placeholder="Repite el código"
+            placeholder="Repite el código maestro"
             className="h-9 text-sm"
           />
           {codesPartial && !codesMatch && (
@@ -100,7 +100,7 @@ export default function SetupPage({
           {busy ? 'Preparando…' : 'Continuar'}
         </Button>
         <p className="text-[11px] text-muted-foreground text-center">
-          El código se guarda (hasheado) en la carpeta de datos y no se puede cambiar desde aquí.
+          Apunta bien el código maestro, no se podrá cambiar.
         </p>
       </div>
     </div>

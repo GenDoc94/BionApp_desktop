@@ -627,7 +627,8 @@ function App() {
         Coment_Extracc: muestraUpdate.Coment_Extracc,
         Visco_grado: muestraUpdate.Visco_grado,
         Pellet: muestraUpdate.Pellet,
-        Medusa: muestraUpdate.Medusa
+        Medusa: muestraUpdate.Medusa,
+        Estado_Muestra: muestraUpdate.Estado_Muestra ?? null,
       }).eq("NumBN", NumBN);
 
       // Actualizar lecturas y marcado
@@ -703,6 +704,7 @@ function App() {
       toast.error("Debes seleccionar tipo de muestra y diagnóstico para continuar");
       return;
     }
+    setEstadoMuestra(muestras[currentMuestraIndex]?.Estado_Muestra ?? null);
     setEditMode(false);
     setEditedData({});
   };
@@ -1520,7 +1522,7 @@ function App() {
         <Toaster position="bottom-right" />
         <div className="bionapp-subpage min-h-screen  p-4 flex flex-col">
           <div className="flex flex-1 flex-col items-center justify-center gap-4 w-full">
-            <p className="text-lg text-slate-700 dark:text-slate-200">No hay muestras disponibles</p>
+            <p className="text-lg text-slate-700 dark:text-slate-200">No se ha añadido ninguna muestra</p>
             <Button
               onClick={handleAddPrimeraMuestra}
               disabled={creatingPrimeraMuestra}
@@ -1531,7 +1533,7 @@ function App() {
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              Añadir primera muestra
+              Añade la primera muestra
             </Button>
           </div>
           <AppFooter />
@@ -1621,7 +1623,7 @@ function App() {
   };
 
 
-  const handleToggleEstado = async () => {
+  const handleToggleEstado = () => {
     if (!editMode) return; // solo se puede cambiar en modo edición
 
     // Secuencia de colores: null -> 1 -> 2 -> 3 -> 1 ...
@@ -1635,26 +1637,10 @@ function App() {
         : 1;
 
     setEstadoMuestra(siguienteEstado);
-
-    const mensajeToast =
-    siguienteEstado === 1
-      ? "Muestra no valorable"
-      : siguienteEstado === 2
-      ? "Muestra pendiente de analizar"
-      : "Muestra analizada";
-
-
-    try {
-      await supabase
-        .from("Muestras")
-        .update({ Estado_Muestra: siguienteEstado })
-        .eq("NumBN", muestraActual.NumBN);
-
-      toast.success(mensajeToast);
-    } catch (err) {
-      console.error("Error al actualizar estado:", err);
-      toast.error("Error al actualizar estado");
-    }
+    setEditedData((prev) => ({
+      ...prev,
+      Estado_Muestra: siguienteEstado,
+    }));
   };
 
   const handleToggleRepetirChip = async (lectIdx, lmIdx, chipIdx) => {

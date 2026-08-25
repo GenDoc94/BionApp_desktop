@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import pkg from "bionapp-pkg";
 
 const version = pkg.version;
@@ -7,7 +8,7 @@ export default function AppFooter() {
   return (
     <footer className="bionapp-footer mt-3 pt-2 border-t border-border text-center text-xs text-muted-foreground">
       <p className="font-medium text-foreground/80">
-        BionApp v{version} · Gestión de muestras de OGM
+        BionApp v{version} (beta) · Gestión de muestras de OGM
       </p>
       <p className="mt-1 inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
         <span>© {year}</span>
@@ -41,7 +42,9 @@ export default function AppFooter() {
           />
         </a>
         <span aria-hidden>·</span>
-        <span>MIT License</span>
+        <Link to="/license" className="hover:underline text-foreground">
+          MIT License
+        </Link>
       </p>
     </footer>
   );

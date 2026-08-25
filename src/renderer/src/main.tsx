@@ -17,6 +17,7 @@ const PreselectPage = lazy(() => import("./pages/PreselectPage"));
 const ActionsPage = lazy(() => import("./pages/ActionsPage"));
 const Calcs = lazy(() => import("./pages/Calcs"));
 const Options = lazy(() => import("./pages/options"));
+const LicensePage = lazy(() => import("./pages/LicensePage"));
 
 function LoadingScreen() {
   return (
@@ -44,6 +45,7 @@ function PrivateRoutes() {
       <Route path="/actions" element={<ActionsPage />} />
       <Route path="/calcs" element={<Calcs />} />
       <Route path="/options" element={<Options />} />
+      <Route path="/license" element={<LicensePage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

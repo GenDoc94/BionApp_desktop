@@ -97,10 +97,10 @@ function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 860,
-    minWidth: 1024,
-    minHeight: 700,
+    minWidth: 480,
+    minHeight: 560,
     show: false,
-    title: 'BionApp',
+    title: 'BionApp (beta)',
     icon: iconPath,
     autoHideMenuBar: true,
     webPreferences: {

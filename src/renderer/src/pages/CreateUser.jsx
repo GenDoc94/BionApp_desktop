@@ -24,7 +24,7 @@ export default function CreateUser() {
     e.preventDefault();
 
     if (!email || !password || !role || !adminCode) {
-      return toast.error("Completa correo, contraseña, rol y código admin");
+      return toast.error("Completa correo, contraseña, rol y código maestro");
     }
 
     setLoading(true);
@@ -117,12 +117,16 @@ export default function CreateUser() {
                   <option value="user">user</option>
                   <option value="admin">admin</option>
                 </select>
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  <span className="font-mono">user</span> solo puede leer muestras;{" "}
+                  <span className="font-mono">admin</span> puede añadir nuevas muestras.
+                </p>
               </div>
 
               <div className="bionapp-login__field flex flex-col">
                 <Label className="text-xs flex items-center gap-1.5">
                   <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-                  Código admin
+                  Código maestro
                 </Label>
                 <Input
                   type="password"

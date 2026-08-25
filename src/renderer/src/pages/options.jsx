@@ -2,12 +2,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   BarChart3,
+  BookOpen,
+  CircleDot,
   CircleEllipsis,
   Database,
   Download,
   FileText,
   Loader2,
   Moon,
+  PenLine,
   Plus,
   Save,
   SquarePen,
@@ -34,6 +37,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import pkg from "bionapp-pkg";
 import {
   SETUP_PENDING_CATALOGS,
   SETUP_PENDING_SAMPLE,
@@ -82,6 +86,7 @@ function CatalogRow({
   onCancelEdit,
   onSave,
   onDelete,
+  canDelete,
   saving,
 }) {
   return (
@@ -135,16 +140,18 @@ function CatalogRow({
               >
                 <SquarePen className="h-4 w-4" />
               </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 bionapp-btn-icon-danger"
-                onClick={onDelete}
-                disabled={saving}
-                title="Eliminar"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {canDelete ? (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 bionapp-btn-icon-danger"
+                  onClick={onDelete}
+                  disabled={saving}
+                  title="Eliminar (solo la última del catálogo)"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              ) : null}
             </>
           )}
         </div>
@@ -239,6 +246,7 @@ export default function Options() {
   const [tagEditColor, setTagEditColor] = useState("#64748b");
   const [themeMode, setThemeMode] = useState(() => getStoredTheme());
   const [activeTab, setActiveTab] = useState(setupFromUrl ? "variables" : "perfil");
+  const [variablesSubTab, setVariablesSubTab] = useState("dmuestra");
 
   const setupInicial =
     setupFromUrl || getSetupPhase() === SETUP_PENDING_CATALOGS;
@@ -366,6 +374,7 @@ export default function Options() {
       if (insErr) throw insErr;
 
       setNewTipoMuestra("");
+      setVariablesSubTab("dmuestra");
       await loadAll();
     } catch (e) {
       console.error(e);
@@ -421,6 +430,13 @@ export default function Options() {
   };
 
   const deleteCatalogItem = async (kind, cod) => {
+    const rows = kind === "dmuestra" ? dmuestra : ddx;
+    const maxCod = rows.reduce((max, r) => Math.max(max, Number(r.Cod) || 0), 0);
+    if (Number(cod) !== maxCod) {
+      toast.error("Solo se puede eliminar la última entrada del catálogo (Cod más alto)");
+      return;
+    }
+
     setSaving(true);
     setErrorMsg(null);
     try {
@@ -446,7 +462,7 @@ export default function Options() {
         cancelCatalogEdit();
       }
       await loadAll();
-      toast.success("Entrada eliminada");
+      toast.success("Última entrada eliminada");
     } catch (e) {
       console.error(e);
       setErrorMsg(e?.message ?? "Error eliminando del catálogo");
@@ -476,6 +492,7 @@ export default function Options() {
       if (insErr) throw insErr;
 
       setNewDx("");
+      setVariablesSubTab("ddx");
       await loadAll();
     } catch (e) {
       console.error(e);
@@ -587,10 +604,10 @@ export default function Options() {
       </div>
     </div>
   ) : (
-    <Tabs defaultValue="dmuestra" className="gap-4">
+    <Tabs value={variablesSubTab} onValueChange={setVariablesSubTab} className="gap-4">
       <TabsList>
-        <TabsTrigger value="dmuestra">Tipos de muestra (DMuestra)</TabsTrigger>
-        <TabsTrigger value="ddx">Diagnósticos (DDx)</TabsTrigger>
+        <TabsTrigger value="dmuestra">Tipos de muestra</TabsTrigger>
+        <TabsTrigger value="ddx">Diagnósticos</TabsTrigger>
       </TabsList>
 
       <TabsContent value="dmuestra" className="space-y-4">
@@ -598,7 +615,7 @@ export default function Options() {
           <div className="font-semibold mb-2">Añadir tipo de muestra</div>
           <div className="flex flex-wrap gap-2 items-end">
             <div className="min-w-[260px] flex-1">
-              <div className="text-xs text-slate-500 mb-1">Nombre (p. ej. Ganglio)</div>
+              <div className="text-xs text-slate-500 mb-1">Nombre (p. ej. Ganglio, SP, MO…)</div>
               <Input
                 value={newTipoMuestra}
                 onChange={(e) => setNewTipoMuestra(e.target.value)}
@@ -611,7 +628,7 @@ export default function Options() {
             </Button>
           </div>
           <div className="text-xs text-slate-500 mt-2">
-            El código <span className="font-mono">Cod</span> se asigna automáticamente como el siguiente número disponible.
+            Solo se puede eliminar la última entrada (Cod más alto), para no dejar huecos en la numeración.
           </div>
         </div>
 
@@ -622,12 +639,14 @@ export default function Options() {
               <thead>
                 <tr className="text-left border-b border-border">
                   <th className="py-2 pr-3 w-28">Cod</th>
-                  <th className="py-2 pr-3">TipoMuestra</th>
+                  <th className="py-2 pr-3">Tipo de Muestra</th>
                   <th className="py-2 pr-3 w-28">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {dmuestra.map((r) => (
+                {dmuestra.map((r) => {
+                  const lastCod = dmuestra.reduce((max, row) => Math.max(max, Number(row.Cod) || 0), 0);
+                  return (
                   <CatalogRow
                     key={r.Cod}
                     cod={r.Cod}
@@ -639,9 +658,11 @@ export default function Options() {
                     onCancelEdit={cancelCatalogEdit}
                     onSave={saveCatalogEdit}
                     onDelete={() => deleteCatalogItem("dmuestra", r.Cod)}
+                    canDelete={Number(r.Cod) === lastCod}
                     saving={saving}
                   />
-                ))}
+                  );
+                })}
                 {!dmuestra.length ? (
                   <tr>
                     <td className="py-2 pr-3 text-slate-500" colSpan={3}>
@@ -660,7 +681,7 @@ export default function Options() {
           <div className="font-semibold mb-2">Añadir diagnóstico</div>
           <div className="flex flex-wrap gap-2 items-end">
             <div className="min-w-[260px] flex-1">
-              <div className="text-xs text-slate-500 mb-1">Nombre (p. ej. “LMA”)</div>
+              <div className="text-xs text-slate-500 mb-1">Nombre (p. ej. LMA, LLA, LLC…)</div>
               <Input value={newDx} onChange={(e) => setNewDx(e.target.value)} placeholder="Nuevo diagnóstico…" />
             </div>
             <Button onClick={addDDx} disabled={saving || !clampText(newDx)}>
@@ -669,7 +690,7 @@ export default function Options() {
             </Button>
           </div>
           <div className="text-xs text-slate-500 mt-2">
-            El código <span className="font-mono">Cod</span> se asigna automáticamente como el siguiente número disponible.
+            Solo se puede eliminar la última entrada (Cod más alto), para no dejar huecos en la numeración.
           </div>
         </div>
 
@@ -685,7 +706,9 @@ export default function Options() {
                 </tr>
               </thead>
               <tbody>
-                {ddx.map((r) => (
+                {ddx.map((r) => {
+                  const lastCod = ddx.reduce((max, row) => Math.max(max, Number(row.Cod) || 0), 0);
+                  return (
                   <CatalogRow
                     key={r.Cod}
                     cod={r.Cod}
@@ -697,9 +720,11 @@ export default function Options() {
                     onCancelEdit={cancelCatalogEdit}
                     onSave={saveCatalogEdit}
                     onDelete={() => deleteCatalogItem("ddx", r.Cod)}
+                    canDelete={Number(r.Cod) === lastCod}
                     saving={saving}
                   />
-                ))}
+                  );
+                })}
                 {!ddx.length ? (
                   <tr>
                     <td className="py-2 pr-3 text-slate-500" colSpan={3}>
@@ -728,7 +753,7 @@ export default function Options() {
         <div className="font-semibold mb-2">Añadir etiqueta</div>
         <div className="flex flex-wrap gap-2 items-end">
           <div className="min-w-[260px] flex-1">
-            <div className="text-xs text-slate-500 mb-1">Nombre (p. ej. “tesis”)</div>
+            <div className="text-xs text-slate-500 mb-1">Nombre (p. ej. Tesis, EC-XXX, QC…)</div>
             <Input
               value={newTagName}
               onChange={(e) => setNewTagName(e.target.value)}
@@ -938,6 +963,14 @@ export default function Options() {
               <Sun className="h-4 w-4" />
               Apariencia
             </TabsTrigger>
+            <TabsTrigger value="manual" className="gap-1.5">
+              <BookOpen className="h-4 w-4" />
+              Manual de uso
+            </TabsTrigger>
+            <TabsTrigger value="autoria" className="gap-1.5">
+              <PenLine className="h-4 w-4" />
+              Autoría
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="perfil">
@@ -956,7 +989,7 @@ export default function Options() {
                 </div>
               </div>
               <p className="text-xs text-slate-500">
-                El rol se gestiona en la tabla <span className="font-mono">profiles</span> de Supabase.
+                Por el momento no se puede cambiar el rol una vez asignado.
               </p>
             </div>
           </TabsContent>
@@ -1206,6 +1239,185 @@ export default function Options() {
                   <Moon className="h-4 w-4" />
                   Oscuro
                 </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="manual">
+            <div className="bionapp-panel p-4 space-y-5 text-sm text-slate-700 dark:text-slate-200">
+              <div>
+                <p className="font-semibold mb-1">Orden lógico de trabajo</p>
+                <p>
+                  Puedes crear muestras desde <strong>Preselección</strong> o desde la{" "}
+                  <strong>página principal</strong>. En Preselección acumulas peticiones interesantes
+                  en cola para OGM; al crear el Nº Bionano pasan a la base con la misma petición y
+                  diagnóstico. En la página principal puedes añadir y editar muestras directamente.
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-2">Estado de la muestra</p>
+                <p className="mb-2">
+                  El icono a la izquierda del Nº BN marca el estado. En modo modificar puedes
+                  cambiarlo; si cancelas sin guardar, vuelve al estado original.
+                </p>
+                <ul className="space-y-1.5">
+                  <li className="flex items-center gap-2">
+                    <CircleDot size={18} color="var(--bion-neutral-muted)" strokeWidth={2} />
+                    <span>Gris — no empezado</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CircleDot size={18} color="var(--bion-danger-fill)" strokeWidth={2} />
+                    <span>Rojo — no valorable</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CircleDot size={18} color="var(--bion-warn-fill)" strokeWidth={2} />
+                    <span>Amarillo — pendiente</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CircleDot size={18} color="var(--bion-success-fill)" strokeWidth={2} />
+                    <span>Verde — realizado</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">Acciones</p>
+                <ul className="list-disc pl-5 space-y-1.5">
+                  <li>
+                    <strong>Hacer</strong>: procesa las muestras que hayas metido y que aún no estén
+                    extraídas.
+                  </li>
+                  <li>
+                    <strong>Leer Extraído</strong>: una vez extraídas, sirve para meter las
+                    concentraciones de lo extraído.
+                  </li>
+                  <li>
+                    <strong>Tirar</strong>: para aquellas que tengan poco extraído.
+                  </li>
+                  <li>
+                    <strong>Marcar</strong>: para las extraídas pendientes de marcar.
+                  </li>
+                  <li>
+                    <strong>Leer Marcado</strong>: para cuantificar lo marcado.
+                  </li>
+                  <li>
+                    <strong>Pte Chip</strong>: para aquellas marcadas y cuantificadas pendientes de
+                    cargar.
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">Otras pantallas</p>
+                <ul className="list-disc pl-5 space-y-1.5">
+                  <li>
+                    <strong>Chips</strong>: gestión de chips y huecos FC asociados a las lecturas
+                    marcadas.
+                  </li>
+                  <li>
+                    <strong>Cálculos</strong>: utilidades de laboratorio (p. ej. diluciones) a partir
+                    de los datos ya registrados.
+                  </li>
+                  <li>
+                    <strong>Opciones</strong>: perfil, estadísticas, documentos, catálogos (tipos de
+                    muestra y diagnósticos), etiquetas y apariencia.
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">Roles y usuarios</p>
+                <p>
+                  El rol <span className="font-mono">user</span> sirve para consultar muestras. El
+                  rol <span className="font-mono">admin</span> puede añadir muestras, gestionar
+                  catálogos y etiquetas. Los usuarios nuevos se crean con el{" "}
+                  <strong>código maestro</strong> definido al configurar la aplicación.
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">Editar y guardar</p>
+                <p>
+                  En la página principal, <strong>Modificar</strong> permite cambiar datos y el
+                  estado. <strong>Guardar</strong> confirma los cambios;{" "}
+                  <strong>Cancelar</strong> descarta todo lo no guardado, incluido el color de
+                  estado.
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="autoria">
+            <div className="bionapp-panel p-4 space-y-5 text-sm text-slate-700 dark:text-slate-200">
+              <div>
+                <p className="font-semibold mb-1">Autor</p>
+                <p>
+                  BionApp ha sido ideado, diseñado y desarrollado por{" "}
+                  <a
+                    href="https://github.com/GenDoc94"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
+                  >
+                    GenDoc94
+                  </a>
+                  .
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">Origen del proyecto</p>
+                <p>
+                  Es una idea original de GenDoc94, continuada a partir de un proyecto previo
+                  también llamado <strong>BionApp</strong>, creado y desarrollado al 100&nbsp;% por
+                  el autor en Microsoft Access. Esta versión (online y escritorio) es la evolución
+                  mejorada de aquella aplicación: misma filosofía de trabajo con muestras de OGM,
+                  con interfaz moderna, multiusuario y soporte web o local.
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">Versión actual</p>
+                <p>
+                  BionApp v{pkg.version} (beta). Existen dos ediciones con la misma lógica de
+                  negocio:
+                </p>
+                <ul className="list-disc pl-5 mt-2 space-y-1.5">
+                  <li>
+                    <strong>Online</strong>: React, Vite, Tailwind CSS, React Router, Supabase
+                    (Auth, Postgres, Edge Functions, almacenamiento) y despliegue web (p. ej.
+                    Vercel).
+                  </li>
+                  <li>
+                    <strong>Escritorio</strong>: Electron, React, Vite (electron-vite), Tailwind
+                    CSS, SQLite (better-sqlite3), autenticación local (bcrypt) y datos en una
+                    carpeta elegida por el usuario.
+                  </li>
+                </ul>
+                <p className="mt-2">
+                  Interfaz común: componentes con Radix UI, iconos Lucide y notificaciones Sonner.
+                  Licencia MIT (enlace en el pie de la aplicación).
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">Uso de inteligencia artificial</p>
+                <p>
+                  En el desarrollo y perfeccionamiento de estas versiones se ha utilizado
+                  asistencia por inteligencia artificial (Cursor / modelos de lenguaje) como apoyo
+                  a la implementación, refactorización y documentación. La concepción del
+                  producto, el flujo de laboratorio, las decisiones de diseño y la dirección del
+                  proyecto corresponden a GenDoc94.
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">Agradecimientos</p>
+                <p>
+                  Gracias a las comunidades y proyectos de código abierto que hacen posible esta
+                  pila tecnológica, y a quienes usan BionApp en el día a día del laboratorio.
+                </p>
               </div>
             </div>
           </TabsContent>

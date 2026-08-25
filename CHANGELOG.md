@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.9
+
+- Mejoras de software. User-friendly. Compatibilidad versión Desktop.
+
 ## 3.0.8
 
 - Sistema de preselección de muestras mejorado.

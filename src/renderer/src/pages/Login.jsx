@@ -146,7 +146,7 @@ export default function Login({ onLogin }) {
             <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
               {!checkingUsers && !hasUsers && !usersCheckError && (
                 <div className="bionapp-alert-warn px-3 py-2 text-xs">
-                  No hay usuarios creados todavía. Crea el primer usuario con el código admin para empezar.
+                  No hay usuarios creados todavía. Crea tu primer usuario en «Añadir nuevo usuario» con el código maestro que has creado antes.
                 </div>
               )}
 

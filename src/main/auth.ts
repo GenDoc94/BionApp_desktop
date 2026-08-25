@@ -46,10 +46,10 @@ export function login(
 export function setAdminCode(db: Database.Database, adminCode: string): { ok: true } | { ok: false; error: string } {
   const code = adminCode.trim()
   if (code.length < 4) {
-    return { ok: false, error: 'El código admin debe tener al menos 4 caracteres' }
+    return { ok: false, error: 'El código maestro debe tener al menos 4 caracteres' }
   }
   if (hasAdminCode(db)) {
-    return { ok: false, error: 'Esta carpeta ya tiene un código admin configurado' }
+    return { ok: false, error: 'Esta carpeta ya tiene un código maestro configurado' }
   }
   setMeta(db, ADMIN_CODE_META, sha256(code))
   return { ok: true }
@@ -65,7 +65,7 @@ export function createUser(
   const adminCode = payload.adminCode
 
   if (!email || !password || !adminCode) {
-    return { error: 'Completa correo, contraseña y código admin', status: 400 }
+    return { error: 'Completa correo, contraseña y código maestro', status: 400 }
   }
   if (role !== 'user' && role !== 'admin') {
     return { error: 'Rol no válido', status: 400 }
@@ -77,12 +77,12 @@ export function createUser(
   const storedHash = getMeta(db, ADMIN_CODE_META)
   if (!storedHash) {
     return {
-      error: 'No hay código admin en esta carpeta. Configúralo en el setup inicial.',
+      error: 'No hay código maestro en esta carpeta. Configúralo en el setup inicial.',
       status: 500
     }
   }
   if (storedHash !== sha256(adminCode)) {
-    return { error: 'Código admin incorrecto', status: 403 }
+    return { error: 'Código maestro incorrecto', status: 403 }
   }
 
   const existing = db
