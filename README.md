@@ -1,6 +1,8 @@
 # BionApp desktop
 
-Versión de escritorio de BionApp (**Electron + SQLite**). Misma UI y esquema de datos que la versión online (`BionApp_online`), sin Supabase ni Vercel.
+Versión de escritorio de BionApp. 
+
+Misma interfaz y esquema de datos que la versión online (`BionApp_online`), cambiando Supabase ni Vercel, por base en SQLite y desarrollo de escritorio en Electron.
 
 ## Requisitos
 
@@ -11,20 +13,12 @@ Versión de escritorio de BionApp (**Electron + SQLite**). Misma UI y esquema de
 
 ```bash
 npm install
-npm run dev
+npm run dist
 ```
 
-Primera ejecución: elige carpeta de datos + código admin. Ahí se crea `bionapp.sqlite` y `documentos/`.
+Con ello se genera el archivo`release/BionApp.exe` .
 
-## Scripts
-
-| Comando | Uso |
-|---------|-----|
-| `npm run dev` | Desarrollo |
-| `npm run build` | Compilar main/preload/renderer |
-| `npm run dist` | Portable `release/BionApp.exe` |
-| `npm run db:pull-supabase` | Importar datos desde el proyecto online (app cerrada) |
-| `npm test` | Tests unitarios del renderer |
+Al abrirlo, primera ejecución: elige carpeta de datos + código admin. Ahí se crea `bionapp.sqlite` y `documentos/`.
 
 ## Arquitectura
 
@@ -34,4 +28,3 @@ Primera ejecución: elige carpeta de datos + código admin. Ahí se crea `bionap
 - `src/shared` — tipos compartidos
 - `resources/` — icono de la app
 
-Para sincronizar código de UI con la versión online, conviene un `shared`/monorepo a medio plazo. Los datos se copian puntual con `db:pull-supabase` (no hay sync en tiempo real).
