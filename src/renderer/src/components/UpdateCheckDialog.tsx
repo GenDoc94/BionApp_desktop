@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
 import type { RemoteUpdateInfo } from "../lib/appUpdates";
 
@@ -9,6 +10,7 @@ type UpdateCheckDialogProps = {
 };
 
 export default function UpdateCheckDialog({ info, onDismiss }: UpdateCheckDialogProps) {
+  const { t } = useTranslation();
   const dismissRef = useRef(onDismiss);
   dismissRef.current = onDismiss;
 
@@ -21,8 +23,8 @@ export default function UpdateCheckDialog({ info, onDismiss }: UpdateCheckDialog
   }, []);
 
   const title = info.hasUpdate
-    ? `Hay una versión nueva: ${info.latestVersion}`
-    : "Estás al día";
+    ? t("updates.newVersion", { version: info.latestVersion })
+    : t("updates.upToDate");
 
   return createPortal(
     <div
@@ -42,18 +44,18 @@ export default function UpdateCheckDialog({ info, onDismiss }: UpdateCheckDialog
         </h2>
 
         <p className="bionapp-version-dialog__meta">
-          Versión instalada: <strong>v{info.currentVersion}</strong>
+          {t("updates.installed", { current: info.currentVersion })}
           {info.hasUpdate && (
             <>
               {" "}
-              · Disponible en GitHub: <strong>v{info.latestVersion}</strong>
+              {t("updates.availableOnGithub", { latest: info.latestVersion })}
             </>
           )}
         </p>
 
         {info.hasUpdate && info.changes.length > 0 && (
           <>
-            <p className="bionapp-version-dialog__subtitle">Cambios:</p>
+            <p className="bionapp-version-dialog__subtitle">{t("updates.changes")}</p>
             <ul className="bionapp-version-dialog__list">
               {info.changes.map((item) => (
                 <li key={item}>{item}</li>
@@ -64,22 +66,15 @@ export default function UpdateCheckDialog({ info, onDismiss }: UpdateCheckDialog
 
         {info.hasUpdate && (
           <div className="bionapp-version-dialog__instructions">
-            <p className="bionapp-version-dialog__subtitle">Cómo actualizar (modo local)</p>
-            <p>
-              Cierra BionApp, descarga el <strong>BionApp.exe</strong> nuevo desde GitHub Releases y
-              sustituye el ejecutable anterior. Conserva tu carpeta de datos (
-              <code>bionapp.sqlite</code> y <code>documentos/</code>).
-            </p>
-            <p>
-              El ejecutable no está firmado. Si Windows SmartScreen avisa, usa{" "}
-              <em>Más información</em> → <em>Ejecutar de todas formas</em>.
-            </p>
+            <p className="bionapp-version-dialog__subtitle">{t("updates.howToTitle")}</p>
+            <p>{t("updates.howToBody")}</p>
+            <p>{t("updates.howToSmartscreen")}</p>
           </div>
         )}
 
         {!info.hasUpdate && (
           <p className="bionapp-version-dialog__meta">
-            No hay versiones más recientes en GitHub para esta instalación.
+            {t("updates.none")}
           </p>
         )}
 
@@ -91,12 +86,12 @@ export default function UpdateCheckDialog({ info, onDismiss }: UpdateCheckDialog
               asChild
             >
               <a href={info.releasesUrl} target="_blank" rel="noreferrer">
-                Abrir en GitHub
+                {t("updates.openGithub")}
               </a>
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={onDismiss}>
-            Cerrar
+            {t("updates.close")}
           </Button>
         </div>
       </div>

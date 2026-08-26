@@ -6,7 +6,6 @@ import {
   collectChipAsignacionesFromMuestras,
   fcLibresParaChip,
   fcYaOcupado,
-  formatFcLibresLabel,
 } from "../lib/chipDisponibilidad";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -22,6 +21,7 @@ import {
   isSetupPendingSample,
   setSetupPhase,
 } from "../lib/setupInicial";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../authContext";
 import { supabase } from "../lib/supabaseClient";
 import {
@@ -147,6 +147,7 @@ function App() {
 
 
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [userRole, setUserRole] = useState<string | null>(null);
 
   const navigate = useNavigate();
@@ -314,7 +315,7 @@ function App() {
       setDxs(dxData ?? []);
     } catch (err) {
       console.error("Error al cargar catálogos:", err);
-      toast.error("Error al cargar catálogos");
+      toast.error(t("app.toast.catalogsLoadError"));
     }
   };
 
@@ -468,7 +469,7 @@ function App() {
             appliedDeepLink = true;
             if (urlTarget) setSearchParams({}, { replace: true });
           } else {
-            toast.error(`No se encontró la muestra ${deepTarget.numBN}`);
+            toast.error(t("app.toast.sampleNotFoundNum", { numBN: deepTarget.numBN }));
           }
         }
         pendingDeepLinkRef.current = false;
@@ -500,7 +501,7 @@ function App() {
       if (fetchId !== fetchMuestrasSeqRef.current) return [];
       console.error(err);
       setMuestrasFetchError(formatMuestrasFetchError(err));
-      toast.error("Error al cargar muestras");
+      toast.error(t("app.toast.samplesLoadError"));
       return [];
     } finally {
       if (fetchId === fetchMuestrasSeqRef.current) {
@@ -514,12 +515,12 @@ function App() {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      toast.success("Sesión cerrada correctamente");
+      toast.success(t("app.toast.logoutOk"));
       // Opcional: redirigir a login si tienes ruta
       // window.location.href = "/login";
     } catch (err) {
       console.error("Error cerrando sesión:", err);
-      toast.error("Error al cerrar sesión");
+      toast.error(t("app.toast.logoutError"));
     }
   };
 
@@ -582,7 +583,7 @@ function App() {
   // ----------------- Guardar cambios -----------------
   const handleSave = async () => {
     if (isSetupPendingSample() && (!editedData.Muestra || !editedData.Dx)) {
-      toast.error("Selecciona un tipo de muestra y un diagnóstico antes de guardar");
+      toast.error(t("app.toast.selectTypeDxSave"));
       return;
     }
 
@@ -604,7 +605,7 @@ function App() {
               })
             ) {
               toast.error(
-                `El hueco FC ${fc} del chip #${chip.NumChip} ya está asignado a otra muestra`
+                t("app.toast.fcTaken", { fc, numChip: chip.NumChip })
               );
               return;
             }
@@ -687,7 +688,7 @@ function App() {
         }
       }
 
-      toast.success("Cambios guardados correctamente");
+      toast.success(t("app.toast.saveOk"));
       if (isSetupPendingSample()) {
         setSetupPhase(null);
       }
@@ -695,13 +696,13 @@ function App() {
       await Promise.all([fetchMuestrasCompleto(), loadCatalogs()]);
     } catch (err) {
       console.error(err);
-      toast.error("Error al guardar cambios");
+      toast.error(t("app.toast.saveError"));
     }
   };
 
   const handleDiscard = () => {
     if (isSetupPendingSample() && (!editedData.Muestra || !editedData.Dx)) {
-      toast.error("Debes seleccionar tipo de muestra y diagnóstico para continuar");
+      toast.error(t("app.toast.selectTypeDxContinue"));
       return;
     }
     setEstadoMuestra(muestras[currentMuestraIndex]?.Estado_Muestra ?? null);
@@ -713,13 +714,13 @@ function App() {
   // ------------ Buscar -------------------
   const handleBuscar = () => {
     const numBuscar = parseInt(buscarNumMuestra, 10);
-    if (isNaN(numBuscar)) return toast.error("Introduce un número válido");
+    if (isNaN(numBuscar)) return toast.error(t("app.toast.invalidNumber"));
 
     const indice = muestras.findIndex((m) => m.NumBN === numBuscar);
 
     if (indice !== -1) {
       if (filtroActivo && !filtroActivo.indices.includes(indice)) {
-        toast.error("Esa muestra no está en el filtro activo");
+        toast.error(t("app.toast.notInFilter"));
         return;
       }
       setCurrentMuestraIndex(indice);
@@ -727,7 +728,7 @@ function App() {
       setCurrentLectMarcIndex(0);
       setBuscarNumMuestra("");
     } else {
-      toast.error("No se encontró la muestra");
+      toast.error(t("app.toast.sampleNotFound"));
     }
   };
 
@@ -752,18 +753,18 @@ function App() {
     setCurrentLecturaIndex(0);
     setCurrentLectMarcIndex(0);
     setFiltroPanelOpen(false);
-    toast.success(`Filtro activo: ${etiqueta} (${indices.length} muestras)`);
+    toast.success(t("app.toast.filterOn", { etiqueta, count: indices.length }));
   };
 
   const quitarFiltro = () => {
     setFiltroActivo(null);
-    toast.success("Filtro quitado — mostrando todas las muestras");
+    toast.success(t("app.toast.filterOff"));
   };
 
   const handleBuscarPetic = () => {
     const q = filtroPetic.trim();
     if (!q) {
-      toast.error("Introduce un número de petición");
+      toast.error(t("app.toast.enterRequest"));
       return;
     }
 
@@ -773,11 +774,11 @@ function App() {
       .map(({ idx }) => idx);
 
     if (indices.length === 0) {
-      toast.error(`No hay muestras con petición ${q}`);
+      toast.error(t("app.toast.noSamplesForRequest", { q }));
       return;
     }
 
-    aplicarFiltro(indices, "peticion", `Petición ${q}`);
+    aplicarFiltro(indices, "peticion", t("app.filters.requestLabel", { q }));
   };
 
   const filtrarPorEstadoMuestra = (
@@ -794,7 +795,7 @@ function App() {
       .map(({ idx }) => idx);
 
     if (indices.length === 0) {
-      toast.error(`No hay muestras ${etiqueta.toLowerCase()}`);
+      toast.error(t("app.toast.noSamplesStatus", { etiqueta }));
       return;
     }
 
@@ -802,13 +803,13 @@ function App() {
   };
 
   const handleFiltrarCompletadas = () =>
-    filtrarPorEstadoMuestra(3, "completadas", "Completadas");
+    filtrarPorEstadoMuestra(3, "completadas", t("app.status.completed"));
 
   const handleFiltrarPendientes = () =>
-    filtrarPorEstadoMuestra(2, "pendientes", "Pendientes");
+    filtrarPorEstadoMuestra(2, "pendientes", t("app.status.pending"));
 
   const handleFiltrarFallidas = () =>
-    filtrarPorEstadoMuestra(1, "fallidas", "Fallidas");
+    filtrarPorEstadoMuestra(1, "fallidas", t("app.status.failed"));
 
   const toggleFiltroTag = (tagNumber: number) => {
     const n = Number(tagNumber);
@@ -819,7 +820,7 @@ function App() {
 
   const handleFiltrarPorEtiquetas = () => {
     if (!filtroTagsSeleccionados.length) {
-      toast.error("Selecciona al menos una etiqueta");
+      toast.error(t("app.toast.selectTag"));
       return;
     }
     const selected = new Set(filtroTagsSeleccionados.map(Number));
@@ -836,7 +837,7 @@ function App() {
       .map(({ idx }) => idx);
 
     if (!indices.length) {
-      toast.error("No hay muestras con las etiquetas seleccionadas");
+      toast.error(t("app.toast.noSamplesForTags"));
       return;
     }
 
@@ -844,7 +845,7 @@ function App() {
       .map((tn) => tagsCatalog.find((t) => Number(t.Tag_Number) === Number(tn))?.Tag_Name)
       .filter(Boolean)
       .join(", ");
-    aplicarFiltro(indices, "etiquetas", `Etiquetas: ${names}`);
+    aplicarFiltro(indices, "etiquetas", t("app.filters.tagsLabel", { names }));
   };
 
 
@@ -860,7 +861,7 @@ function App() {
       if (fetchError) throw fetchError;
 
       if (existing?.length) {
-        toast.error("La muestra 1 ya existe");
+        toast.error(t("app.toast.sample1Exists"));
         await fetchMuestrasCompleto();
         return;
       }
@@ -871,12 +872,12 @@ function App() {
 
       if (insertError) throw insertError;
 
-      toast.success("Muestra 1 creada. Define tipo de muestra y diagnóstico en Opciones.");
+      toast.success(t("app.toast.sample1Created"));
       setSetupPhase(SETUP_PENDING_CATALOGS);
       navigate("/options?setup=inicial");
     } catch (err) {
       console.error("Error al crear la primera muestra:", err);
-      toast.error("Error al crear la primera muestra");
+      toast.error(t("app.toast.firstSampleError"));
     } finally {
       setCreatingPrimeraMuestra(false);
     }
@@ -896,7 +897,7 @@ function App() {
 
       const numBN = lastMuestra?.NumBN ? Number(lastMuestra.NumBN) + 1 : 1;
 
-      const confirmMessage = `¿Añadir muestra ${numBN}?`;
+      const confirmMessage = t("app.confirm.addSample", { numBN });
       if (!window.confirm(confirmMessage)) {
         return;
       }
@@ -910,7 +911,7 @@ function App() {
       if (fetchError) throw fetchError;
 
       if (existing && existing.length > 0) {
-        toast.error("La muestra ya existe");
+        toast.error(t("app.toast.sampleExists"));
         return;
       }
 
@@ -921,7 +922,7 @@ function App() {
 
       if (insertError) throw insertError;
 
-      toast.success("Muestra creada correctamente");
+      toast.success(t("app.toast.sampleCreated"));
 
       // 🔄 Recargar muestras
       await fetchMuestrasCompleto();
@@ -940,7 +941,7 @@ function App() {
       }, 300);
     } catch (err) {
       console.error("Error al crear la muestra:", err);
-      toast.error("Error al crear la muestra");
+      toast.error(t("app.toast.sampleCreateError"));
     }
   };
 
@@ -949,11 +950,11 @@ function App() {
     const numBN = Number(muestraParaEliminar?.NumBN);
 
     if (!numBN) {
-      toast.error("No hay muestra seleccionada para eliminar");
+      toast.error(t("app.toast.noSampleToDelete"));
       return;
     }
 
-    if (!window.confirm(`¿Eliminar muestra ${numBN}?`)) {
+    if (!window.confirm(t("app.confirm.deleteSample", { numBN }))) {
       return;
     }
 
@@ -981,7 +982,7 @@ function App() {
 
       if (deleteMuestraError) throw deleteMuestraError;
 
-      toast.success(`Muestra ${numBN} eliminada correctamente`);
+      toast.success(t("app.toast.sampleDeleted", { numBN }));
       setEditMode(false);
       setEditedData({});
       setCurrentLecturaIndex(0);
@@ -991,7 +992,7 @@ function App() {
       await fetchMuestrasCompleto();
     } catch (err) {
       console.error("Error al eliminar la muestra:", err);
-      toast.error("Error al eliminar la muestra");
+      toast.error(t("app.toast.sampleDeleteError"));
     }
   };
 
@@ -1000,7 +1001,7 @@ function App() {
     const numBN = lectura.NumBN_L;
     const numLectura = lectura.NumLectura;
 
-    if (!window.confirm(`¿Eliminar lectura ${numLectura} de la muestra ${numBN}? Esto eliminará todos los datos asociados.`)) {
+    if (!window.confirm(t("app.confirm.deleteReading", { numLectura, numBN }))) {
       return;
     }
 
@@ -1041,7 +1042,7 @@ function App() {
 
       if (errorLectura) throw errorLectura;
 
-      toast.success(`Lectura ${numLectura} eliminada correctamente`);
+      toast.success(t("app.toast.readingDeleted", { numLectura }));
       setEditMode(false);
       setEditedData({});
       setCurrentLecturaIndex(Math.max(0, currentLecturaIndex - 1));
@@ -1049,7 +1050,7 @@ function App() {
       await fetchMuestrasCompleto();
     } catch (err) {
       console.error("Error al eliminar la lectura:", err);
-      toast.error("Error al eliminar la lectura");
+      toast.error(t("app.toast.readingDeleteError"));
     }
   };
 
@@ -1060,7 +1061,7 @@ function App() {
     const numLectura = lectMarc.NumLectura_LM;
     const numLectMarc = lectMarc.NumLectMarc;
 
-    if (!window.confirm(`¿Eliminar lectura marcada ${numLectMarc} de la lectura ${numLectura} de la muestra ${numBN}?`)) {
+    if (!window.confirm(t("app.confirm.deleteLm", { numLectMarc, numLectura, numBN }))) {
       return;
     }
 
@@ -1085,26 +1086,26 @@ function App() {
 
       if (errorLectMarc) throw errorLectMarc;
 
-      toast.success(`Lectura marcada ${numLectMarc} eliminada correctamente`);
+      toast.success(t("app.toast.lmDeleted", { numLectMarc }));
       setEditMode(false);
       setEditedData({});
       setCurrentLectMarcIndex(Math.max(0, currentLectMarcIndex - 1));
       await fetchMuestrasCompleto();
     } catch (err) {
       console.error("Error al eliminar la lectura marcada:", err);
-      toast.error("Error al eliminar la lectura marcada");
+      toast.error(t("app.toast.lmDeleteError"));
     }
   };
 
   const handleCopyFromPrevious = () => {
     if (currentMuestraIndex <= 0) {
-      toast.error("No hay muestra anterior para copiar");
+      toast.error(t("app.toast.noPreviousSample"));
       return;
     }
 
     const previousMuestra = muestras[currentMuestraIndex - 1];
     if (!previousMuestra) {
-      toast.error("No se encontró la muestra anterior");
+      toast.error(t("app.toast.previousNotFound"));
       return;
     }
 
@@ -1116,12 +1117,12 @@ function App() {
       Exp: previousMuestra.Exp,
     }));
 
-    toast.success("Copiado de la muestra anterior");
+    toast.success(t("app.toast.copiedPrevious"));
   };
 
   const handleCopyMarcadoFromPreviousMuestra = () => {
     if (currentMuestraIndex <= 0) {
-      toast.error("No hay muestra anterior para copiar");
+      toast.error(t("app.toast.noPreviousSample"));
       return;
     }
 
@@ -1131,7 +1132,7 @@ function App() {
 
     if (!prevLm) {
       toast.error(
-        "La muestra anterior no tiene esta lectura de marcado (mismo Nº lectura / Nº LM)"
+        t("app.toast.previousNoLm")
       );
       return;
     }
@@ -1164,7 +1165,7 @@ function App() {
       return { ...prev, lecturas };
     });
 
-    toast.success("Datos de marcado copiados de la muestra anterior");
+    toast.success(t("app.toast.labeledCopied"));
   };
 
   /** Muestras en Hacer (Estado_Muestra NULL) pasan a pendiente (2) al empezar lecturas. */
@@ -1197,12 +1198,12 @@ function App() {
 
       await promoteEstadoMuestraSiNull(muestraActual.NumBN, muestraActual.Estado_Muestra);
 
-      toast.success("Lectura añadida correctamente");
+      toast.success(t("app.toast.readingAdded"));
       fetchMuestrasCompleto(); // Refresca los datos para que aparezca la nueva lectura
       setCurrentLecturaIndex(0); // Va automáticamente a la primera lectura
     } catch (err) {
       console.error("Error al crear la lectura:", err);
-      toast.error("Error al crear la lectura");
+      toast.error(t("app.toast.readingCreateError"));
     }
   };
 
@@ -1223,7 +1224,7 @@ function App() {
 
       await promoteEstadoMuestraSiNull(muestraActual.NumBN, muestraActual.Estado_Muestra);
 
-      toast.success("Lectura añadida correctamente");
+      toast.success(t("app.toast.readingAdded"));
 
       await fetchMuestrasCompleto(); // refresca los datos
 
@@ -1232,7 +1233,7 @@ function App() {
       
     } catch (err) {
       console.error("Error al crear la lectura:", err);
-      toast.error("Error al crear la lectura");
+      toast.error(t("app.toast.readingCreateError"));
     }
   };
 
@@ -1268,12 +1269,12 @@ function App() {
 
       if (errorLectMarc) throw errorLectMarc;
 
-      toast.success("Lectura de marcado añadida correctamente");
+      toast.success(t("app.toast.lmAdded"));
       await fetchMuestrasCompleto();
       setCurrentLectMarcIndex(0);
     } catch (err) {
       console.error("Error al crear la lectura de marcado:", err);
-      toast.error("Error al crear la lectura de marcado");
+      toast.error(t("app.toast.lmCreateError"));
     }
   };
 
@@ -1309,7 +1310,7 @@ function App() {
 
       if (error) throw error;
 
-      toast.success("Lectura de marcado añadida correctamente");
+      toast.success(t("app.toast.lmAdded"));
 
       await fetchMuestrasCompleto(); // refresca los datos
 
@@ -1318,7 +1319,7 @@ function App() {
 
     } catch (err) {
       console.error("Error al crear la lectura de marcado:", err);
-      toast.error("Error al crear la lectura de marcado");
+      toast.error(t("app.toast.lmCreateError"));
     }
   };
 
@@ -1327,19 +1328,19 @@ function App() {
   const handleAddChip = async () => {
     const lecturaMarcada = lecturaActual?.marcado?.lecturasMarcado?.[currentLectMarcIndex];
     if (!lecturaMarcada) {
-      toast.error("No hay lectura marcada seleccionada");
+      toast.error(t("app.toast.noLmSelected"));
       return;
     }
 
     if (!newChipNumber) {
-      toast.error("Selecciona un chip");
+      toast.error(t("app.toast.selectChip"));
       return;
     }
 
     try {
       const selectedChip = dChips.find((c) => c.NumChip_D === parseInt(newChipNumber, 10));
       if (!selectedChip) {
-        toast.error("Chip no encontrado");
+        toast.error(t("app.toast.chipNotFound"));
         return;
       }
 
@@ -1347,12 +1348,12 @@ function App() {
         (c) => Number(c.NumChip) === Number(selectedChip.NumChip_D)
       );
       if (yaAsignado) {
-        toast.error("Ese chip ya está asignado a esta lectura marcada");
+        toast.error(t("app.toast.chipAlreadyAssigned"));
         return;
       }
 
       if (!chipTieneHuecoDisponible(Number(selectedChip.NumChip_D), asignacionesChip)) {
-        toast.error("Ese chip no tiene huecos FC libres (1–3 ya ocupados en otras muestras)");
+        toast.error(t("app.toast.chipNoFc"));
         return;
       }
 
@@ -1377,7 +1378,7 @@ function App() {
 
       if (estadoError) throw estadoError;
 
-      toast.success("Chip añadido correctamente");
+      toast.success(t("app.toast.chipAdded"));
       setNewChipNumber("");
 
       const newChip = {
@@ -1419,7 +1420,7 @@ function App() {
 
     } catch (err) {
       console.error("Error al añadir chip:", err);
-      toast.error("Error al añadir chip");
+      toast.error(t("app.toast.chipAddError"));
     }
   };
 
@@ -1435,13 +1436,19 @@ function App() {
     const chip = lm?.chips?.[chipIdx];
 
     if (!chip) {
-      toast.error("No hay chip asignado para eliminar");
+      toast.error(t("app.toast.noChipToDelete"));
       return;
     }
 
     const chipNum = chip.NumChip;
     const confirmDelete = window.confirm(
-      `¿Eliminar el chip ${chipNum} (${chip.Chip_Nombre || "sin nombre"}) asignado a la lectura marcada ${lm.NumLectMarc} de la lectura ${lectura?.NumLectura} de la muestra ${muestra?.NumBN}?`
+      t("app.confirm.deleteChip", {
+        chipNum,
+        chipName: chip.Chip_Nombre || t("common.unnamed"),
+        numLectMarc: lm.NumLectMarc,
+        numLectura: lectura?.NumLectura,
+        numBN: muestra?.NumBN,
+      })
     );
     if (!confirmDelete) return;
 
@@ -1458,7 +1465,7 @@ function App() {
 
       if (error) throw error;
 
-      toast.success(`Chip ${chipNum} eliminado correctamente`);
+      toast.success(t("app.toast.chipDeleted", { chipNum }));
 
       const removeChipAt = (lecturasMarcado) => {
         if (!lecturasMarcado?.[lmIdx]?.chips) return;
@@ -1480,7 +1487,7 @@ function App() {
       });
     } catch (err) {
       console.error("Error al eliminar chip:", err);
-      toast.error("Error al eliminar chip");
+      toast.error(t("app.toast.chipDeleteError"));
     }
   };
 
@@ -1488,7 +1495,7 @@ function App() {
   // ----------------- Render -----------------
   if (loading) return (
     <div className="bionapp-subpage min-h-screen  p-4 flex flex-col items-center justify-center gap-3">
-      <span className="text-lg font-medium">Cargando muestras...</span>
+      <span className="text-lg font-medium">{t("app.loadingSamples")}</span>
       <Loader2 className="h-10 w-10 animate-spin text-slate-600 dark:text-slate-200" />
     </div>
   );
@@ -1499,7 +1506,7 @@ function App() {
         <div className="bionapp-subpage min-h-screen  p-4 flex flex-col">
           <div className="flex flex-1 flex-col items-center justify-center gap-4 max-w-md text-center mx-auto w-full">
             <p className="text-lg font-medium text-slate-800 dark:text-slate-100">
-              Error de conexión
+              {t("app.connectionError")}
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-400">{muestrasFetchError}</p>
             <Button
@@ -1507,7 +1514,7 @@ function App() {
               className="gap-2"
             >
               <RefreshCw className="h-4 w-4" />
-              Reintentar
+              {t("app.retry")}
             </Button>
           </div>
           <AppFooter />
@@ -1522,7 +1529,7 @@ function App() {
         <Toaster position="bottom-right" />
         <div className="bionapp-subpage min-h-screen  p-4 flex flex-col">
           <div className="flex flex-1 flex-col items-center justify-center gap-4 w-full">
-            <p className="text-lg text-slate-700 dark:text-slate-200">No se ha añadido ninguna muestra</p>
+            <p className="text-lg text-slate-700 dark:text-slate-200">{t("app.empty.noSamples")}</p>
             <Button
               onClick={handleAddPrimeraMuestra}
               disabled={creatingPrimeraMuestra}
@@ -1533,7 +1540,7 @@ function App() {
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              Añade la primera muestra
+              {t("app.empty.addFirst")}
             </Button>
           </div>
           <AppFooter />
@@ -1574,7 +1581,7 @@ function App() {
       }
 
       if (muestraTags.length >= MAX_TAGS_PER_MUESTRA) {
-        toast.error(`Máximo ${MAX_TAGS_PER_MUESTRA} etiquetas por muestra`);
+        toast.error(t("app.toast.maxTags", { max: MAX_TAGS_PER_MUESTRA }));
         return;
       }
 
@@ -1612,7 +1619,7 @@ function App() {
       );
     } catch (e: any) {
       console.error(e);
-      toast.error(e?.message ?? "Error guardando etiquetas");
+      toast.error(e?.message ?? t("app.toast.tagsSaveError"));
     }
   }
 
@@ -1674,12 +1681,12 @@ function App() {
       setEditedData((prev) => patchChipRepetirEnMuestra(prev, lectIdx, lmIdx, chipIdx, nuevo));
       toast.success(
         nuevo === 1
-          ? "Marcado repetir para este chip (Repetir_Chip = 1)"
-          : "Repetición desmarcada para este chip"
+          ? t("app.toast.repeatOn")
+          : t("app.toast.repeatOff")
       );
     } catch (err) {
       console.error("Error al actualizar Repetir_Chip:", err);
-      toast.error("Error al actualizar repetición de chip");
+      toast.error(t("app.toast.repeatError"));
     }
   };
 
@@ -1695,7 +1702,7 @@ function App() {
         <div className="bionapp-shell max-w-[1600px] mx-auto w-full min-w-0">
           {isSetupPendingSample() && editMode ? (
             <div className="mb-3 bionapp-alert-warn p-3 text-sm">
-              Configuración inicial: elige un <strong>tipo de muestra</strong> y un <strong>diagnóstico</strong> en los desplegables y pulsa <strong>Guardar</strong> para ver la muestra 1.
+              {t("app.setupBanner")}
             </div>
           ) : null}
           {/* Header con navegación */}
@@ -1718,8 +1725,8 @@ function App() {
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="text-xs sm:text-sm px-1 sm:px-2 whitespace-nowrap">
-                <span className="bionapp-registro-prefix">Registro: </span>
-                {posicionNavegacion + 1} de {navegacionIndices.length}
+                <span className="bionapp-registro-prefix">{t("app.nav.record")} </span>
+                {t("common.nOfTotal", { current: posicionNavegacion + 1, total: navegacionIndices.length })}
               </span>
               <Button
                 onClick={handleNextMuestra}
@@ -1743,7 +1750,7 @@ function App() {
                 <div className="bionapp-nav-tools">
                   <Input
                     type="number"
-                    placeholder="Buscar..."
+                    placeholder={t("app.search.placeholder")}
                     value={buscarNumMuestra}
                     onChange={(e) => setBuscarNumMuestra(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
@@ -1753,9 +1760,9 @@ function App() {
                     onClick={handleBuscar}
                     size="sm"
                     className="bionapp-nav-mini-btn bionapp-nav-mini-btn--text bionapp-btn-green shrink-0"
-                    title="Ir al NumBN"
+                    title={t("app.search.goTitle")}
                   >
-                    Ir
+                    {t("app.search.go")}
                   </Button>
                   <span ref={filtroBtnRef} className="inline-flex shrink-0">
                     <Button
@@ -1763,7 +1770,7 @@ function App() {
                       size="sm"
                       variant="outline"
                       className="bionapp-nav-mini-btn bionapp-nav-mini-btn--icon"
-                      title="Filtros"
+                      title={t("app.filters.title")}
                       aria-expanded={filtroPanelOpen}
                       aria-controls="bionapp-filtro-panel"
                       onClick={toggleFiltroPanel}
@@ -1776,14 +1783,14 @@ function App() {
                       <div
                         id="bionapp-filtro-panel"
                         role="dialog"
-                        aria-label="Filtros de muestras"
+                        aria-label={t("app.filters.aria")}
                         className="petic-search-floating bionapp-filtro-panel"
                         style={{
                           top: filtroPanelPos.top,
                           left: filtroPanelPos.left,
                         }}
                       >
-                        <p className="text-xs font-medium mb-2">Filtros</p>
+                        <p className="text-xs font-medium mb-2">{t("app.filters.title")}</p>
                         <div className="bionapp-filtro-panel__tabs mb-3">
                           <button
                             type="button"
@@ -1792,7 +1799,7 @@ function App() {
                             }`}
                             onClick={() => setFiltroModo("peticion")}
                           >
-                            Por petición
+                            {t("app.filters.byRequest")}
                           </button>
                           <button
                             type="button"
@@ -1801,7 +1808,7 @@ function App() {
                             }`}
                             onClick={() => setFiltroModo("estado")}
                           >
-                            Por estado
+                            {t("app.filters.byStatus")}
                           </button>
                           <button
                             type="button"
@@ -1810,7 +1817,7 @@ function App() {
                             }`}
                             onClick={() => setFiltroModo("etiquetas")}
                           >
-                            Etiquetas
+                            {t("app.filters.tags")}
                           </button>
                         </div>
 
@@ -1819,7 +1826,7 @@ function App() {
                             <Input
                               type="text"
                               inputMode="numeric"
-                              placeholder="Nº petición"
+                              placeholder={t("app.filters.requestPlaceholder")}
                               value={filtroPetic}
                               onChange={(e) => setFiltroPetic(e.target.value)}
                               onKeyDown={(e) => e.key === "Enter" && handleBuscarPetic()}
@@ -1832,7 +1839,7 @@ function App() {
                               className="h-8 bionapp-btn-green shrink-0"
                               onClick={handleBuscarPetic}
                             >
-                              Aplicar
+                              {t("app.filters.apply")}
                             </Button>
                           </div>
                         ) : filtroModo === "estado" ? (
@@ -1850,7 +1857,7 @@ function App() {
                                 strokeWidth={2}
                                 className="shrink-0"
                               />
-                              Completadas
+                              {t("app.status.completed")}
                             </Button>
                             <Button
                               type="button"
@@ -1865,7 +1872,7 @@ function App() {
                                 strokeWidth={2}
                                 className="shrink-0"
                               />
-                              Pendientes
+                              {t("app.status.pending")}
                             </Button>
                             <Button
                               type="button"
@@ -1880,31 +1887,31 @@ function App() {
                                 strokeWidth={2}
                                 className="shrink-0"
                               />
-                              Fallidas
+                              {t("app.status.failed")}
                             </Button>
                           </div>
                         ) : tagsCatalog.length === 0 ? (
                           <p className="text-xs text-muted-foreground">
-                            No hay etiquetas definidas. Créalas en Opciones.
+                            {t("app.filters.noTags")}
                           </p>
                         ) : (
                           <div className="bionapp-filtro-tags">
                             <p className="text-[0.65rem] text-muted-foreground mb-2">
-                              Muestras con al menos una etiqueta seleccionada
+                              {t("app.filters.tagsHint")}
                             </p>
-                            <div className="bionapp-filtro-tags__list" role="listbox" aria-label="Filtrar por etiquetas">
-                              {tagsCatalog.map((t) => {
-                                const selected = filtroTagsSeleccionados.includes(Number(t.Tag_Number));
+                            <div className="bionapp-filtro-tags__list" role="listbox" aria-label={t("app.filters.tagsAria")}>
+                              {tagsCatalog.map((tag) => {
+                                const selected = filtroTagsSeleccionados.includes(Number(tag.Tag_Number));
                                 return (
-                                  <label key={t.Tag_Number} className="bionapp-tag-picker__item">
+                                  <label key={tag.Tag_Number} className="bionapp-tag-picker__item">
                                     <input
                                       type="checkbox"
                                       className="h-3.5 w-3.5 shrink-0 accent-slate-900 dark:accent-slate-100"
                                       checked={selected}
-                                      onChange={() => toggleFiltroTag(Number(t.Tag_Number))}
+                                      onChange={() => toggleFiltroTag(Number(tag.Tag_Number))}
                                     />
-                                    <Tag size={13} color={t.Tag_Color || "#64748b"} strokeWidth={2} />
-                                    <span className="truncate">{t.Tag_Name}</span>
+                                    <Tag size={13} color={tag.Tag_Color || "#64748b"} strokeWidth={2} />
+                                    <span className="truncate">{tag.Tag_Name}</span>
                                   </label>
                                 );
                               })}
@@ -1915,7 +1922,7 @@ function App() {
                               className="h-8 w-full bionapp-btn-green"
                               onClick={handleFiltrarPorEtiquetas}
                             >
-                              Aplicar
+                              {t("app.filters.apply")}
                             </Button>
                           </div>
                         )}
@@ -1927,7 +1934,7 @@ function App() {
                     onClick={handleAddMuestra}
                     size="sm"
                     className="bionapp-nav-mini-btn bionapp-nav-mini-btn--icon shrink-0"
-                    title="Nueva muestra"
+                    title={t("app.newSample")}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -1945,10 +1952,15 @@ function App() {
 
             <div className="bionapp-header-user-meta">
               <span className="shrink-0">
-                <strong>Usuario:</strong> {user?.email?.split("@")?.[0] || "Desconocido"}
+                <strong>{t("app.user.label")}</strong> {user?.email?.split("@")?.[0] || t("app.user.unknown")}
               </span>
               <span className="shrink-0">
-                <strong>Rol:</strong> {userRole || "sin asignar"}
+                <strong>{t("app.role.label")}</strong>{" "}
+                {userRole === "admin"
+                  ? t("role.admin")
+                  : userRole === "user"
+                    ? t("role.user")
+                    : t("role.unassigned")}
               </span>
             </div>
 
@@ -1959,10 +1971,10 @@ function App() {
                   size="sm"
                   variant="destructive"
                   className="h-7 px-2 shrink-0"
-                  title="Eliminar muestra"
+                  title={t("app.deleteSample")}
                 >
                   <Minus className="h-3 w-3 shrink-0" />
-                  <span className="bionapp-nav-label">Eliminar muestra</span>
+                  <span className="bionapp-nav-label">{t("app.deleteSample")}</span>
                 </Button>
               )}
               {!editMode && (
@@ -1971,7 +1983,7 @@ function App() {
                     onClick={() => navigateFromBase("/preselect")}
                     size="sm"
                     className="bionapp-btn-info bionapp-nav-mini-btn bionapp-nav-mini-btn--icon shrink-0"
-                    title="Preselección"
+                    title={t("nav.preselect")}
                   >
                     <ClipboardList className="h-5 w-5 text-white" />
                   </Button>
@@ -1979,7 +1991,7 @@ function App() {
                     onClick={() => navigateFromBase("/chips")}
                     size="sm"
                     className="bionapp-btn-green bionapp-nav-mini-btn bionapp-nav-mini-btn--icon shrink-0"
-                    title="Chips"
+                    title={t("nav.chips")}
                   >
                     <Cpu className="h-5 w-5 text-white" />
                   </Button>
@@ -1987,7 +1999,7 @@ function App() {
                   onClick={() => navigateFromBase("/actions")}
                   size="sm"
                   className="bionapp-btn-green bionapp-nav-mini-btn bionapp-nav-mini-btn--icon shrink-0"
-                  title="Acciones"
+                  title={t("nav.actions")}
                 >
                   <Pickaxe className="h-5 w-5 text-white" />
                 </Button>
@@ -1995,7 +2007,7 @@ function App() {
                   onClick={() => navigateFromBase("/calcs")}
                   size="sm"
                   className="bionapp-btn-green bionapp-nav-mini-btn bionapp-nav-mini-btn--icon shrink-0"
-                  title="Cálculos"
+                  title={t("nav.calcs")}
                 >
                   <Calculator className="h-5 w-5 text-white" />
                 </Button>
@@ -2004,7 +2016,7 @@ function App() {
                     onClick={() => navigateFromBase("/options")}
                     size="sm"
                     className="bionapp-btn-green bionapp-nav-mini-btn bionapp-nav-mini-btn--icon shrink-0"
-                    title="Opciones"
+                    title={t("nav.options")}
                   >
                     <CircleEllipsis className="h-5 w-5 text-white" />
                   </Button>
@@ -2018,20 +2030,20 @@ function App() {
                       onClick={toggleEditMode}
                       size="sm"
                       className="bionapp-nav-mini-btn bionapp-nav-mini-btn--icon shrink-0"
-                      title="Modificar"
+                      title={t("app.edit")}
                     >
                       <Edit className="h-4 w-4 shrink-0" />
                     </Button>
                   ) : (
                     <>
-                      <Button onClick={handleSave} size="sm" className="gap-2 shrink-0 bionapp-btn-green" title="Guardar">
+                      <Button onClick={handleSave} size="sm" className="gap-2 shrink-0 bionapp-btn-green" title={t("common.save")}>
                         <Save className="h-4 w-4 shrink-0" />
-                        <span className="bionapp-nav-label">Guardar</span>
+                        <span className="bionapp-nav-label">{t("common.save")}</span>
                       </Button>
                       {!isSetupPendingSample() ? (
-                        <Button onClick={handleDiscard} variant="outline" size="sm" className="gap-2 shrink-0" title="Cancelar">
+                        <Button onClick={handleDiscard} variant="outline" size="sm" className="gap-2 shrink-0" title={t("common.cancel")}>
                           <X className="h-4 w-4 shrink-0" />
-                          <span className="bionapp-nav-label">Cancelar</span>
+                          <span className="bionapp-nav-label">{t("common.cancel")}</span>
                         </Button>
                       ) : null}
                     </>
@@ -2042,10 +2054,10 @@ function App() {
                 size="sm"
                 variant="destructive"
                 className="gap-2 shrink-0"
-                title="Cerrar sesión"
+                title={t("app.logout")}
               >
                 <LogOut className="h-5 w-5 shrink-0" />
-                <span className="bionapp-nav-label">Cerrar sesión</span>
+                <span className="bionapp-nav-label">{t("app.logout")}</span>
               </Button>
             </div>
           </header>
@@ -2063,12 +2075,10 @@ function App() {
               }`}
             >
               <span>
-                Filtro activo: <strong>{filtroActivo.etiqueta}</strong>
-                <span className="text-muted-foreground">
-                  {" "}
-                  — {navegacionIndices.length} muestra
-                  {navegacionIndices.length !== 1 ? "s" : ""}
-                </span>
+                {t("app.filters.active", {
+                  label: filtroActivo.etiqueta,
+                  count: navegacionIndices.length,
+                })}
               </span>
               <Button
                 type="button"
@@ -2078,7 +2088,7 @@ function App() {
                 onClick={quitarFiltro}
               >
                 <X className="h-3.5 w-3.5" />
-                Quitar filtro
+                {t("app.filters.clear")}
               </Button>
             </div>
           ) : null}
@@ -2097,10 +2107,10 @@ function App() {
                     `}
                     style={{ width: 24, height: 24, minWidth: 24, minHeight: 24 }}
                     title={
-                      estadoMuestra === 1 ? "Estado rojo (1)" :
-                      estadoMuestra === 2 ? "Estado amarillo (2)" :
-                      estadoMuestra === 3 ? "Estado verde (3)" :
-                      "Estado sin definir"
+                      estadoMuestra === 1 ? t("app.state.red") :
+                      estadoMuestra === 2 ? t("app.state.yellow") :
+                      estadoMuestra === 3 ? t("app.state.green") :
+                      t("app.state.undefined")
                     }
                   >
                     <CircleDot
@@ -2117,17 +2127,17 @@ function App() {
                   <Badge
                     variant="default"
                     className="bionapp-num-bn shrink-0"
-                    title={`Número de BN: ${muestraActual.NumBN}`}
+                    title={t("app.numBnTitle", { numBN: muestraActual.NumBN })}
                   >
                     {muestraActual.NumBN}
                   </Badge>
                   {editMode && tagsCatalog.length > 0 ? (
                     <details className="bionapp-tag-picker">
-                      <summary className="bionapp-tag-picker__trigger bionapp-tag-picker__trigger--icon" title="Asignar etiquetas">
+                      <summary className="bionapp-tag-picker__trigger bionapp-tag-picker__trigger--icon" title={t("app.tags.assign")}>
                         <Tag size={14} strokeWidth={2.25} />
                         <ChevronDown size={11} className="bionapp-tag-picker__chevron" />
                       </summary>
-                      <div className="bionapp-tag-picker__menu" role="listbox" aria-label="Etiquetas de muestra">
+                      <div className="bionapp-tag-picker__menu" role="listbox" aria-label={t("app.tags.aria")}>
                         {tagsCatalog.map((t) => {
                           const selected = muestraTags.some(
                             (mt) => Number(mt.Tag_Number) === Number(t.Tag_Number)
@@ -2163,7 +2173,7 @@ function App() {
                       <button
                         type="button"
                         className="bionapp-preselect-coment-btn shrink-0"
-                        title="Ver motivo de preselección"
+                        title={t("app.preselect.viewReason")}
                         onClick={handleGoToPreselectComent}
                       >
                         <MessageSquare className="h-3.5 w-3.5" />
@@ -2179,7 +2189,7 @@ function App() {
 
 
               <div className="bionapp-field">
-                <Label className="text-xs bionapp-field-label">Nº Petición:</Label>
+                <Label className="text-xs bionapp-field-label">{t("app.field.requestNo")}</Label>
                 {editMode ? (
                   <Input
                     value={muestraActual.Petic || ""}
@@ -2187,13 +2197,13 @@ function App() {
                     className="h-7 text-xs"
                   />
                 ) : (
-                  <span className="text-xs">{muestraActual.Petic || "—"}</span>
+                  <span className="text-xs">{muestraActual.Petic || t("common.empty")}</span>
                 )}
               </div>
 
 
               <div className="bionapp-field">
-                <Label className="text-xs bionapp-field-label">Posición:</Label>
+                <Label className="text-xs bionapp-field-label">{t("app.field.position")}</Label>
                 {editMode ? (
                   <Input
                     value={muestraActual.Posic || ""}
@@ -2201,20 +2211,20 @@ function App() {
                     className="h-7 text-xs"
                   />
                 ) : (
-                  <span className="text-xs">{muestraActual.Posic || "—"}</span>
+                  <span className="text-xs">{muestraActual.Posic || t("common.empty")}</span>
                 )}
               </div>
 
 
               <div className="bionapp-field">
-                <Label className="text-xs bionapp-field-label">Tipo de muestra:</Label>
+                <Label className="text-xs bionapp-field-label">{t("app.field.sampleType")}</Label>
                 {editMode ? (
                   <select
                     value={muestraActual.Muestra || ""}
                     onChange={(e) => handleChange("Muestra", parseInt(e.target.value))}
                     className="h-7 text-xs border rounded px-1"
                   >
-                    <option value="">— Selecciona —</option>
+                    <option value="">{t("common.selectPlaceholder")}</option>
                     {tiposMuestra.map((tipo) => (
                       <option key={tipo.Cod} value={tipo.Cod}>
                         {tipo.TipoMuestra}
@@ -2222,7 +2232,7 @@ function App() {
                     ))}
                   </select>
                 ) : (
-                  <span className="text-xs">{muestraActual.DMuestra?.TipoMuestra || "—"}</span>
+                  <span className="text-xs">{muestraActual.DMuestra?.TipoMuestra || t("common.empty")}</span>
                 )}
               </div>
 
@@ -2231,14 +2241,14 @@ function App() {
               
 
               <div className="bionapp-field">
-                <Label className="text-xs bionapp-field-label">Diagnóstico:</Label>
+                <Label className="text-xs bionapp-field-label">{t("app.field.diagnosis")}</Label>
                 {editMode ? (
                   <select
                     value={muestraActual.Dx || ""}
                     onChange={(e) => handleChange("Dx", parseInt(e.target.value))}
                     className="h-7 text-xs border rounded px-1"
                   >
-                    <option value="">— Selecciona —</option>
+                    <option value="">{t("common.selectPlaceholder")}</option>
                     {dxs.map((d) => (
                       <option key={d.Cod} value={d.Cod}>
                         {d.Dx}
@@ -2246,12 +2256,12 @@ function App() {
                     ))}
                   </select>
                 ) : (
-                  <span className="text-xs">{muestraActual.DDx?.Dx || "—"}</span>
+                  <span className="text-xs">{muestraActual.DDx?.Dx || t("common.empty")}</span>
                 )}
               </div>
 
               <div className="bionapp-field">
-                <Label className="text-xs bionapp-field-label">Procesamiento:</Label>
+                <Label className="text-xs bionapp-field-label">{t("app.field.processing")}</Label>
                 {editMode ? (
                   <Input
                     value={muestraActual.Proces || ""}
@@ -2259,12 +2269,12 @@ function App() {
                     className="h-7 text-xs"
                   />
                 ) : (
-                  <span className="text-xs">{muestraActual.Proces || "—"}</span>
+                  <span className="text-xs">{muestraActual.Proces || t("common.empty")}</span>
                 )}
               </div>
             </div>
             <div className="bionapp-span-full bionapp-field mt-2">
-              <Label className="text-xs bionapp-field-label">Comentario:</Label>
+              <Label className="text-xs bionapp-field-label">{t("app.field.comment")}</Label>
               {editMode ? (
                 <Input
                   value={muestraActual.Coment_Muestra || ""}
@@ -2272,7 +2282,7 @@ function App() {
                   className="h-7 text-xs flex-1 min-w-0"
                 />
               ) : (
-                <span className="text-xs">{muestraActual.Coment_Muestra || "—"}</span>
+                <span className="text-xs">{muestraActual.Coment_Muestra || t("common.empty")}</span>
               )}
             </div>
           </div>
@@ -2281,7 +2291,7 @@ function App() {
           <div className="bionapp-card bionapp-panel p-3 mb-2">
             <div className="bionapp-form-grid text-sm">
               <div className="bionapp-field bionapp-field--nowrap">
-                <Label className="text-xs bionapp-field-label">Fecha de extracción:</Label>
+                <Label className="text-xs bionapp-field-label">{t("app.field.extractionDate")}</Label>
                 {editMode ? (
                   <Input
                     type="date"
@@ -2302,7 +2312,7 @@ function App() {
                     className="h-7 text-xs"
                   />
                 ) : (
-                  <span className="text-xs">{muestraActual.Pellet || "—"}</span>
+                  <span className="text-xs">{muestraActual.Pellet || t("common.empty")}</span>
                 )}
               </div>
               <div className="bionapp-field">
@@ -2314,7 +2324,7 @@ function App() {
                     className="h-7 text-xs min-w-0"
                   />
                 ) : (
-                  <span className="text-xs">{muestraActual.PN || "—"}</span>
+                  <span className="text-xs">{muestraActual.PN || t("common.empty")}</span>
                 )}
               </div>
               <div className="bionapp-field">
@@ -2326,7 +2336,7 @@ function App() {
                     className="h-7 text-xs"
                   />
                 ) : (
-                  <span className="text-xs">{muestraActual.LN || "—"}</span>
+                  <span className="text-xs">{muestraActual.LN || t("common.empty")}</span>
                 )}
               </div>
               <div className="bionapp-field">
@@ -2338,7 +2348,7 @@ function App() {
                     className="h-7 text-xs"
                   />
                 ) : (
-                  <span className="text-xs">{muestraActual.Exp || "—"}</span>
+                  <span className="text-xs">{muestraActual.Exp || t("common.empty")}</span>
                 )}
               </div>
               <div className="bionapp-field bionapp-field--with-action">
@@ -2354,19 +2364,19 @@ function App() {
                       onClick={handleCopyFromPrevious}
                       size="sm"
                       className="bionapp-btn-info h-7 w-8 p-0 shrink-0 rounded flex items-center justify-center"
-                      title="Copiar Fecha, PN, LN y Exp de la muestra anterior"
+                      title={t("app.copy.extractionTitle")}
                       type="button"
                     >
                       <ArrowDownToLine className="h-4 w-4 text-white" />
                     </Button>
                   </div>
                 ) : (
-                  <span className="text-xs">{muestraActual.Medusa || "—"}</span>
+                  <span className="text-xs">{muestraActual.Medusa || t("common.empty")}</span>
                 )}
               </div>
 
               <div className="bionapp-span-2 bionapp-field">
-                <Label className="text-xs bionapp-field-label">Viscosidad:</Label>
+                <Label className="text-xs bionapp-field-label">{t("app.field.viscosity")}</Label>
                 {editMode ? (
                   <Input
                     value={muestraActual.Visco_grado || ""}
@@ -2378,7 +2388,7 @@ function App() {
                 )}
               </div>
               <div className="bionapp-span-4 bionapp-field">
-                <Label className="text-xs bionapp-field-label">Comentario:</Label>
+                <Label className="text-xs bionapp-field-label">{t("app.field.comment")}</Label>
                 {editMode ? (
                   <Input
                     value={muestraActual.Coment_Extracc || ""}
@@ -2386,7 +2396,7 @@ function App() {
                     className="h-7 text-xs flex-1 min-w-0"
                   />
                 ) : (
-                  <span className="text-xs">{muestraActual.Coment_Extracc || "—"}</span>
+                  <span className="text-xs">{muestraActual.Coment_Extracc || t("common.empty")}</span>
                 )}
               </div>
             </div>
@@ -2398,7 +2408,7 @@ function App() {
           {muestraActual.lecturas && muestraActual.lecturas.length > 0 ? (
             <div className="bionapp-card bionapp-lectura-extraido-panel p-2.5 min-w-0 mb-0">
               <div className="bionapp-section-toolbar mb-1.5">
-                <h3 className="text-sm font-medium">Lectura de lo extraído</h3>
+                <h3 className="text-sm font-medium">{t("app.extracted.title")}</h3>
                 <div className="bionapp-section-toolbar__actions flex items-center gap-2 shrink-0">
                   <Button
                     onClick={handlePrevLectura}
@@ -2409,7 +2419,7 @@ function App() {
                     <ChevronLeft className="h-3 w-3" />
                   </Button>
                   <span className="text-xs">
-                    {currentLecturaIndex + 1} de {muestraActual.lecturas.length}
+                    {t("common.nOfTotal", { current: currentLecturaIndex + 1, total: muestraActual.lecturas.length })}
                   </span>
                   <Button
                     onClick={handleNextLectura}
@@ -2425,7 +2435,7 @@ function App() {
                       onClick={handleDeleteLectura}
                       size="sm"
                       variant="destructive"
-                      title="Eliminar esta lectura"
+                      title={t("app.extracted.delete")}
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
@@ -2436,7 +2446,7 @@ function App() {
                         onClick={handleAddLecturaNueva}
                         size="sm"
                         className="bionapp-btn-green"
-                        title="Añadir nueva lectura"
+                        title={t("app.extracted.add")}
                       >
                         +
                       </Button>
@@ -2461,11 +2471,11 @@ function App() {
                 <div className="bionapp-lectura-extraido-data text-xs mb-1">
                   <div className="bionapp-lectura-block bionapp-lectura-block--meta">
                     <div className="bionapp-lectura-item">
-                      <Label className="text-xs shrink-0">Nº:</Label>
+                      <Label className="text-xs shrink-0">{t("app.field.number")}</Label>
                       <Badge variant="secondary" className="text-xs">{lectura.NumLectura}</Badge>
                     </div>
                     <div className="bionapp-lectura-item bionapp-lectura-item--fecha">
-                      <Label className="text-xs shrink-0">Fecha:</Label>
+                      <Label className="text-xs shrink-0">{t("app.field.date")}</Label>
                       {editMode ? (
                         <Input
                           type="date"
@@ -2481,20 +2491,20 @@ function App() {
                   <div className="bionapp-lectura-block bionapp-lectura-block--stats">
                     <div className="bionapp-lectura-stats-grupo bionapp-lectura-stats-grupo--lecturas">
                     <div className="bionapp-lectura-item">
-                      <Label className="text-xs shrink-0">D:</Label>
+                      <Label className="text-xs shrink-0">{t("app.quant.left")}:</Label>
                       {editMode ? (
                         <Input
                           type="number"
-                          value={lectura.Dcha || ""}
-                          onChange={(e) => handleChange(`lecturas.${lectIdx}.Dcha`, e.target.value)}
+                          value={lectura.Izq || ""}
+                          onChange={(e) => handleChange(`lecturas.${lectIdx}.Izq`, e.target.value)}
                           className="h-7 text-xs bionapp-campo-cuant"
                         />
                       ) : (
-                        <span className="text-xs">{displayValue(lectura.Dcha)}</span>
+                        <span className="text-xs">{displayValue(lectura.Izq)}</span>
                       )}
                     </div>
                     <div className="bionapp-lectura-item">
-                      <Label className="text-xs shrink-0">C:</Label>
+                      <Label className="text-xs shrink-0">{t("app.quant.center")}:</Label>
                       {editMode ? (
                         <Input
                           type="number"
@@ -2507,16 +2517,16 @@ function App() {
                       )}
                     </div>
                     <div className="bionapp-lectura-item">
-                      <Label className="text-xs shrink-0">I:</Label>
+                      <Label className="text-xs shrink-0">{t("app.quant.right")}:</Label>
                       {editMode ? (
                         <Input
                           type="number"
-                          value={lectura.Izq || ""}
-                          onChange={(e) => handleChange(`lecturas.${lectIdx}.Izq`, e.target.value)}
+                          value={lectura.Dcha || ""}
+                          onChange={(e) => handleChange(`lecturas.${lectIdx}.Dcha`, e.target.value)}
                           className="h-7 text-xs bionapp-campo-cuant"
                         />
                       ) : (
-                        <span className="text-xs">{displayValue(lectura.Izq)}</span>
+                        <span className="text-xs">{displayValue(lectura.Dcha)}</span>
                       )}
                     </div>
                     </div>
@@ -2555,7 +2565,7 @@ function App() {
                   </div>
                   <div className="bionapp-lectura-block bionapp-lectura-block--coment">
                     <div className="bionapp-lectura-item bionapp-lectura-item--coment">
-                      <Label className="text-xs shrink-0">Coment:</Label>
+                      <Label className="text-xs shrink-0">{t("app.field.commentShort")}</Label>
                       {editMode ? (
                         <Input
                           value={lectura.Coment_Lectura || ""}
@@ -2563,7 +2573,7 @@ function App() {
                           className="h-7 text-xs flex-1"
                         />
                       ) : (
-                        <span className="text-xs">{lectura.Coment_Lectura || "—"}</span>
+                        <span className="text-xs">{lectura.Coment_Lectura || t("common.empty")}</span>
                       )}
                     </div>
                   </div>
@@ -2573,7 +2583,7 @@ function App() {
                 {lectura.marcado && lectura.marcado.lecturasMarcado && lectura.marcado.lecturasMarcado.length > 0 ? (
                   <div className="bionapp-marcado-panel p-2 min-w-0">
                     <div className="bionapp-section-toolbar mb-1.5">
-                      <h4 className="text-xs font-medium">Datos del marcado</h4>
+                      <h4 className="text-xs font-medium">{t("app.labeled.title")}</h4>
                       <div className="bionapp-section-toolbar__actions flex items-center gap-2 shrink-0">
                         <Button
                           onClick={handlePrevLectMarc}
@@ -2584,7 +2594,7 @@ function App() {
                           <ChevronLeft className="h-3 w-3" />
                         </Button>
                         <span className="text-xs">
-                          {currentLectMarcIndex + 1} de {lectura.marcado.lecturasMarcado.length}
+                          {t("common.nOfTotal", { current: currentLectMarcIndex + 1, total: lectura.marcado.lecturasMarcado.length })}
                         </span>
                         <Button
                           onClick={handleNextLectMarc}
@@ -2600,7 +2610,7 @@ function App() {
                             onClick={handleCopyMarcadoFromPreviousMuestra}
                             size="sm"
                             className="bionapp-btn-info h-7 w-8 p-0 shrink-0 rounded flex items-center justify-center"
-                            title="Copiar Fecha, PN, LN, Exp, PNm, LNm y Expm de la muestra anterior (misma lectura y Nº LM)"
+                            title={t("app.copy.labeledTitle")}
                             type="button"
                           >
                             <ArrowDownToLine className="h-4 w-4 text-white" />
@@ -2612,7 +2622,7 @@ function App() {
                             onClick={handleDeleteLecturaMarcada}
                             size="sm"
                             variant="destructive"
-                            title="Eliminar esta lectura marcada"
+                            title={t("app.labeled.delete")}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
@@ -2623,7 +2633,7 @@ function App() {
                             onClick={handleAddLecturaMarcadoNueva}
                             size="sm"
                             className="bionapp-btn-green"
-                            title="Añadir nueva lectura marcada"
+                            title={t("app.labeled.add")}
                           >
                             +
                           </Button>
@@ -2642,11 +2652,11 @@ function App() {
                         <div className="bionapp-marcado-lm__stack">
                           <div className="bionapp-marcado-block bionapp-marcado-block--head">
                             <div className="bionapp-marcado-field bionapp-marcado-field--num">
-                              <Label className="text-xs shrink-0">Nº:</Label>
+                              <Label className="text-xs shrink-0">{t("app.field.number")}</Label>
                               <Badge variant="outline" className="text-xs">{lm.NumLectMarc}</Badge>
                             </div>
                             <div className="bionapp-marcado-field bionapp-marcado-field--fecha">
-                              <Label className="text-xs shrink-0">Fecha:</Label>
+                              <Label className="text-xs shrink-0">{t("app.field.date")}</Label>
                               {editMode ? (
                                 <Input
                                   type="date"
@@ -2681,7 +2691,7 @@ function App() {
                                   className="h-7 text-xs"
                                 />
                               ) : (
-                                <span className="text-xs">{lm.PN_LM || "—"}</span>
+                                <span className="text-xs">{lm.PN_LM || t("common.empty")}</span>
                               )}
                             </div>
                             <div className="bionapp-marcado-field">
@@ -2698,7 +2708,7 @@ function App() {
                                   className="h-7 text-xs"
                                 />
                               ) : (
-                                <span className="text-xs">{lm.LN_LM || "—"}</span>
+                                <span className="text-xs">{lm.LN_LM || t("common.empty")}</span>
                               )}
                             </div>
                             <div className="bionapp-marcado-field">
@@ -2715,7 +2725,7 @@ function App() {
                                   className="h-7 text-xs"
                                 />
                               ) : (
-                                <span className="text-xs">{lm.Exp_LM || "—"}</span>
+                                <span className="text-xs">{lm.Exp_LM || t("common.empty")}</span>
                               )}
                             </div>
                             <div className="bionapp-marcado-field">
@@ -2732,7 +2742,7 @@ function App() {
                                   className="h-7 text-xs"
                                 />
                               ) : (
-                                <span className="text-xs">{lm.PNM_LM || "—"}</span>
+                                <span className="text-xs">{lm.PNM_LM || t("common.empty")}</span>
                               )}
                             </div>
                             <div className="bionapp-marcado-field">
@@ -2749,7 +2759,7 @@ function App() {
                                   className="h-7 text-xs"
                                 />
                               ) : (
-                                <span className="text-xs">{lm.LNM_LM || "—"}</span>
+                                <span className="text-xs">{lm.LNM_LM || t("common.empty")}</span>
                               )}
                             </div>
                             <div className="bionapp-marcado-field">
@@ -2766,13 +2776,13 @@ function App() {
                                   className="h-7 text-xs"
                                 />
                               ) : (
-                                <span className="text-xs">{lm.ExpM_LM || "—"}</span>
+                                <span className="text-xs">{lm.ExpM_LM || t("common.empty")}</span>
                               )}
                             </div>
                           </div>
 
                           <div className="bionapp-marcado-block bionapp-marcado-block--comment">
-                            <Label className="text-xs whitespace-nowrap">Comentario:</Label>
+                            <Label className="text-xs whitespace-nowrap">{t("app.field.comment")}</Label>
                             {editMode ? (
                               <Input
                                 value={lm.Comentario_LMarcado ?? ""}
@@ -2782,12 +2792,12 @@ function App() {
                                     e.target.value
                                   )
                                 }
-                                placeholder="Comentario (Marcado)"
+                                placeholder={t("app.labeled.commentPlaceholder")}
                                 className="h-7 text-xs bionapp-marcado-lm__comment-input"
                               />
                             ) : (
                               <span className="text-xs text-slate-600 italic truncate min-w-0">
-                                {lm.Comentario_LMarcado || "—"}
+                                {lm.Comentario_LMarcado || t("common.empty")}
                               </span>
                             )}
                           </div>
@@ -2795,7 +2805,7 @@ function App() {
 
                           <div className="bionapp-marcado-block bionapp-marcado-block--measures">
                             <div className="bionapp-marcado-field bionapp-marcado-field--stat">
-                              <Label className="text-xs shrink-0">I:</Label>
+                              <Label className="text-xs shrink-0">{t("app.quant.left")}:</Label>
                               {editMode ? (
                                 <Input
                                   type="number"
@@ -2808,7 +2818,7 @@ function App() {
                               )}
                             </div>
                             <div className="bionapp-marcado-field bionapp-marcado-field--stat">
-                              <Label className="text-xs shrink-0">D:</Label>
+                              <Label className="text-xs shrink-0">{t("app.quant.right")}:</Label>
                               {editMode ? (
                                 <Input
                                   type="number"
@@ -2855,7 +2865,7 @@ function App() {
 
                         {/* Chips: separador en estrecho; columna derecha si hay espacio */}
                         <div className="bionapp-chips-block bionapp-marcado-lm__chips flex flex-col gap-1 w-full min-w-0">
-                          <Label className="text-xs">Chips:</Label>
+                          <Label className="text-xs">{t("app.chips.label")}</Label>
                           {(lm.chips || []).map((chip, chipIdx) => (
                             <div
                               key={`${chip.NumChip}-${chipIdx}`}
@@ -2879,7 +2889,7 @@ function App() {
                                     }
                                     className="bionapp-chip-fc-select h-6 text-[11px] shrink-0 rounded border border-slate-300 bg-white px-1"
                                   >
-                                    <option value="">— FC —</option>
+                                    <option value="">{t("app.chips.fcPlaceholder")}</option>
                                     {(() => {
                                       const libres = fcLibresParaChip(
                                         Number(chip.NumChip),
@@ -2900,7 +2910,7 @@ function App() {
                                   </select>
                                 ) : (
                                   <span className="text-xs text-slate-500 shrink-0">
-                                    FC: {chip.FC ?? "—"}
+                                    {t("app.chips.fcValue", { fc: chip.FC ?? t("common.empty") })}
                                   </span>
                                 )}
                                 <button
@@ -2920,11 +2930,11 @@ function App() {
                                   title={
                                     repetirChipActivado(chip.Repetir_Chip)
                                       ? editMode
-                                        ? "Repetir este chip (activo). Pulsa para quitar."
-                                        : "Repetir este chip (activo)"
+                                        ? t("app.chips.repeatOnEdit")
+                                        : t("app.chips.repeatOn")
                                       : editMode
-                                        ? "Marcar que este chip ha fallado y hay que repetirlo."
-                                        : "Marcar repetir chip"
+                                        ? t("app.chips.repeatMarkEdit")
+                                        : t("app.chips.repeatMark")
                                   }
                                 >
                                   <TriangleAlert
@@ -2947,7 +2957,7 @@ function App() {
                                           e.target.value
                                         )
                                       }
-                                      placeholder="Coment."
+                                      placeholder={t("app.chips.commentPlaceholder")}
                                       className="bionapp-chip-comment h-7 text-[11px]"
                                     />
                                     <Button
@@ -2957,7 +2967,7 @@ function App() {
                                       size="sm"
                                       variant="destructive"
                                       className="bionapp-chip-action-btn"
-                                      title="Eliminar este chip"
+                                      title={t("app.chips.delete")}
                                     >
                                       <Minus className="h-3 w-3" />
                                     </Button>
@@ -2979,8 +2989,8 @@ function App() {
                               >
                                 <option value="">
                                   {(lm.chips || []).length > 0
-                                    ? "— Añadir otro chip —"
-                                    : "— Selecciona chip —"}
+                                    ? t("app.chips.addAnother")
+                                    : t("app.chips.select")}
                                 </option>
                                 {dChips
                                   .filter((c) => {
@@ -3008,7 +3018,12 @@ function App() {
                                         value={chipOpt.NumChip_D}
                                       >
                                         #{chipOpt.NumChip_D} - {chipOpt.Nombre_Chip} (
-                                        {formatFcLibresLabel(libres)})
+                                        {libres.length === 3
+                                          ? t("chips.fc.allFree")
+                                          : libres.length === 0
+                                            ? t("chips.fc.noneFree")
+                                            : t("chips.fc.someFree", { slots: libres.join(", ") })}
+                                        )
                                       </option>
                                     );
                                   })}
@@ -3018,14 +3033,14 @@ function App() {
                                 size="sm"
                                 className="bionapp-chip-action-btn"
                                 disabled={!newChipNumber}
-                                title="Añadir chip a esta lectura marcada"
+                                title={t("app.chips.addToLm")}
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
                             </div>
                           )}
                           {!editMode && (lm.chips || []).length === 0 && (
-                            <span className="text-xs text-slate-400">Sin chip</span>
+                            <span className="text-xs text-slate-400">{t("app.chips.none")}</span>
                           )}
                         </div>
 
@@ -3054,7 +3069,7 @@ function App() {
                     size="sm"
                     className="bionapp-btn-green"
                   >
-                    Añadir marcado
+                    {t("app.labeled.addFirst")}
                   </Button>
                   </div>
                   )
@@ -3070,7 +3085,7 @@ function App() {
                   size="sm"
                   className="bionapp-btn-green"
                 >
-                Añadir lectura
+                {t("app.extracted.addFirst")}
                 </Button>
               )
         )}

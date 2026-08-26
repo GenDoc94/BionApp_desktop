@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, FileText, Loader2, Trash2, Upload } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
+import { translateIpcError } from "../../i18n/ipcErrors";
 
 type DocumentoItem = {
   name: string;
@@ -24,6 +26,7 @@ function formatDate(iso: string): string {
 }
 
 export default function DocumentosTab() {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<DocumentoItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,12 +40,12 @@ export default function DocumentosTab() {
       setFiles(list);
     } catch (err) {
       console.error(err);
-      toast.error("Error al cargar documentos");
+      toast.error(t("docs.toast.loadError"));
       setFiles([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void loadFiles();
@@ -57,12 +60,14 @@ export default function DocumentosTab() {
         await window.api.uploadDocumento(file.name, buffer);
       }
       toast.success(
-        fileList.length === 1 ? "Documento subido" : `${fileList.length} documentos subidos`
+        fileList.length === 1
+          ? t("docs.toast.uploadedOne")
+          : t("docs.toast.uploadedMany", { count: fileList.length })
       );
       await loadFiles();
     } catch (err) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : "Error al subir");
+      toast.error(err instanceof Error ? translateIpcError(err.message) : t("docs.toast.uploadError"));
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -81,20 +86,20 @@ export default function DocumentosTab() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
-      toast.error("Error al descargar");
+      toast.error(t("docs.toast.downloadError"));
     }
   };
 
   const handleDelete = async (name: string) => {
-    if (!window.confirm(`¿Eliminar «${name}» de la carpeta de documentos?`)) return;
+    if (!window.confirm(t("docs.confirmDelete", { name }))) return;
     setDeleting(name);
     try {
       await window.api.deleteDocumento(name);
-      toast.success("Documento eliminado");
+      toast.success(t("docs.toast.deleted"));
       await loadFiles();
     } catch (err) {
       console.error(err);
-      toast.error("Error al eliminar");
+      toast.error(t("docs.toast.deleteError"));
     } finally {
       setDeleting(null);
     }
@@ -104,10 +109,9 @@ export default function DocumentosTab() {
     <div className="space-y-4">
       <div className="bionapp-panel p-4 space-y-3">
         <div>
-          <div className="font-semibold">Protocolos y documentos</div>
+          <div className="font-semibold">{t("docs.title")}</div>
           <p className="text-xs text-slate-500 mt-1">
-            Los archivos se guardan en la carpeta <span className="font-mono">documentos/</span>{" "}
-            dentro de la carpeta de datos compartida de esta instalación.
+            {t("docs.help")}
           </p>
         </div>
 
@@ -131,10 +135,10 @@ export default function DocumentosTab() {
             ) : (
               <Upload className="h-4 w-4" />
             )}
-            Subir documento
+            {t("docs.upload")}
           </Button>
           <Button type="button" size="sm" variant="outline" onClick={() => void loadFiles()}>
-            Actualizar lista
+            {t("docs.refresh")}
           </Button>
         </div>
       </div>
@@ -143,11 +147,11 @@ export default function DocumentosTab() {
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Cargando documentos…
+            {t("docs.loading")}
           </div>
         ) : files.length === 0 ? (
           <p className="text-sm text-slate-500">
-            No hay documentos. Sube protocolos PDF, Word u otros archivos de la técnica.
+            {t("docs.empty")}
           </p>
         ) : (
           <ul className="divide-y divide-border">
@@ -172,14 +176,14 @@ export default function DocumentosTab() {
                     onClick={() => void handleDownload(file.name)}
                   >
                     <Download className="h-3.5 w-3.5" />
-                    Descargar
+                    {t("docs.download")}
                   </Button>
                   <Button
                     type="button"
                     size="sm"
                     variant="destructive"
                     className="h-8 w-8 p-0"
-                    title="Eliminar"
+                    title={t("docs.delete")}
                     disabled={deleting === file.name}
                     onClick={() => void handleDelete(file.name)}
                   >

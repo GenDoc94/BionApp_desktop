@@ -6,6 +6,7 @@ import JSZip from 'jszip'
 import * as XLSX from 'xlsx'
 import { dbPathFor } from './db'
 import { EXPORT_TABLES, stamp, type TableDump } from '../shared/exportTables'
+import { mt } from './i18n'
 import type { ExportFormat } from '../shared/types'
 
 function collectDump(db: Database.Database): TableDump {
@@ -26,7 +27,7 @@ async function buildExcelZip(dump: TableDump): Promise<Buffer> {
     const wb = XLSX.utils.book_new()
     const ws = rows.length
       ? XLSX.utils.json_to_sheet(rows)
-      : XLSX.utils.aoa_to_sheet([['(sin filas)']])
+      : XLSX.utils.aoa_to_sheet([[mt('emptySheet')]])
     XLSX.utils.book_append_sheet(wb, ws, name.slice(0, 31))
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer
     zip.file(`${name}.xlsx`, buf)
@@ -61,7 +62,7 @@ export async function exportDatabase(
         : `BionApp_${ts}.sqlite`
 
   const saveOpts = {
-    title: 'Exportar base de datos',
+    title: mt('exportDialog'),
     defaultPath: defaultName,
     filters
   }

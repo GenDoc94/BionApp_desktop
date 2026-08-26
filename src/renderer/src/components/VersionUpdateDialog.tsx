@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
 
 type VersionUpdateDialogProps = {
@@ -13,6 +14,7 @@ export default function VersionUpdateDialog({
   changes,
   onDismiss,
 }: VersionUpdateDialogProps) {
+  const { t } = useTranslation();
   const dismissRef = useRef(onDismiss);
   dismissRef.current = onDismiss;
 
@@ -38,16 +40,16 @@ export default function VersionUpdateDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id="bionapp-version-dialog-title" className="bionapp-version-dialog__title">
-          Nueva versión {version}
+          {t("updates.whatsNewTitle", { version })}
         </h2>
-        <p className="bionapp-version-dialog__subtitle">Cambios:</p>
+        <p className="bionapp-version-dialog__subtitle">{t("updates.changes")}</p>
         <ul className="bionapp-version-dialog__list">
           {changes.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
         <Button className="w-full bionapp-btn-green mt-4" size="sm" onClick={onDismiss}>
-          Entendido
+          {t("updates.gotIt")}
         </Button>
       </div>
     </div>,

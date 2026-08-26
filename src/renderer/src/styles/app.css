@@ -1069,7 +1069,7 @@
   min-width: 0;
 }
 
-/* Cuantificación D/C/I: ~3 dígitos sin hueco sobrante */
+/* Cuantificación I/C/D: ~3 dígitos sin hueco sobrante */
 .bionapp-campo-cuant {
   width: 3.25rem;
   min-width: 2.75rem;

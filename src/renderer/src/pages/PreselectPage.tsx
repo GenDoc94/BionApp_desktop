@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import {
@@ -22,7 +23,6 @@ import {
   labelDxPreselect,
   parsePeticInput,
   parsePreselectHighlightPetic,
-  PRESELECT_DUPLICATE_MESSAGE,
   type CatalogDx,
   type PreselectRow,
 } from "../lib/preselectData";
@@ -42,6 +42,7 @@ import {
 type PreselectTableVariant = "pendiente" | "en-muestras";
 
 function PreselectPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const pendingHighlightPetic = useRef<number | null>(null);
@@ -76,7 +77,7 @@ function PreselectPage() {
 
     if (error) {
       console.error("Error al cargar preselección:", error);
-      toast.error("Error al cargar preselección");
+      toast.error(t("preselect.toast.loadError"));
       setRows([]);
     } else {
       setRows((data || []) as PreselectRow[]);
@@ -84,14 +85,14 @@ function PreselectPage() {
 
     if (dxError) {
       console.error("Error al cargar diagnósticos:", dxError);
-      toast.error("Error al cargar diagnósticos");
+      toast.error(t("preselect.toast.dxLoadError"));
       setDxList([]);
     } else {
       setDxList((dxData || []) as CatalogDx[]);
     }
 
     setLoading(false);
-  }, [addedSortOrder]);
+  }, [addedSortOrder, t]);
 
   useEffect(() => {
     void fetchRows();
@@ -112,7 +113,7 @@ function PreselectPage() {
     window.requestAnimationFrame(() => {
       const el = document.getElementById(`preselect-coment-${petic}`);
       if (!el) {
-        toast.error(`No se encontró la petición ${petic} en preselección`);
+        toast.error(t("preselect.toast.peticNotFound", { petic }));
         return;
       }
       el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -161,12 +162,12 @@ function PreselectPage() {
   async function handleAddPreselect() {
     const petic = parsePeticInput(newPetic);
     if (petic == null) {
-      toast.error("Introduce un Nº de petición válido");
+      toast.error(t("preselect.toast.invalidPetic"));
       return;
     }
 
     if (rows.some((row) => Number(row.Petic_Preselect) === petic)) {
-      toast.error(PRESELECT_DUPLICATE_MESSAGE);
+      toast.error(t("preselect.toast.duplicate"));
       return;
     }
 
@@ -183,21 +184,21 @@ function PreselectPage() {
 
       if (error) {
         if (error.code === "23505") {
-          toast.error(PRESELECT_DUPLICATE_MESSAGE);
+          toast.error(t("preselect.toast.duplicate"));
         } else {
           throw error;
         }
         return;
       }
 
-      toast.success("Petición añadida a preselección");
+      toast.success(t("preselect.toast.added"));
       setNewPetic("");
       setNewComent("");
       setNewDx("");
       await fetchRows();
     } catch (err) {
       console.error("Error al añadir preselección:", err);
-      toast.error("Error al añadir preselección");
+      toast.error(t("preselect.toast.addError"));
     } finally {
       setAdding(false);
     }
@@ -206,12 +207,15 @@ function PreselectPage() {
   async function handleDelete(row: PreselectRow) {
     if (row.NumBN_Preselect != null) {
       toast.error(
-        `La petición ${row.Petic_Preselect} ya está en Muestras (Nº ${row.NumBN_Preselect}). Elimina primero la muestra en la app principal.`
+        t("preselect.toast.alreadyInSamples", {
+          petic: row.Petic_Preselect,
+          numBN: row.NumBN_Preselect,
+        })
       );
       return;
     }
 
-    if (!confirm(`¿Eliminar petición ${row.Petic_Preselect} de preselección?`)) return;
+    if (!confirm(t("preselect.confirm.delete", { petic: row.Petic_Preselect }))) return;
 
     try {
       const { error } = await supabase
@@ -224,11 +228,11 @@ function PreselectPage() {
       if (editingPetic === row.Petic_Preselect) {
         handleCancelEditRow();
       }
-      toast.success("Petición eliminada de preselección");
+      toast.success(t("preselect.toast.deleted"));
       await fetchRows();
     } catch (err) {
       console.error("Error al eliminar preselección:", err);
-      toast.error("Error al eliminar preselección");
+      toast.error(t("preselect.toast.deleteError"));
     }
   }
 
@@ -274,11 +278,11 @@ function PreselectPage() {
             : row
         )
       );
-      toast.success("Preselección actualizada");
+      toast.success(t("preselect.toast.updated"));
       handleCancelEditRow();
     } catch (err) {
       console.error("Error al actualizar preselección:", err);
-      toast.error("Error al actualizar preselección");
+      toast.error(t("preselect.toast.updateError"));
     } finally {
       setSavingRow(false);
     }
@@ -287,11 +291,15 @@ function PreselectPage() {
   async function handleCrearMuestra(row: PreselectRow) {
     const siguiente = await fetchNextNumBN(supabase);
     const dxLabel = labelDxPreselect(row, dxList);
-    const dxTexto = dxLabel !== "—" ? ` · Dx: ${dxLabel}` : "";
+    const dxTexto = dxLabel !== "—" ? t("preselect.dxSuffix", { dx: dxLabel }) : "";
 
     if (
       !confirm(
-        `¿Crear muestra Nº ${siguiente} para la petición ${row.Petic_Preselect}${dxTexto} y cargarla en Muestras?`
+        t("preselect.confirm.create", {
+          numBN: siguiente,
+          petic: row.Petic_Preselect,
+          dxTexto,
+        })
       )
     ) {
       return;
@@ -300,11 +308,13 @@ function PreselectPage() {
     setCreatingMuestraPetic(row.Petic_Preselect);
     try {
       const numBN = await crearMuestraDesdePreselect(supabase, row.Petic_Preselect);
-      toast.success(`Muestra ${numBN} creada para petición ${row.Petic_Preselect}`);
+      toast.success(
+        t("preselect.toast.sampleCreated", { numBN, petic: row.Petic_Preselect })
+      );
       await fetchRows();
     } catch (err) {
       console.error("Error al crear muestra desde preselección:", err);
-      toast.error(err instanceof Error ? err.message : "Error al crear la muestra");
+      toast.error(err instanceof Error ? err.message : t("preselect.toast.createError"));
     } finally {
       setCreatingMuestraPetic(null);
     }
@@ -342,9 +352,9 @@ function PreselectPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">Nº petición</TableHead>
+              <TableHead className="w-[100px]">{t("preselect.requestNo")}</TableHead>
               <TableHead className="w-[72px]">Dx</TableHead>
-              <TableHead className="min-w-[160px]">Comentario</TableHead>
+              <TableHead className="min-w-[160px]">{t("preselect.comment")}</TableHead>
               <TableHead className="w-[150px]">
                 <button
                   type="button"
@@ -352,15 +362,15 @@ function PreselectPage() {
                   onClick={() =>
                     setAddedSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
                   }
-                  title="Ordenar por fecha de Añadida"
+                  title={t("preselect.sortByAdded")}
                 >
-                  Añadida {addedSortOrder === "desc" ? "↓" : "↑"}
+                  {t("preselect.added", { dir: addedSortOrder === "desc" ? "↓" : "↑" })}
                 </button>
               </TableHead>
               {!isPendiente ? (
-                <TableHead className="w-[100px]">Nº Bionano</TableHead>
+                <TableHead className="w-[100px]">{t("preselect.bnNo")}</TableHead>
               ) : null}
-              <TableHead className="w-[150px] text-right">Acciones</TableHead>
+              <TableHead className="w-[150px] text-right">{t("preselect.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -377,7 +387,7 @@ function PreselectPage() {
                         editingDx,
                         setEditingDx,
                         "bionapp-preselect-dx-select h-8 text-xs",
-                        "—"
+                        t("common.selectPlaceholder")
                       )
                     ) : (
                       <span className="text-sm font-medium">{labelDxPreselect(row, dxList)}</span>
@@ -399,7 +409,7 @@ function PreselectPage() {
                         }}
                       />
                     ) : (
-                      <span className="text-sm">{row.Coment_Preselect || "—"}</span>
+                      <span className="text-sm">{row.Coment_Preselect || t("common.empty")}</span>
                     )}
                   </TableCell>
                   <TableCell className="text-sm whitespace-nowrap">
@@ -411,7 +421,7 @@ function PreselectPage() {
                         type="button"
                         className="text-sm font-semibold bionapp-text-info hover:underline"
                         onClick={() => handleOpenMuestra(row.NumBN_Preselect!)}
-                        title="Ir a la muestra"
+                        title={t("preselect.goSample")}
                       >
                         {row.NumBN_Preselect}
                       </button>
@@ -427,7 +437,7 @@ function PreselectPage() {
                             onClick={() => void handleSaveRow(row.Petic_Preselect)}
                             disabled={savingRow}
                             className="h-7 w-7 p-0"
-                            title="Guardar cambios"
+                            title={t("preselect.save")}
                           >
                             <Save className="h-3.5 w-3.5 bionapp-text-success" />
                           </Button>
@@ -437,7 +447,7 @@ function PreselectPage() {
                             onClick={handleCancelEditRow}
                             disabled={savingRow}
                             className="h-7 w-7 p-0"
-                            title="Cancelar"
+                            title={t("preselect.cancel")}
                           >
                             <X className="h-3.5 w-3.5 text-slate-700" />
                           </Button>
@@ -450,7 +460,7 @@ function PreselectPage() {
                               size="sm"
                               onClick={() => handleStartEditRow(row)}
                               className="h-7 w-7 p-0"
-                              title="Editar comentario y diagnóstico"
+                              title={t("preselect.edit")}
                             >
                               <SquarePen className="h-3.5 w-3.5 text-slate-700" />
                             </Button>
@@ -461,9 +471,9 @@ function PreselectPage() {
                               onClick={() => void handleCrearMuestra(row)}
                               disabled={creando}
                               className="h-7 px-2 text-xs bionapp-btn-info"
-                              title="Crear muestra en Muestras"
+                              title={t("preselect.createSample")}
                             >
-                              {creando ? "..." : "Crear BN"}
+                              {creando ? "..." : t("preselect.createBn")}
                             </Button>
                           ) : (
                             <Button
@@ -471,7 +481,7 @@ function PreselectPage() {
                               size="sm"
                               onClick={() => handleOpenMuestra(row.NumBN_Preselect!)}
                               className="h-7 w-7 p-0"
-                              title="Ir a muestra"
+                              title={t("preselect.goToSample")}
                             >
                               <ExternalLink className="h-3.5 w-3.5 bionapp-text-info" />
                             </Button>
@@ -482,7 +492,7 @@ function PreselectPage() {
                               size="sm"
                               onClick={() => void handleDelete(row)}
                               className="h-7 w-7 p-0"
-                              title="Eliminar de preselección"
+                              title={t("preselect.delete")}
                             >
                               <Trash2 className="h-3.5 w-3.5 text-destructive" />
                             </Button>
@@ -524,18 +534,18 @@ function PreselectPage() {
               <div className="flex flex-wrap items-center gap-2 ml-auto">
                 <div className="text-xs text-muted-foreground">
                   {pendingPageSize === "all" ? (
-                    <>Mostrando todo</>
+                    t("preselect.showingAll")
                   ) : (
-                    <>
-                      Mostrando{" "}
-                      <strong>
-                        {Math.min(
+                    <Trans
+                      i18nKey="preselect.showingPage"
+                      values={{
+                        shown: Math.min(
                           pendientes.length,
                           pendingPageIndex * pendingPageSizeResolved + pendingPageSizeResolved
-                        )}
-                      </strong>{" "}
-                      / {pendientes.length}
-                    </>
+                        ),
+                        total: pendientes.length,
+                      }}
+                    />
                   )}
                 </div>
                 <div className="flex items-center gap-1">
@@ -546,7 +556,7 @@ function PreselectPage() {
                     className="h-7 px-2"
                     onClick={() => setPendingPageIndex((p) => Math.max(0, p - 1))}
                     disabled={pendingPageIndex <= 0 || pendingPageSize === "all"}
-                    title="Página anterior"
+                    title={t("preselect.prevPage")}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -559,7 +569,7 @@ function PreselectPage() {
                       setPendingPageIndex((p) => Math.min(pendingMaxPageIndex, p + 1))
                     }
                     disabled={pendingPageIndex >= pendingMaxPageIndex || pendingPageSize === "all"}
-                    title="Página siguiente"
+                    title={t("preselect.nextPage")}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -573,20 +583,20 @@ function PreselectPage() {
                     setPendingPageIndex(0);
                   }}
                   className="h-7 text-sm border rounded-md px-2"
-                  title="Tamaño de la página"
+                  title={t("preselect.pageSize")}
                   disabled={pendientes.length === 0}
                 >
                   <option value={10}>10</option>
                   <option value={15}>15</option>
                   <option value={20}>20</option>
-                  <option value="all">Todos</option>
+                  <option value="all">{t("preselect.all")}</option>
                 </select>
               </div>
             ) : null}
           </div>
           {variant === "en-muestras" ? (
             <p className="text-xs text-muted-foreground mt-1">
-              Para quitar una petición de esta lista, elimina primero su muestra en la app principal.
+              {t("preselect.inSamplesHint")}
             </p>
           ) : null}
         </div>
@@ -606,24 +616,21 @@ function PreselectPage() {
       <div className="bionapp-subpage min-h-screen p-4 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground">Cargando preselección...</p>
+          <p className="text-muted-foreground">{t("preselect.loading")}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <SubpageShell title="Preselección" icon={ClipboardList} maxWidthClass="max-w-[1200px]">
+    <SubpageShell title={t("preselect.title")} icon={ClipboardList} maxWidthClass="max-w-[1200px]">
       <Toaster position="bottom-right" />
-      <p className="text-sm text-muted-foreground mb-4">
-        Añade aquí las peticiones de muestras interesantes en cola para realizar OGM. Puedes indicar
-        diagnóstico. Al crear el NºBionano se meterá a la base con la misma petición y diagnóstico.
-      </p>
+      <p className="text-sm text-muted-foreground mb-4">{t("preselect.intro")}</p>
 
       <div className="bionapp-panel bionapp-panel--muestra p-4 mb-6">
         <div className="bionapp-preselect-add-row">
           <div className="bionapp-preselect-add-field bionapp-preselect-add-field--petic">
-            <p className="text-xs text-slate-500 mb-1">Nº petición</p>
+            <p className="text-xs text-slate-500 mb-1">{t("preselect.requestNo")}</p>
             <Input
               type="number"
               value={newPetic}
@@ -634,7 +641,7 @@ function PreselectPage() {
               className={`h-9 text-sm ${
                 duplicatePeticInInput ? "border-destructive bg-destructive/10" : ""
               }`}
-              placeholder="Ej. 12345"
+              placeholder={t("preselect.requestPlaceholder")}
             />
           </div>
           <div className="bionapp-preselect-add-field bionapp-preselect-add-field--dx">
@@ -643,11 +650,11 @@ function PreselectPage() {
               newDx,
               setNewDx,
               "bionapp-preselect-dx-select h-9 text-sm",
-              "—"
+              t("common.selectPlaceholder")
             )}
           </div>
           <div className="bionapp-preselect-add-field bionapp-preselect-add-field--coment min-w-0">
-            <p className="text-xs text-slate-500 mb-1">Comentario</p>
+            <p className="text-xs text-slate-500 mb-1">{t("preselect.comment")}</p>
             <Input
               value={newComent}
               onChange={(e) => setNewComent(e.target.value)}
@@ -655,7 +662,7 @@ function PreselectPage() {
                 if (e.key === "Enter") void handleAddPreselect();
               }}
               className="h-9 text-sm"
-              placeholder="Opcional: motivo, notas..."
+              placeholder={t("preselect.commentPlaceholder")}
             />
           </div>
           <div className="bionapp-preselect-add-field bionapp-preselect-add-field--btn">
@@ -666,7 +673,7 @@ function PreselectPage() {
               className="h-9 gap-2 bionapp-btn-info w-full sm:w-auto"
             >
               <Plus className="h-4 w-4" />
-              Añadir
+              {t("preselect.add")}
             </Button>
           </div>
         </div>
@@ -674,23 +681,23 @@ function PreselectPage() {
 
       {rows.length === 0 ? (
         <div className="bionapp-panel p-6 text-center text-sm text-muted-foreground">
-          No hay peticiones en preselección. Añade la primera con el formulario de arriba.
+          {t("preselect.empty")}
         </div>
       ) : (
         <>
           {renderSection(
-            "Pendiente",
+            t("preselect.pending"),
             pendientes.length,
             pendientesPaged,
             "pendiente",
-            "No hay peticiones pendientes de Nº Bionano."
+            t("preselect.emptyPending")
           )}
           {renderSection(
-            "En Muestras",
+            t("preselect.inSamples"),
             enMuestras.length,
             enMuestras,
             "en-muestras",
-            "Aún no hay peticiones pasadas a Muestras."
+            t("preselect.emptyInSamples")
           )}
         </>
       )}

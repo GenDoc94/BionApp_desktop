@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabaseClient";
 import { getFunctionErrorMessage } from "../lib/functionErrors";
 import { Button } from "../components/ui/button";
@@ -10,10 +11,12 @@ import { Toaster, toast } from "sonner@2.0.3";
 import { ArrowLeft, Lock, Mail, Shield, UserPlus } from "lucide-react";
 import pkg from "bionapp-pkg";
 import logo from "../assets/BionApp.svg";
+import { translateIpcError } from "../i18n/ipcErrors";
 
 const version = pkg.version;
 
 export default function CreateUser() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("user");
@@ -24,7 +27,7 @@ export default function CreateUser() {
     e.preventDefault();
 
     if (!email || !password || !role || !adminCode) {
-      return toast.error("Completa correo, contraseña, rol y código maestro");
+      return toast.error(t("createUser.incomplete"));
     }
 
     setLoading(true);
@@ -41,14 +44,14 @@ export default function CreateUser() {
     setLoading(false);
 
     if (error) {
-      return toast.error(await getFunctionErrorMessage(error));
+      return toast.error(translateIpcError(await getFunctionErrorMessage(error)));
     }
 
     setEmail("");
     setPassword("");
     setRole("user");
     setAdminCode("");
-    toast.success(`Usuario ${data.user.email} creado como ${data.user.role}`);
+    toast.success(t("createUser.created", { email: data.user.email, role: data.user.role }));
   };
 
   return (
@@ -67,7 +70,7 @@ export default function CreateUser() {
         <div className="w-full max-w-sm bionapp-panel shadow-sm">
           <div className="bionapp-login__panel-head px-4 py-2 rounded-t-lg">
             <div className="flex items-center justify-between gap-2">
-              <h1 className="text-sm font-semibold">Crear nuevo usuario</h1>
+              <h1 className="text-sm font-semibold">{t("createUser.title")}</h1>
               <UserPlus className="h-4 w-4 text-muted-foreground shrink-0" />
             </div>
           </div>
@@ -77,13 +80,13 @@ export default function CreateUser() {
               <div className="bionapp-login__field flex flex-col">
                 <Label className="text-xs flex items-center gap-1.5">
                   <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                  Correo electrónico
+                  {t("createUser.email")}
                 </Label>
                 <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="usuario@ejemplo.com"
+                  placeholder={t("createUser.emailPlaceholder")}
                   className="h-9 text-sm"
                   autoComplete="email"
                 />
@@ -92,7 +95,7 @@ export default function CreateUser() {
               <div className="bionapp-login__field flex flex-col">
                 <Label className="text-xs flex items-center gap-1.5">
                   <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                  Contraseña
+                  {t("createUser.password")}
                 </Label>
                 <Input
                   type="password"
@@ -107,7 +110,7 @@ export default function CreateUser() {
               <div className="bionapp-login__field flex flex-col">
                 <Label className="text-xs flex items-center gap-1.5">
                   <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-                  Rol
+                  {t("createUser.role")}
                 </Label>
                 <select
                   value={role}
@@ -118,21 +121,20 @@ export default function CreateUser() {
                   <option value="admin">admin</option>
                 </select>
                 <p className="text-[11px] text-muted-foreground leading-snug">
-                  <span className="font-mono">user</span> solo puede leer muestras;{" "}
-                  <span className="font-mono">admin</span> puede añadir nuevas muestras.
+                  {t("createUser.roleHelp")}
                 </p>
               </div>
 
               <div className="bionapp-login__field flex flex-col">
                 <Label className="text-xs flex items-center gap-1.5">
                   <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-                  Código maestro
+                  {t("createUser.adminCode")}
                 </Label>
                 <Input
                   type="password"
                   value={adminCode}
                   onChange={(e) => setAdminCode(e.target.value)}
-                  placeholder="Código privado"
+                  placeholder={t("createUser.adminCodePlaceholder")}
                   className="h-9 text-sm"
                   autoComplete="off"
                 />
@@ -145,13 +147,13 @@ export default function CreateUser() {
                 disabled={loading}
               >
                 <UserPlus className="h-4 w-4" />
-                {loading ? "Creando usuario..." : "Crear usuario"}
+                {loading ? t("createUser.creating") : t("createUser.submit")}
               </Button>
 
               <Button variant="outline" size="sm" className="w-full gap-2" asChild>
                 <Link to="/">
                   <ArrowLeft className="h-4 w-4" />
-                  Volver al login
+                  {t("createUser.backToLogin")}
                 </Link>
               </Button>
             </form>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   BarChart3,
@@ -25,7 +26,6 @@ import { toast, Toaster } from "sonner";
 
 import { supabase } from "../lib/supabaseClient";
 import {
-  agrupacionLabel,
   buildEstadisticas,
   downloadEstadisticasCsv,
   formatPorcentaje,
@@ -33,6 +33,7 @@ import {
 import EstadisticasApiladas from "../components/options/EstadisticasApiladas";
 import DocumentosTab from "../components/options/DocumentosTab";
 import ExportacionTab from "../components/options/ExportacionTab";
+import LanguageToggle from "../components/LanguageToggle";
 import { getStoredTheme, setTheme } from "../lib/theme";
 import SubpageShell from "../components/SubpageShell";
 import { Button } from "../components/ui/button";
@@ -58,10 +59,26 @@ function normalizeHexColor(value) {
   return "#64748b";
 }
 
-function roleLabel(role) {
-  if (role === "admin") return "Administrador";
-  if (role === "user") return "Usuario";
-  return "Sin asignar";
+function mdStrong(text) {
+  const parts = String(text).split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
+function agrupacionNounKey(agrupacion) {
+  if (agrupacion === "ano") return "year";
+  if (agrupacion === "trimestre") return "quarter";
+  return "month";
+}
+
+function roleLabel(role, t) {
+  if (role === "admin") return t("role.admin");
+  if (role === "user") return t("role.user");
+  return t("role.unassigned");
 }
 
 function StatCard({ label, value, pct, className }) {
@@ -91,6 +108,7 @@ function CatalogRow({
   canDelete,
   saving,
 }) {
+  const { t } = useTranslation();
   return (
     <tr className="border-b border-border/60">
       <td className="py-2 pr-3 font-mono">{cod}</td>
@@ -115,7 +133,7 @@ function CatalogRow({
                 className="h-8 w-8"
                 onClick={onSave}
                 disabled={saving}
-                title="Guardar"
+                title={t("common.save")}
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               </Button>
@@ -125,7 +143,7 @@ function CatalogRow({
                 className="h-8 w-8"
                 onClick={onCancelEdit}
                 disabled={saving}
-                title="Cancelar"
+                title={t("common.cancel")}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -138,7 +156,7 @@ function CatalogRow({
                 className="h-8 w-8"
                 onClick={onStartEdit}
                 disabled={saving}
-                title="Editar"
+                title={t("common.edit")}
               >
                 <SquarePen className="h-4 w-4" />
               </Button>
@@ -149,7 +167,7 @@ function CatalogRow({
                   className="h-8 w-8 bionapp-btn-icon-danger"
                   onClick={onDelete}
                   disabled={saving}
-                  title="Eliminar (solo la última del catálogo)"
+                  title={t("catalog.deleteLastOnly")}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -163,6 +181,7 @@ function CatalogRow({
 }
 
 function PeriodoBarra({ periodo }) {
+  const { t } = useTranslation();
   const max = Math.max(periodo.total, 1);
   const pct = (n) => `${(n / max) * 100}%`;
 
@@ -170,40 +189,51 @@ function PeriodoBarra({ periodo }) {
     <div className="space-y-1">
       <div className="flex items-center justify-between gap-2 text-xs">
         <span className="font-medium">{periodo.label}</span>
-        <span className="text-slate-500 tabular-nums">{periodo.total} muestras</span>
+        <span className="text-slate-500 tabular-nums">
+          {t("stats.period.samples", { count: periodo.total })}
+        </span>
       </div>
       <div className="flex h-7 w-full overflow-hidden rounded bg-muted">
         {periodo.fallidas > 0 ? (
           <div
             className="bionapp-chart-fill--danger"
             style={{ width: pct(periodo.fallidas) }}
-            title={`Fallidas: ${periodo.fallidas}`}
+            title={t("stats.bar.failed", { count: periodo.fallidas })}
           />
         ) : null}
         {periodo.enProceso > 0 ? (
           <div
             className="bionapp-chart-fill--warn"
             style={{ width: pct(periodo.enProceso) }}
-            title={`En proceso: ${periodo.enProceso}`}
+            title={t("stats.bar.inProgress", { count: periodo.enProceso })}
           />
         ) : null}
         {periodo.completas > 0 ? (
           <div
             className="bionapp-chart-fill--ok"
             style={{ width: pct(periodo.completas) }}
-            title={`Completas: ${periodo.completas}`}
+            title={t("stats.bar.completed", { count: periodo.completas })}
           />
         ) : null}
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
         <span className="bionapp-text-danger">
-          Fallidas: {periodo.fallidas} ({formatPorcentaje(periodo.fallidas, periodo.total)})
+          {t("stats.legend.failed", {
+            count: periodo.fallidas,
+            pct: formatPorcentaje(periodo.fallidas, periodo.total),
+          })}
         </span>
         <span className="bionapp-text-warn">
-          En proceso: {periodo.enProceso} ({formatPorcentaje(periodo.enProceso, periodo.total)})
+          {t("stats.legend.inProgress", {
+            count: periodo.enProceso,
+            pct: formatPorcentaje(periodo.enProceso, periodo.total),
+          })}
         </span>
         <span className="bionapp-text-success">
-          Completas: {periodo.completas} ({formatPorcentaje(periodo.completas, periodo.total)})
+          {t("stats.legend.completed", {
+            count: periodo.completas,
+            pct: formatPorcentaje(periodo.completas, periodo.total),
+          })}
         </span>
       </div>
     </div>
@@ -211,12 +241,13 @@ function PeriodoBarra({ periodo }) {
 }
 
 const AGRUPACIONES = [
-  { id: "mes", label: "Meses" },
-  { id: "trimestre", label: "Trimestres" },
-  { id: "ano", label: "Años" },
+  { id: "mes", labelKey: "stats.group.months" },
+  { id: "trimestre", labelKey: "stats.group.quarters" },
+  { id: "ano", labelKey: "stats.group.years" },
 ];
 
 export default function Options() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const setupFromUrl = searchParams.get("setup") === "inicial";
@@ -277,7 +308,7 @@ export default function Options() {
 
   const handleVolver = () => {
     if (setupInicial && !catalogsReady) {
-      toast.error("Añade al menos un tipo de muestra y un diagnóstico antes de volver");
+      toast.error(t("options.setup.backBlocked"));
       return;
     }
     navigate("/");
@@ -285,7 +316,7 @@ export default function Options() {
 
   const handleContinuarABase = () => {
     if (!catalogsReady) {
-      toast.error("Añade al menos un tipo de muestra y un diagnóstico");
+      toast.error(t("options.setup.needCatalogs"));
       return;
     }
     setSetupPhase(SETUP_PENDING_SAMPLE);
@@ -344,7 +375,7 @@ export default function Options() {
       setTags(tagsData ?? []);
     } catch (e) {
       console.error(e);
-      setErrorMsg(e?.message ?? "Error cargando opciones");
+      setErrorMsg(e?.message ?? t("options.err.load"));
     } finally {
       if (!silent) setLoading(false);
     }
@@ -380,7 +411,7 @@ export default function Options() {
       await loadAll();
     } catch (e) {
       console.error(e);
-      setErrorMsg(e?.message ?? "Error añadiendo tipo de muestra");
+      setErrorMsg(e?.message ?? t("options.err.addSampleType"));
     } finally {
       setSaving(false);
     }
@@ -400,7 +431,7 @@ export default function Options() {
     if (!catalogEdit) return;
     const text = clampText(catalogEditText);
     if (!text) {
-      toast.error("El nombre no puede estar vacío");
+      toast.error(t("options.toast.emptyName"));
       return;
     }
 
@@ -422,10 +453,10 @@ export default function Options() {
       }
       cancelCatalogEdit();
       await loadAll();
-      toast.success("Catálogo actualizado");
+      toast.success(t("options.toast.catalogUpdated"));
     } catch (e) {
       console.error(e);
-      setErrorMsg(e?.message ?? "Error guardando el catálogo");
+      setErrorMsg(e?.message ?? t("options.err.saveCatalog"));
     } finally {
       setSaving(false);
     }
@@ -435,7 +466,7 @@ export default function Options() {
     const rows = kind === "dmuestra" ? dmuestra : ddx;
     const maxCod = rows.reduce((max, r) => Math.max(max, Number(r.Cod) || 0), 0);
     if (Number(cod) !== maxCod) {
-      toast.error("Solo se puede eliminar la última entrada del catálogo (Cod más alto)");
+      toast.error(t("options.toast.deleteLastOnly"));
       return;
     }
 
@@ -450,9 +481,7 @@ export default function Options() {
       if (countErr) throw countErr;
 
       if ((count ?? 0) > 0) {
-        toast.error(
-          `No se puede eliminar: ${count} muestra(s) usan este valor. Edítalas o reasígnalas antes.`
-        );
+        toast.error(t("options.toast.inUse", { count }));
         return;
       }
 
@@ -464,10 +493,10 @@ export default function Options() {
         cancelCatalogEdit();
       }
       await loadAll();
-      toast.success("Última entrada eliminada");
+      toast.success(t("options.toast.lastDeleted"));
     } catch (e) {
       console.error(e);
-      setErrorMsg(e?.message ?? "Error eliminando del catálogo");
+      setErrorMsg(e?.message ?? t("options.err.deleteCatalog"));
     } finally {
       setSaving(false);
     }
@@ -498,7 +527,7 @@ export default function Options() {
       await loadAll();
     } catch (e) {
       console.error(e);
-      setErrorMsg(e?.message ?? "Error añadiendo diagnóstico");
+      setErrorMsg(e?.message ?? t("options.err.addDx"));
     } finally {
       setSaving(false);
     }
@@ -529,10 +558,10 @@ export default function Options() {
       setNewTagColor("#64748b");
       setActiveTab("etiquetas");
       await loadAll({ silent: true });
-      toast.success("Etiqueta añadida");
+      toast.success(t("options.toast.tagAdded"));
     } catch (e) {
       console.error(e);
-      setErrorMsg(e?.message ?? "Error añadiendo etiqueta");
+      setErrorMsg(e?.message ?? t("options.err.addTag"));
     } finally {
       setSaving(false);
     }
@@ -543,7 +572,7 @@ export default function Options() {
     const name = clampText(tagEditName);
     const color = normalizeHexColor(tagEditColor);
     if (!name) {
-      toast.error("El nombre no puede estar vacío");
+      toast.error(t("options.toast.emptyName"));
       return;
     }
     setSaving(true);
@@ -557,10 +586,10 @@ export default function Options() {
       cancelEditTag();
       setActiveTab("etiquetas");
       await loadAll({ silent: true });
-      toast.success("Etiqueta actualizada");
+      toast.success(t("options.toast.tagUpdated"));
     } catch (e) {
       console.error(e);
-      setErrorMsg(e?.message ?? "Error guardando etiqueta");
+      setErrorMsg(e?.message ?? t("options.err.saveTag"));
     } finally {
       setSaving(false);
     }
@@ -569,7 +598,7 @@ export default function Options() {
   const deleteTag = async (tag) => {
     const tagNumber = Number(tag?.Tag_Number);
     if (!Number.isFinite(tagNumber)) return;
-    if (!confirm(`¿Eliminar etiqueta «${tag.Tag_Name || "sin nombre"}»?`)) return;
+    if (!confirm(t("options.tags.confirmDelete", { name: tag.Tag_Name || t("common.unnamed") }))) return;
     setSaving(true);
     setErrorMsg(null);
     try {
@@ -578,10 +607,10 @@ export default function Options() {
       if (tagEditNumber === tagNumber) cancelEditTag();
       setActiveTab("etiquetas");
       await loadAll({ silent: true });
-      toast.success("Etiqueta eliminada");
+      toast.success(t("options.toast.tagDeleted"));
     } catch (e) {
       console.error(e);
-      setErrorMsg(e?.message ?? "Error eliminando etiqueta");
+      setErrorMsg(e?.message ?? t("options.err.deleteTag"));
     } finally {
       setSaving(false);
     }
@@ -594,55 +623,55 @@ export default function Options() {
       onClick={handleContinuarABase}
       disabled={loading || saving || !catalogsReady}
     >
-      Continuar a la base
+      {t("options.setup.continue")}
     </Button>
   ) : undefined;
 
   const variablesContent = !canEditCatalogs ? (
     <div className="bionapp-panel p-4">
-      <div className="font-semibold mb-1">Acceso restringido</div>
+      <div className="font-semibold mb-1">{t("options.restricted.title")}</div>
       <div className="text-sm text-slate-600 dark:text-slate-300">
-        Necesitas rol <span className="font-mono">admin</span> para modificar los catálogos DMuestra y DDx.
+        {t("options.restricted.catalogs")}
       </div>
     </div>
   ) : (
     <Tabs value={variablesSubTab} onValueChange={setVariablesSubTab} className="gap-4">
       <TabsList>
-        <TabsTrigger value="dmuestra">Tipos de muestra</TabsTrigger>
-        <TabsTrigger value="ddx">Diagnósticos</TabsTrigger>
+        <TabsTrigger value="dmuestra">{t("options.vars.sampleTypes")}</TabsTrigger>
+        <TabsTrigger value="ddx">{t("options.vars.diagnoses")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="dmuestra" className="space-y-4">
         <div className="bionapp-panel p-4">
-          <div className="font-semibold mb-2">Añadir tipo de muestra</div>
+          <div className="font-semibold mb-2">{t("options.vars.addSampleType")}</div>
           <div className="flex flex-wrap gap-2 items-end">
             <div className="min-w-[260px] flex-1">
-              <div className="text-xs text-slate-500 mb-1">Nombre (p. ej. Ganglio, SP, MO…)</div>
+              <div className="text-xs text-slate-500 mb-1">{t("options.vars.sampleTypeHint")}</div>
               <Input
                 value={newTipoMuestra}
                 onChange={(e) => setNewTipoMuestra(e.target.value)}
-                placeholder="Nuevo tipo de muestra…"
+                placeholder={t("options.vars.sampleTypePlaceholder")}
               />
             </div>
             <Button onClick={addDMuestra} disabled={saving || !clampText(newTipoMuestra)}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Añadir
+              {t("common.add")}
             </Button>
           </div>
           <div className="text-xs text-slate-500 mt-2">
-            Solo se puede eliminar la última entrada (Cod más alto), para no dejar huecos en la numeración.
+            {t("options.vars.deleteHint")}
           </div>
         </div>
 
         <div className="bionapp-panel p-4">
-          <div className="font-semibold mb-3">Listado actual</div>
+          <div className="font-semibold mb-3">{t("options.list.current")}</div>
           <div className="overflow-auto">
             <table className="min-w-[520px] w-full text-sm border-collapse">
               <thead>
                 <tr className="text-left border-b border-border">
                   <th className="py-2 pr-3 w-28">Cod</th>
-                  <th className="py-2 pr-3">Tipo de Muestra</th>
-                  <th className="py-2 pr-3 w-28">Acciones</th>
+                  <th className="py-2 pr-3">{t("options.col.sampleType")}</th>
+                  <th className="py-2 pr-3 w-28">{t("options.col.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -668,7 +697,7 @@ export default function Options() {
                 {!dmuestra.length ? (
                   <tr>
                     <td className="py-2 pr-3 text-slate-500" colSpan={3}>
-                      No hay valores.
+                      {t("options.empty.values")}
                     </td>
                   </tr>
                 ) : null}
@@ -680,31 +709,31 @@ export default function Options() {
 
       <TabsContent value="ddx" className="space-y-4">
         <div className="bionapp-panel p-4">
-          <div className="font-semibold mb-2">Añadir diagnóstico</div>
+          <div className="font-semibold mb-2">{t("options.vars.addDx")}</div>
           <div className="flex flex-wrap gap-2 items-end">
             <div className="min-w-[260px] flex-1">
-              <div className="text-xs text-slate-500 mb-1">Nombre (p. ej. LMA, LLA, LLC…)</div>
-              <Input value={newDx} onChange={(e) => setNewDx(e.target.value)} placeholder="Nuevo diagnóstico…" />
+              <div className="text-xs text-slate-500 mb-1">{t("options.vars.dxHint")}</div>
+              <Input value={newDx} onChange={(e) => setNewDx(e.target.value)} placeholder={t("options.vars.dxPlaceholder")} />
             </div>
             <Button onClick={addDDx} disabled={saving || !clampText(newDx)}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Añadir
+              {t("common.add")}
             </Button>
           </div>
           <div className="text-xs text-slate-500 mt-2">
-            Solo se puede eliminar la última entrada (Cod más alto), para no dejar huecos en la numeración.
+            {t("options.vars.deleteHint")}
           </div>
         </div>
 
         <div className="bionapp-panel p-4">
-          <div className="font-semibold mb-3">Listado actual</div>
+          <div className="font-semibold mb-3">{t("options.list.current")}</div>
           <div className="overflow-auto">
             <table className="min-w-[520px] w-full text-sm border-collapse">
               <thead>
                 <tr className="text-left border-b border-border">
                   <th className="py-2 pr-3 w-28">Cod</th>
                   <th className="py-2 pr-3">Dx</th>
-                  <th className="py-2 pr-3 w-28">Acciones</th>
+                  <th className="py-2 pr-3 w-28">{t("options.col.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -730,7 +759,7 @@ export default function Options() {
                 {!ddx.length ? (
                   <tr>
                     <td className="py-2 pr-3 text-slate-500" colSpan={3}>
-                      No hay valores.
+                      {t("options.empty.values")}
                     </td>
                   </tr>
                 ) : null}
@@ -744,18 +773,18 @@ export default function Options() {
 
   const tagsContent = !isAdmin ? (
     <div className="bionapp-panel p-4">
-      <div className="font-semibold mb-1">Acceso restringido</div>
+      <div className="font-semibold mb-1">{t("options.restricted.title")}</div>
       <div className="text-sm text-slate-600 dark:text-slate-300">
-        Necesitas rol <span className="font-mono">admin</span> para crear y editar etiquetas.
+        {t("options.restricted.tags")}
       </div>
     </div>
   ) : (
     <div className="space-y-4">
       <div className="bionapp-panel p-4">
-        <div className="font-semibold mb-2">Añadir etiqueta</div>
+        <div className="font-semibold mb-2">{t("options.tags.add")}</div>
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-[200px] flex-1 relative z-10">
-            <div className="text-xs text-slate-500 mb-1">Nombre (p. ej. Tesis, EC-XXX, QC…)</div>
+            <div className="text-xs text-slate-500 mb-1">{t("options.tags.nameHint")}</div>
             <Input
               type="text"
               autoComplete="off"
@@ -763,14 +792,14 @@ export default function Options() {
               value={newTagName}
               onChange={(e) => setNewTagName(e.target.value)}
               onKeyDown={(e) => e.stopPropagation()}
-              placeholder="Nueva etiqueta…"
+              placeholder={t("options.tags.namePlaceholder")}
             />
           </div>
           <div className="shrink-0 relative z-0">
-            <div className="text-xs text-slate-500 mb-1">Color</div>
+            <div className="text-xs text-slate-500 mb-1">{t("options.tags.color")}</div>
             <label
               className="relative flex h-9 w-12 cursor-pointer overflow-hidden rounded border border-input"
-              title="Color de etiqueta"
+              title={t("options.tags.colorAria")}
             >
               <span
                 className="pointer-events-none absolute inset-0"
@@ -783,29 +812,29 @@ export default function Options() {
                 onChange={(e) => setNewTagColor(e.target.value)}
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                 tabIndex={-1}
-                aria-label="Color de etiqueta"
+                aria-label={t("options.tags.colorAria")}
               />
             </label>
           </div>
           <Button onClick={addTag} disabled={saving || !clampText(newTagName)} className="shrink-0">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Añadir
+            {t("common.add")}
           </Button>
         </div>
         <div className="text-xs text-slate-500 mt-2">
-          Elige un color para identificar la etiqueta en las muestras.
+          {t("options.tags.colorHint")}
         </div>
       </div>
 
       <div className="bionapp-panel p-4">
-        <div className="font-semibold mb-3">Listado actual</div>
+        <div className="font-semibold mb-3">{t("options.list.current")}</div>
         <div className="overflow-auto">
           <table className="min-w-[420px] w-full text-sm border-collapse">
             <thead>
               <tr className="text-left border-b border-border">
-                <th className="py-2 pr-3">Nombre</th>
-                <th className="py-2 pr-3 w-20">Color</th>
-                <th className="py-2 pr-3 w-28">Acciones</th>
+                <th className="py-2 pr-3">{t("options.col.name")}</th>
+                <th className="py-2 pr-3 w-20">{t("options.tags.color")}</th>
+                <th className="py-2 pr-3 w-28">{t("options.col.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -839,7 +868,7 @@ export default function Options() {
                           <Tag size={18} color={color} strokeWidth={2.25} />
                           <label
                             className="relative flex h-8 w-12 cursor-pointer overflow-hidden rounded border border-input"
-                            title="Color de etiqueta"
+                            title={t("options.tags.colorAria")}
                           >
                             <span
                               className="pointer-events-none absolute inset-0"
@@ -852,7 +881,7 @@ export default function Options() {
                               onChange={(e) => setTagEditColor(e.target.value)}
                               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                               tabIndex={-1}
-                              aria-label="Color de etiqueta"
+                              aria-label={t("options.tags.colorAria")}
                             />
                           </label>
                         </div>
@@ -870,7 +899,7 @@ export default function Options() {
                               className="h-8 w-8"
                               onClick={saveTag}
                               disabled={saving}
-                              title="Guardar"
+                              title={t("common.save")}
                             >
                               {saving ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -884,7 +913,7 @@ export default function Options() {
                               className="h-8 w-8"
                               onClick={cancelEditTag}
                               disabled={saving}
-                              title="Cancelar"
+                              title={t("common.cancel")}
                             >
                               <X className="h-4 w-4" />
                             </Button>
@@ -897,7 +926,7 @@ export default function Options() {
                               className="h-8 w-8"
                               onClick={() => startEditTag(tag)}
                               disabled={saving}
-                              title="Editar"
+                              title={t("common.edit")}
                             >
                               <SquarePen className="h-4 w-4" />
                             </Button>
@@ -907,7 +936,7 @@ export default function Options() {
                               className="h-8 w-8 bionapp-btn-icon-danger"
                               onClick={() => deleteTag(tag)}
                               disabled={saving}
-                              title="Eliminar"
+                              title={t("common.delete")}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -921,7 +950,7 @@ export default function Options() {
               {!tags.length ? (
                 <tr>
                   <td className="py-2 pr-3 text-slate-500" colSpan={3}>
-                    No hay etiquetas.
+                    {t("options.tags.empty")}
                   </td>
                 </tr>
               ) : null}
@@ -934,7 +963,7 @@ export default function Options() {
 
   return (
     <SubpageShell
-      title="Opciones"
+      title={t("options.title")}
       icon={CircleEllipsis}
       maxWidthClass="max-w-5xl"
       headerActions={headerActions}
@@ -945,20 +974,17 @@ export default function Options() {
 
       {setupInicial && !loading ? (
         <div className="mb-4 bionapp-alert-warn p-3 text-sm">
-          <p className="font-semibold mb-1">Configuración inicial</p>
-          <p>
-            En <strong>Variables</strong>, crea al menos un tipo de muestra y un diagnóstico.
-            Luego pulsa <strong>Continuar a la base</strong>.
-          </p>
+          <p className="font-semibold mb-1">{t("options.setup.title")}</p>
+          <p>{mdStrong(t("options.setup.body"))}</p>
           <p className="mt-2 text-xs bionapp-alert-warn-muted">
-            Tipos: {dmuestra.length} · Diagnósticos: {ddx.length}
+            {t("options.setup.counts", { tipos: dmuestra.length, dx: ddx.length })}
           </p>
         </div>
       ) : null}
 
       {loading ? (
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-          <Loader2 className="h-4 w-4 animate-spin" /> Cargando…
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("options.loading")}
         </div>
       ) : null}
 
@@ -973,77 +999,77 @@ export default function Options() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="perfil" className="gap-1.5">
               <UserRound className="h-4 w-4" />
-              Perfil
+              {t("options.tab.profile")}
             </TabsTrigger>
             <TabsTrigger value="variables" className="gap-1.5">
               <Database className="h-4 w-4" />
-              Variables
+              {t("options.tab.variables")}
             </TabsTrigger>
             <TabsTrigger value="etiquetas" className="gap-1.5">
               <Tag className="h-4 w-4" />
-              Etiquetas
+              {t("options.tab.tags")}
             </TabsTrigger>
             <TabsTrigger value="estadisticas" className="gap-1.5">
               <BarChart3 className="h-4 w-4" />
-              Estadísticas
+              {t("options.tab.stats")}
             </TabsTrigger>
             <TabsTrigger value="documentos" className="gap-1.5">
               <FileText className="h-4 w-4" />
-              Documentos
+              {t("options.tab.docs")}
             </TabsTrigger>
             <TabsTrigger value="exportacion" className="gap-1.5">
               <FolderOutput className="h-4 w-4" />
-              Exportación
+              {t("options.tab.export")}
             </TabsTrigger>
             <TabsTrigger value="apariencia" className="gap-1.5">
               <Sun className="h-4 w-4" />
-              Apariencia
+              {t("options.tab.appearance")}
             </TabsTrigger>
             <TabsTrigger value="manual" className="gap-1.5">
               <BookOpen className="h-4 w-4" />
-              Manual
+              {t("options.tab.manual")}
             </TabsTrigger>
             <TabsTrigger value="autoria" className="gap-1.5">
               <PenLine className="h-4 w-4" />
-              Autoría
+              {t("options.tab.authorship")}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="perfil">
             <div className="bionapp-panel p-4 space-y-4">
               <div>
-                <p className="text-xs text-slate-500 mb-1">Correo</p>
-                <p className="text-sm font-medium break-all">{userEmail || "—"}</p>
+                <p className="text-xs text-slate-500 mb-1">{t("options.profile.email")}</p>
+                <p className="text-sm font-medium break-all">{userEmail || t("common.empty")}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 mb-1">Rol</p>
+                <p className="text-xs text-slate-500 mb-1">{t("options.profile.role")}</p>
                 <div className="flex items-center gap-2">
-                  <Badge variant={isAdmin ? "default" : "secondary"}>{roleLabel(userRole)}</Badge>
+                  <Badge variant={isAdmin ? "default" : "secondary"}>{roleLabel(userRole, t)}</Badge>
                   {userRole ? (
                     <span className="text-xs text-slate-500 font-mono">({userRole})</span>
                   ) : null}
                 </div>
               </div>
               <p className="text-xs text-slate-500">
-                Por el momento no se puede cambiar el rol una vez asignado.
+                {t("options.profile.roleLocked")}
               </p>
             </div>
           </TabsContent>
 
           <TabsContent value="estadisticas" className="space-y-4">
             <div className="bionapp-panel p-4">
-              <div className="font-semibold mb-3">Filtros</div>
+              <div className="font-semibold mb-3">{t("stats.filters")}</div>
               <div className="flex flex-wrap gap-4 items-end">
                 <div className="min-w-[200px]">
                   <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
-                    Tipo de muestra
+                    {t("stats.sampleType")}
                   </label>
                   <select
                     className="h-9 w-full rounded-md border border-input bg-input-background px-2 text-sm"
                     value={filtroTipoMuestra}
                     onChange={(e) => setFiltroTipoMuestra(e.target.value)}
                   >
-                    <option value="">Todos</option>
+                    <option value="">{t("common.all")}</option>
                     {dmuestra.map((r) => (
                       <option key={r.Cod} value={String(r.Cod)}>
                         {r.TipoMuestra}
@@ -1053,14 +1079,14 @@ export default function Options() {
                 </div>
                 <div className="min-w-[200px]">
                   <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
-                    Diagnóstico
+                    {t("stats.diagnosis")}
                   </label>
                   <select
                     className="h-9 w-full rounded-md border border-input bg-input-background px-2 text-sm"
                     value={filtroDx}
                     onChange={(e) => setFiltroDx(e.target.value)}
                   >
-                    <option value="">Todos</option>
+                    <option value="">{t("common.all")}</option>
                     {ddx.map((r) => (
                       <option key={r.Cod} value={String(r.Cod)}>
                         {r.Dx}
@@ -1078,7 +1104,7 @@ export default function Options() {
                       setFiltroDx("");
                     }}
                   >
-                    Quitar filtros
+                    {t("stats.clearFilters")}
                   </Button>
                 ) : null}
               </div>
@@ -1086,7 +1112,7 @@ export default function Options() {
 
             <div className="grid gap-3 sm:grid-cols-3">
               <StatCard
-                label="Completas (estado 3)"
+                label={t("stats.card.completed")}
                 value={estadisticas.resumen.completas}
                 pct={formatPorcentaje(
                   estadisticas.resumen.completas,
@@ -1095,7 +1121,7 @@ export default function Options() {
                 className="bionapp-stat-card--ok"
               />
               <StatCard
-                label="En proceso (estado 2)"
+                label={t("stats.card.inProgress")}
                 value={estadisticas.resumen.enProceso}
                 pct={formatPorcentaje(
                   estadisticas.resumen.enProceso,
@@ -1104,7 +1130,7 @@ export default function Options() {
                 className="bionapp-stat-card--warn"
               />
               <StatCard
-                label="Fallidas (estado 1)"
+                label={t("stats.card.failed")}
                 value={estadisticas.resumen.fallidas}
                 pct={formatPorcentaje(
                   estadisticas.resumen.fallidas,
@@ -1117,7 +1143,9 @@ export default function Options() {
             <div className="bionapp-panel p-4">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
                 <div className="font-semibold">
-                  Evolución por {agrupacionLabel(agrupacionEstadisticas)} de extracción
+                  {t("stats.evolution", {
+                    agrupacion: t(`stats.group.${agrupacionNounKey(agrupacionEstadisticas)}`),
+                  })}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="inline-flex rounded-md border border-border p-0.5">
@@ -1130,7 +1158,7 @@ export default function Options() {
                         className="h-8 px-3"
                         onClick={() => setAgrupacionEstadisticas(opt.id)}
                       >
-                        {opt.label}
+                        {t(opt.labelKey)}
                       </Button>
                     ))}
                   </div>
@@ -1145,26 +1173,26 @@ export default function Options() {
                       }
                     >
                       <Download className="h-4 w-4" />
-                      Exportar CSV
+                      {t("stats.exportCsv")}
                     </Button>
                   ) : null}
                 </div>
               </div>
               <p className="text-xs text-slate-500 mb-4">
-                Agrupado por <span className="font-mono">Fecha</span> (fecha de extracción). Solo muestras con estado 1, 2 o 3.
+                {t("stats.groupHint")}
               </p>
 
               {estadisticas.porPeriodo.length ? (
                 <div className="space-y-6">
                   <div>
                     <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-2">
-                      Vista de columnas apiladas
+                      {t("stats.stackedView")}
                     </p>
                     <EstadisticasApiladas porPeriodo={estadisticas.porPeriodo} />
                   </div>
                   <div className="space-y-4">
                     <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                      Barras horizontales por periodo
+                      {t("stats.barsView")}
                     </p>
                     {estadisticas.porPeriodo.map((periodo) => (
                       <PeriodoBarra key={periodo.period} periodo={periodo} />
@@ -1173,7 +1201,7 @@ export default function Options() {
                 </div>
               ) : (
                 <p className="text-sm text-slate-500">
-                  No hay muestras con estado asignado y fecha de extracción para mostrar.
+                  {t("stats.empty")}
                 </p>
               )}
             </div>
@@ -1181,19 +1209,23 @@ export default function Options() {
             {estadisticas.porPeriodo.length ? (
               <div className="bionapp-panel p-4 overflow-auto">
                 <div className="font-semibold mb-3">
-                  Tabla por {agrupacionLabel(agrupacionEstadisticas)}
+                  {t("stats.tableTitle", {
+                    agrupacion: t(`stats.group.${agrupacionNounKey(agrupacionEstadisticas)}`),
+                  })}
                 </div>
                 <table className="min-w-[520px] w-full text-sm border-collapse">
                   <thead>
                     <tr className="text-left border-b border-border">
-                      <th className="py-2 pr-3 capitalize">{agrupacionLabel(agrupacionEstadisticas)}</th>
-                      <th className="py-2 pr-3 bionapp-text-danger">Fallidas</th>
-                      <th className="py-2 pr-3 bionapp-text-warn">En proceso</th>
-                      <th className="py-2 pr-3 bionapp-text-success">Completas</th>
-                      <th className="py-2 pr-3">Total</th>
-                      <th className="py-2 pr-3">% Fallidas</th>
-                      <th className="py-2 pr-3">% En proceso</th>
-                      <th className="py-2 pr-3">% Completas</th>
+                      <th className="py-2 pr-3 capitalize">
+                        {t(`stats.group.${agrupacionNounKey(agrupacionEstadisticas)}`)}
+                      </th>
+                      <th className="py-2 pr-3 bionapp-text-danger">{t("stats.failed")}</th>
+                      <th className="py-2 pr-3 bionapp-text-warn">{t("stats.inProgress")}</th>
+                      <th className="py-2 pr-3 bionapp-text-success">{t("stats.completed")}</th>
+                      <th className="py-2 pr-3">{t("stats.total")}</th>
+                      <th className="py-2 pr-3">{t("stats.pctFailed")}</th>
+                      <th className="py-2 pr-3">{t("stats.pctInProgress")}</th>
+                      <th className="py-2 pr-3">{t("stats.pctCompleted")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1223,10 +1255,10 @@ export default function Options() {
             {(estadisticas.resumen.sinFecha > 0 || estadisticas.resumen.sinEstado > 0) ? (
               <p className="text-xs text-slate-500">
                 {estadisticas.resumen.sinFecha > 0
-                  ? `${estadisticas.resumen.sinFecha} muestra(s) con estado 1–3 sin fecha de extracción no aparecen en el gráfico. `
+                  ? t("stats.note.noDate", { count: estadisticas.resumen.sinFecha }) + " "
                   : ""}
                 {estadisticas.resumen.sinEstado > 0
-                  ? `${estadisticas.resumen.sinEstado} muestra(s) sin estado (cola «Hacer») no se incluyen.`
+                  ? t("stats.note.noStatus", { count: estadisticas.resumen.sinEstado })
                   : ""}
               </p>
             ) : null}
@@ -1249,9 +1281,9 @@ export default function Options() {
           <TabsContent value="apariencia">
             <div className="bionapp-panel p-4 space-y-4">
               <div>
-                <p className="font-semibold mb-1">Tema de la interfaz</p>
+                <p className="font-semibold mb-1">{t("options.theme.title")}</p>
                 <p className="text-sm text-slate-600 dark:text-slate-300">
-                  Elige cómo se muestra BionApp. La preferencia se guarda en este navegador.
+                  {t("options.theme.help")}
                 </p>
               </div>
               <div className="inline-flex rounded-md border border-border p-0.5">
@@ -1266,7 +1298,7 @@ export default function Options() {
                   }}
                 >
                   <Sun className="h-4 w-4" />
-                  Claro
+                  {t("options.theme.light")}
                 </Button>
                 <Button
                   type="button"
@@ -1279,113 +1311,76 @@ export default function Options() {
                   }}
                 >
                   <Moon className="h-4 w-4" />
-                  Oscuro
+                  {t("options.theme.dark")}
                 </Button>
               </div>
+              <div>
+                <p className="font-semibold mb-1">{t("language.title")}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{t("language.help")}</p>
+              </div>
+              <LanguageToggle />
             </div>
           </TabsContent>
 
           <TabsContent value="manual">
             <div className="bionapp-panel p-4 space-y-5 text-sm text-slate-700 dark:text-slate-200">
               <div>
-                <p className="font-semibold mb-1">Orden lógico de trabajo</p>
-                <p>
-                  Puedes crear muestras desde <strong>Preselección</strong> o desde la{" "}
-                  <strong>página principal</strong>. En Preselección acumulas peticiones interesantes
-                  en cola para OGM; al crear el Nº Bionano pasan a la base con la misma petición y
-                  diagnóstico. En la página principal puedes añadir y editar muestras directamente.
-                </p>
+                <p className="font-semibold mb-1">{t("manual.workflow.title")}</p>
+                <p>{mdStrong(t("manual.workflow.body"))}</p>
               </div>
 
               <div>
-                <p className="font-semibold mb-2">Estado de la muestra</p>
-                <p className="mb-2">
-                  El icono a la izquierda del Nº BN marca el estado. En modo modificar puedes
-                  cambiarlo; si cancelas sin guardar, vuelve al estado original.
-                </p>
+                <p className="font-semibold mb-2">{t("manual.status.title")}</p>
+                <p className="mb-2">{t("manual.status.body")}</p>
                 <ul className="space-y-1.5">
                   <li className="flex items-center gap-2">
                     <CircleDot size={18} color="var(--bion-neutral-muted)" strokeWidth={2} />
-                    <span>Gris — no empezado</span>
+                    <span>{t("manual.status.gray")}</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CircleDot size={18} color="var(--bion-danger-fill)" strokeWidth={2} />
-                    <span>Rojo — no valorable</span>
+                    <span>{t("manual.status.red")}</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CircleDot size={18} color="var(--bion-warn-fill)" strokeWidth={2} />
-                    <span>Amarillo — pendiente</span>
+                    <span>{t("manual.status.yellow")}</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CircleDot size={18} color="var(--bion-success-fill)" strokeWidth={2} />
-                    <span>Verde — realizado</span>
+                    <span>{t("manual.status.green")}</span>
                   </li>
                 </ul>
               </div>
 
               <div>
-                <p className="font-semibold mb-1">Acciones</p>
+                <p className="font-semibold mb-1">{t("manual.actions.title")}</p>
                 <ul className="list-disc pl-5 space-y-1.5">
-                  <li>
-                    <strong>Hacer</strong>: procesa las muestras que hayas metido y que aún no estén
-                    extraídas.
-                  </li>
-                  <li>
-                    <strong>Leer Extraído</strong>: una vez extraídas, sirve para meter las
-                    concentraciones de lo extraído.
-                  </li>
-                  <li>
-                    <strong>Tirar</strong>: para aquellas que tengan poco extraído.
-                  </li>
-                  <li>
-                    <strong>Marcar</strong>: para las extraídas pendientes de marcar.
-                  </li>
-                  <li>
-                    <strong>Leer Marcado</strong>: para cuantificar lo marcado.
-                  </li>
-                  <li>
-                    <strong>Pte Chip</strong>: para aquellas marcadas y cuantificadas pendientes de
-                    cargar.
-                  </li>
+                  <li>{mdStrong(t("manual.actions.hacer"))}</li>
+                  <li>{mdStrong(t("manual.actions.leerExtraido"))}</li>
+                  <li>{mdStrong(t("manual.actions.tirar"))}</li>
+                  <li>{mdStrong(t("manual.actions.marcar"))}</li>
+                  <li>{mdStrong(t("manual.actions.leerMarcado"))}</li>
+                  <li>{mdStrong(t("manual.actions.pteChip"))}</li>
                 </ul>
               </div>
 
               <div>
-                <p className="font-semibold mb-1">Otras pantallas</p>
+                <p className="font-semibold mb-1">{t("manual.other.title")}</p>
                 <ul className="list-disc pl-5 space-y-1.5">
-                  <li>
-                    <strong>Chips</strong>: gestión de chips y huecos FC asociados a las lecturas
-                    marcadas.
-                  </li>
-                  <li>
-                    <strong>Cálculos</strong>: utilidades de laboratorio (p. ej. diluciones) a partir
-                    de los datos ya registrados.
-                  </li>
-                  <li>
-                    <strong>Opciones</strong>: perfil, variables, etiquetas, estadísticas,
-                    documentos, exportación, apariencia y manual.
-                  </li>
+                  <li>{mdStrong(t("manual.other.chips"))}</li>
+                  <li>{mdStrong(t("manual.other.calcs"))}</li>
+                  <li>{mdStrong(t("manual.other.options"))}</li>
                 </ul>
               </div>
 
               <div>
-                <p className="font-semibold mb-1">Roles y usuarios</p>
-                <p>
-                  El rol <span className="font-mono">user</span> sirve para consultar muestras. El
-                  rol <span className="font-mono">admin</span> puede añadir muestras, gestionar
-                  catálogos y etiquetas. Los usuarios nuevos se crean con el{" "}
-                  <strong>código maestro</strong> definido al configurar la aplicación.
-                </p>
+                <p className="font-semibold mb-1">{t("manual.roles.title")}</p>
+                <p>{mdStrong(t("manual.roles.body"))}</p>
               </div>
 
               <div>
-                <p className="font-semibold mb-1">Editar y guardar</p>
-                <p>
-                  En la página principal, <strong>Modificar</strong> permite cambiar datos y el
-                  estado. <strong>Guardar</strong> confirma los cambios;{" "}
-                  <strong>Cancelar</strong> descarta todo lo no guardado, incluido el color de
-                  estado.
-                </p>
+                <p className="font-semibold mb-1">{t("manual.edit.title")}</p>
+                <p>{mdStrong(t("manual.edit.body"))}</p>
               </div>
             </div>
           </TabsContent>
@@ -1393,113 +1388,84 @@ export default function Options() {
           <TabsContent value="autoria">
             <div className="bionapp-panel p-4 space-y-5 text-sm text-slate-700 dark:text-slate-200">
               <div>
-                <p className="font-semibold mb-1">Autor</p>
+                <p className="font-semibold mb-1">{t("credits.author.title")}</p>
                 <p>
-                  BionApp ha sido ideado, diseñado y desarrollado por{" "}
-                  <a
-                    href="https://github.com/GenDoc94"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
-                  >
-                    GenDoc94
-                  </a>{" "}
-                  (Juan José Domínguez-García,{" "}
-                  <a
-                    href="https://orcid.org/0000-0001-6210-1294"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
-                  >
-                    ORCID
-                  </a>
-                  ).
+                  <Trans
+                    i18nKey="credits.author.body"
+                    components={{
+                      github: (
+                        <a
+                          href="https://github.com/GenDoc94"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
+                        />
+                      ),
+                      orcid: (
+                        <a
+                          href="https://orcid.org/0000-0001-6210-1294"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
+                        />
+                      ),
+                    }}
+                  />
                 </p>
               </div>
 
               <div>
-                <p className="font-semibold mb-1">Origen del proyecto</p>
-                <p>
-                  Es una idea original de GenDoc94, continuada a partir de un proyecto previo
-                  también llamado <strong>BionApp</strong>, creado y desarrollado al 100&nbsp;% por
-                  el autor en Microsoft Access. Esta versión (online y escritorio) es la evolución
-                  mejorada de aquella aplicación: misma filosofía de trabajo con muestras de OGM,
-                  con interfaz moderna, multiusuario y soporte web o local.
-                </p>
+                <p className="font-semibold mb-1">{t("credits.origin.title")}</p>
+                <p>{mdStrong(t("credits.origin.body"))}</p>
               </div>
 
               <div>
-                <p className="font-semibold mb-1">Versión actual</p>
-                <p>
-                  BionApp v{pkg.version} (beta). Existen dos ediciones con la misma lógica de
-                  negocio:
-                </p>
+                <p className="font-semibold mb-1">{t("credits.version.title")}</p>
+                <p>{t("credits.version.intro", { version: pkg.version })}</p>
                 <ul className="list-disc pl-5 mt-2 space-y-1.5">
-                  <li>
-                    <strong>Online</strong>: React, Vite, Tailwind CSS, React Router, Supabase
-                    (Auth, Postgres, Edge Functions, almacenamiento) y despliegue web (p. ej.
-                    Vercel).
-                  </li>
-                  <li>
-                    <strong>Escritorio</strong>: Electron, React, Vite (electron-vite), Tailwind
-                    CSS, SQLite (better-sqlite3), autenticación local (bcrypt) y datos en una
-                    carpeta elegida por el usuario.
-                  </li>
+                  <li>{mdStrong(t("credits.version.online"))}</li>
+                  <li>{mdStrong(t("credits.version.desktop"))}</li>
                 </ul>
-                <p className="mt-2">
-                  Interfaz común: componentes con Radix UI, iconos Lucide y notificaciones Sonner.
-                  Licencia MIT (enlace en el pie de la aplicación).
+                <p className="mt-2">{mdStrong(t("credits.version.common"))}</p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">{t("credits.ai.title")}</p>
+                <p>{t("credits.ai.body1")}</p>
+                <p className="mt-2">{t("credits.ai.disclaimer")}</p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">{t("credits.cite.title")}</p>
+                <p>
+                  <Trans
+                    i18nKey="credits.cite.body"
+                    values={{ doi: "10.5281/zenodo.22116491" }}
+                    components={{
+                      citation: (
+                        <a
+                          href="https://github.com/GenDoc94/BionApp_desktop/blob/master/CITATION.cff"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
+                        />
+                      ),
+                      doi: (
+                        <a
+                          href="https://doi.org/10.5281/zenodo.22116491"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
+                        />
+                      ),
+                    }}
+                  />
                 </p>
               </div>
 
               <div>
-                <p className="font-semibold mb-1">Uso de inteligencia artificial</p>
-                <p>
-                  Se ha utilizado inteligencia artificial para la generación de código de la
-                  aplicación. La idea original del desarrollo de software, las bases, toda la
-                  arquitectura de la app y su uso son de GenDoc94. La IA es una herramienta de
-                  implementación; no es autora del producto ni de su diseño de laboratorio.
-                </p>
-                <p className="mt-2">
-                  BionApp no ha sido creada por un informático profesional, sino por un médico
-                  aficionado a la informática. Puede haber errores de código e incluso de
-                  concepto. El autor no se responsabiliza de daños, pérdidas de datos, decisiones
-                  clínicas o de laboratorio, ni de cualquier otro perjuicio derivado del uso de
-                  esta aplicación. Se ofrece tal cual, en fase beta, bajo la licencia MIT.
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold mb-1">Cómo citar</p>
-                <p>
-                  Si usas BionApp en un trabajo, cítalo con los datos de{" "}
-                  <a
-                    href="https://github.com/GenDoc94/BionApp_desktop/blob/master/CITATION.cff"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
-                  >
-                    CITATION.cff
-                  </a>{" "}
-                  (autor, ORCID y DOI{" "}
-                  <a
-                    href="https://doi.org/10.5281/zenodo.22116491"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
-                  >
-                    10.5281/zenodo.22116491
-                  </a>
-                  ).
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold mb-1">Agradecimientos</p>
-                <p>
-                  Gracias a las comunidades y proyectos de código abierto que hacen posible esta
-                  pila tecnológica, y a quienes usan BionApp en el día a día del laboratorio.
-                </p>
+                <p className="font-semibold mb-1">{t("credits.thanks.title")}</p>
+                <p>{t("credits.thanks.body")}</p>
               </div>
             </div>
           </TabsContent>

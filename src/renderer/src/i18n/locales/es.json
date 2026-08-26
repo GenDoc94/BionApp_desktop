@@ -1,0 +1,896 @@
+{
+  "language": {
+    "es": "ES",
+    "en": "EN",
+    "title": "Idioma",
+    "help": "Elige el idioma de la interfaz. La preferencia se guarda en este equipo."
+  },
+  "common": {
+    "loading": "Cargando…",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "add": "Añadir",
+    "print": "Imprimir",
+    "close": "Cerrar",
+    "all": "Todos",
+    "actions": "Acciones",
+    "empty": "—",
+    "unnamed": "sin nombre",
+    "selectPlaceholder": "— Selecciona —",
+    "nOfTotal": "{{current}} de {{total}}",
+    "retry": "Reintentar"
+  },
+  "errors": {
+    "unknown": "Error desconocido",
+    "serverFunction": "Error en la función del servidor"
+  },
+  "nav": {
+    "backToApp": "Volver a la app",
+    "preselect": "Preselección",
+    "chips": "Chips",
+    "actions": "Acciones",
+    "calcs": "Cálculos",
+    "options": "Opciones"
+  },
+  "footer": {
+    "tagline": "BionApp v{{version}} (beta) · Gestión de muestras de OGM",
+    "createdBy": "Created by"
+  },
+  "role": {
+    "admin": "Administrador",
+    "user": "Usuario",
+    "unassigned": "Sin asignar"
+  },
+  "setup": {
+    "title": "BionApp escritorio (beta)",
+    "body": "Elige la carpeta que contendrá los datos y el código maestro para crear nuevos usuarios. NO se podrá cambiar más adelante.",
+    "pickFolder": "Seleccionar carpeta…",
+    "adminCode": "Código maestro (mín. 4 caracteres)",
+    "adminCodePlaceholder": "Código maestro",
+    "confirmCode": "Confirmar código maestro",
+    "confirmPlaceholder": "Repite el código maestro",
+    "mismatch": "Los códigos no coinciden",
+    "continue": "Continuar",
+    "preparing": "Preparando…",
+    "remember": "Apunta bien el código maestro, no se podrá cambiar.",
+    "languageHint": "También puedes elegir el idioma de la interfaz."
+  },
+  "login": {
+    "needFirstUser": "Primero crea el primer usuario de esta instalación",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "emailPlaceholder": "usuario@ejemplo.com",
+    "enter": "Entrar",
+    "checking": "Comprobando instalación...",
+    "signingIn": "Iniciando sesión...",
+    "addUser": "Añadir nuevo usuario",
+    "restricted": "Acceso restringido a personal autorizado",
+    "checkUpdates": "v{{version}} (beta) · Buscar actualizaciones",
+    "checkUpdatesTitle": "Buscar actualizaciones en GitHub",
+    "checkingUpdates": "Buscando actualizaciones…",
+    "checkingGithub": "Buscando actualizaciones en GitHub…",
+    "versionBeta": "v{{version}} (beta)",
+    "noUsers": "No hay usuarios creados todavía. Crea tu primer usuario en «Añadir nuevo usuario» con el código maestro que has creado antes.",
+    "usersCheckError": "No se pudo comprobar si hay usuarios: {{error}}",
+    "createFirst": "Crea el primer usuario de esta instalación",
+    "needEmailPassword": "Introduce correo y contraseña",
+    "signedIn": "Sesión iniciada correctamente",
+    "offline": "No se pudo comprobar. ¿Hay conexión a internet?"
+  },
+  "createUser": {
+    "title": "Crear nuevo usuario",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "role": "Rol",
+    "roleHelp": "user solo puede leer muestras; admin puede añadir nuevas muestras.",
+    "adminCode": "Código maestro",
+    "adminCodePlaceholder": "Código privado",
+    "creating": "Creando usuario...",
+    "submit": "Crear usuario",
+    "backToLogin": "Volver al login",
+    "incomplete": "Completa correo, contraseña, rol y código maestro",
+    "created": "Usuario {{email}} creado como {{role}}",
+    "emailPlaceholder": "usuario@ejemplo.com"
+  },
+  "updates": {
+    "newVersion": "Hay una versión nueva: {{version}}",
+    "upToDate": "Estás al día",
+    "installed": "Versión instalada: **v{{current}}**",
+    "availableOnGithub": "· Disponible en GitHub: **v{{latest}}**",
+    "changes": "Cambios:",
+    "howToTitle": "Cómo actualizar (modo local)",
+    "howToBody": "Cierra BionApp, descarga el **BionApp.exe** nuevo desde GitHub Releases y sustituye el ejecutable anterior. Conserva tu carpeta de datos (`bionapp.sqlite` y `documentos/`).",
+    "howToSmartscreen": "El ejecutable no está firmado. Si Windows SmartScreen avisa, usa *Más información* → *Ejecutar de todas formas*.",
+    "none": "No hay versiones más recientes en GitHub para esta instalación.",
+    "openGithub": "Abrir en GitHub",
+    "close": "Cerrar",
+    "whatsNewTitle": "Nueva versión {{version}}",
+    "gotIt": "Entendido",
+    "err": {
+      "packageJson": "No se pudo leer package.json en GitHub ({{status}})",
+      "invalidGithub": "La respuesta de GitHub no es válida",
+      "latestRelease": "No se pudo leer el último Release de GitHub ({{status}})",
+      "invalidRemoteVersion": "La versión remota no es válida",
+      "offline": "No se pudo comprobar. ¿Hay conexión a internet?",
+      "repoNotFound": "No se encontró el repositorio en GitHub.",
+      "readVersion": "No se pudo leer la versión en GitHub"
+    }
+  },
+  "options": {
+    "title": "Opciones",
+    "loading": "Cargando…",
+    "tab": {
+      "profile": "Perfil",
+      "variables": "Variables",
+      "tags": "Etiquetas",
+      "stats": "Estadísticas",
+      "docs": "Documentos",
+      "export": "Exportación",
+      "appearance": "Apariencia",
+      "manual": "Manual",
+      "authorship": "Autoría"
+    },
+    "setup": {
+      "continue": "Continuar a la base",
+      "title": "Configuración inicial",
+      "body": "En **Variables**, crea al menos un tipo de muestra y un diagnóstico. Luego pulsa **Continuar a la base**.",
+      "counts": "Tipos: {{tipos}} · Diagnósticos: {{dx}}",
+      "backBlocked": "Añade al menos un tipo de muestra y un diagnóstico antes de volver",
+      "needCatalogs": "Añade al menos un tipo de muestra y un diagnóstico"
+    },
+    "restricted": {
+      "title": "Acceso restringido",
+      "catalogs": "Necesitas rol admin para modificar los catálogos DMuestra y DDx.",
+      "tags": "Necesitas rol admin para crear y editar etiquetas."
+    },
+    "vars": {
+      "sampleTypes": "Tipos de muestra",
+      "diagnoses": "Diagnósticos",
+      "addSampleType": "Añadir tipo de muestra",
+      "sampleTypeHint": "Nombre (p. ej. Ganglio, SP, MO…)",
+      "sampleTypePlaceholder": "Nuevo tipo de muestra…",
+      "deleteHint": "Solo se puede eliminar la última entrada (Cod más alto), para no dejar huecos en la numeración.",
+      "addDx": "Añadir diagnóstico",
+      "dxHint": "Nombre (p. ej. LMA, LLA, LLC…)",
+      "dxPlaceholder": "Nuevo diagnóstico…"
+    },
+    "list": {
+      "current": "Listado actual"
+    },
+    "col": {
+      "sampleType": "Tipo de Muestra",
+      "actions": "Acciones",
+      "name": "Nombre"
+    },
+    "empty": {
+      "values": "No hay valores."
+    },
+    "toast": {
+      "emptyName": "El nombre no puede estar vacío",
+      "catalogUpdated": "Catálogo actualizado",
+      "deleteLastOnly": "Solo se puede eliminar la última entrada del catálogo (Cod más alto)",
+      "inUse": "No se puede eliminar: {{count}} muestra(s) usan este valor. Edítalas o reasígnalas antes.",
+      "lastDeleted": "Última entrada eliminada",
+      "tagAdded": "Etiqueta añadida",
+      "tagUpdated": "Etiqueta actualizada",
+      "tagDeleted": "Etiqueta eliminada"
+    },
+    "err": {
+      "load": "Error cargando opciones",
+      "addSampleType": "Error añadiendo tipo de muestra",
+      "saveCatalog": "Error guardando el catálogo",
+      "deleteCatalog": "Error eliminando del catálogo",
+      "addDx": "Error añadiendo diagnóstico",
+      "addTag": "Error añadiendo etiqueta",
+      "saveTag": "Error guardando etiqueta",
+      "deleteTag": "Error eliminando etiqueta"
+    },
+    "tags": {
+      "add": "Añadir etiqueta",
+      "nameHint": "Nombre (p. ej. Tesis, EC-XXX, QC…)",
+      "namePlaceholder": "Nueva etiqueta…",
+      "color": "Color",
+      "colorAria": "Color de etiqueta",
+      "colorHint": "Elige un color para identificar la etiqueta en las muestras.",
+      "empty": "No hay etiquetas.",
+      "confirmDelete": "¿Eliminar etiqueta «{{name}}»?"
+    },
+    "profile": {
+      "email": "Correo",
+      "role": "Rol",
+      "roleLocked": "Por el momento no se puede cambiar el rol una vez asignado."
+    },
+    "theme": {
+      "title": "Tema de la interfaz",
+      "help": "Elige cómo se muestra BionApp. La preferencia se guarda en este navegador.",
+      "light": "Claro",
+      "dark": "Oscuro"
+    }
+  },
+  "catalog": {
+    "deleteLastOnly": "Eliminar (solo la última del catálogo)"
+  },
+  "stats": {
+    "filters": "Filtros",
+    "sampleType": "Tipo de muestra",
+    "diagnosis": "Diagnóstico",
+    "clearFilters": "Quitar filtros",
+    "card": {
+      "completed": "Completas (estado 3)",
+      "inProgress": "En proceso (estado 2)",
+      "failed": "Fallidas (estado 1)"
+    },
+    "evolution": "Evolución por {{agrupacion}} de extracción",
+    "group": {
+      "months": "Meses",
+      "quarters": "Trimestres",
+      "years": "Años",
+      "year": "año",
+      "quarter": "trimestre",
+      "month": "mes"
+    },
+    "exportCsv": "Exportar CSV",
+    "groupHint": "Agrupado por Fecha (fecha de extracción). Solo muestras con estado 1, 2 o 3.",
+    "stackedView": "Vista de columnas apiladas",
+    "barsView": "Barras horizontales por periodo",
+    "empty": "No hay muestras con estado asignado y fecha de extracción para mostrar.",
+    "tableTitle": "Tabla por {{agrupacion}}",
+    "failed": "Fallidas",
+    "inProgress": "En proceso",
+    "completed": "Completas",
+    "total": "Total",
+    "pctFailed": "% Fallidas",
+    "pctInProgress": "% En proceso",
+    "pctCompleted": "% Completas",
+    "note": {
+      "noDate": "{{count}} muestra(s) con estado 1–3 sin fecha de extracción no aparecen en el gráfico.",
+      "noStatus": "{{count}} muestra(s) sin estado (cola «Hacer») no se incluyen."
+    },
+    "period": {
+      "samples": "{{count}} muestras",
+      "quarter": "T{{q}} {{year}}"
+    },
+    "tooltip": {
+      "failed": "Fallidas: {{count}}",
+      "inProgress": "En proceso: {{count}}",
+      "completed": "Completas: {{count}}"
+    },
+    "legend": {
+      "failed": "Fallidas: {{count}} ({{pct}})",
+      "inProgress": "En proceso: {{count}} ({{pct}})",
+      "completed": "Completas: {{count}} ({{pct}})",
+      "failedShort": "Fallidas",
+      "inProgressShort": "En proceso",
+      "completedShort": "Completas"
+    },
+    "bar": {
+      "title": "{{label}}: {{total}} muestras",
+      "failed": "Fallidas: {{count}}",
+      "inProgress": "En proceso: {{count}}",
+      "completed": "Completas: {{count}}"
+    },
+    "csv": {
+      "period": "Periodo",
+      "failed": "Fallidas",
+      "inProgress": "En proceso",
+      "completed": "Completas",
+      "total": "Total",
+      "pctFailed": "% Fallidas",
+      "pctInProgress": "% En proceso",
+      "pctCompleted": "% Completas"
+    },
+    "months": {
+      "ene": "ene",
+      "feb": "feb",
+      "mar": "mar",
+      "abr": "abr",
+      "may": "may",
+      "jun": "jun",
+      "jul": "jul",
+      "ago": "ago",
+      "sep": "sep",
+      "oct": "oct",
+      "nov": "nov",
+      "dic": "dic"
+    }
+  },
+  "manual": {
+    "workflow": {
+      "title": "Orden lógico de trabajo",
+      "body": "Puedes crear muestras desde **Preselección** o desde la **página principal**. En Preselección acumulas peticiones interesantes en cola para OGM; al crear el Nº Bionano pasan a la base con la misma petición y diagnóstico. En la página principal puedes añadir y editar muestras directamente."
+    },
+    "status": {
+      "title": "Estado de la muestra",
+      "body": "El icono a la izquierda del Nº BN marca el estado. En modo modificar puedes cambiarlo; si cancelas sin guardar, vuelve al estado original.",
+      "gray": "Gris — no empezado",
+      "red": "Rojo — no valorable",
+      "yellow": "Amarillo — pendiente",
+      "green": "Verde — realizado"
+    },
+    "actions": {
+      "title": "Acciones",
+      "hacer": "**Hacer**: procesa las muestras que hayas metido y que aún no estén extraídas.",
+      "leerExtraido": "**Leer Extraído**: una vez extraídas, sirve para meter las concentraciones de lo extraído.",
+      "tirar": "**Tirar**: para aquellas que tengan poco extraído.",
+      "marcar": "**Marcar**: para las extraídas pendientes de marcar.",
+      "leerMarcado": "**Leer Marcado**: para cuantificar lo marcado.",
+      "pteChip": "**Pte Chip**: para aquellas marcadas y cuantificadas pendientes de cargar."
+    },
+    "other": {
+      "title": "Otras pantallas",
+      "chips": "**Chips**: gestión de chips y huecos FC asociados a las lecturas marcadas.",
+      "calcs": "**Cálculos**: utilidades de laboratorio (p. ej. diluciones) a partir de los datos ya registrados.",
+      "options": "**Opciones**: perfil, variables, etiquetas, estadísticas, documentos, exportación, apariencia y manual."
+    },
+    "roles": {
+      "title": "Roles y usuarios",
+      "body": "El rol user sirve para consultar muestras. El rol admin puede añadir muestras, gestionar catálogos y etiquetas. Los usuarios nuevos se crean con el **código maestro** definido al configurar la aplicación."
+    },
+    "edit": {
+      "title": "Editar y guardar",
+      "body": "En la página principal, **Modificar** permite cambiar datos y el estado. **Guardar** confirma los cambios; **Cancelar** descarta todo lo no guardado, incluido el color de estado."
+    }
+  },
+  "credits": {
+    "author": {
+      "title": "Autor",
+      "body": "BionApp ha sido ideado, diseñado y desarrollado por <github>GenDoc94</github> (Juan José Domínguez-García, <orcid>ORCID</orcid>)."
+    },
+    "origin": {
+      "title": "Origen del proyecto",
+      "body": "Es una idea original de GenDoc94, continuada a partir de un proyecto previo también llamado **BionApp**, creado y desarrollado al 100 % por el autor en Microsoft Access. Esta versión (online y escritorio) es la evolución mejorada de aquella aplicación: misma filosofía de trabajo con muestras de OGM, con interfaz moderna, multiusuario y soporte web o local."
+    },
+    "version": {
+      "title": "Versión actual",
+      "intro": "BionApp v{{version}} (beta). Existen dos ediciones con la misma lógica de negocio:",
+      "online": "**Online**: React, Vite, Tailwind CSS, React Router, Supabase (Auth, Postgres, Edge Functions, almacenamiento) y despliegue web (p. ej. Vercel).",
+      "desktop": "**Escritorio**: Electron, React, Vite (electron-vite), Tailwind CSS, SQLite (better-sqlite3), autenticación local (bcrypt) y datos en una carpeta elegida por el usuario.",
+      "common": "Interfaz común: componentes con Radix UI, iconos Lucide y notificaciones Sonner. Licencia MIT (enlace en el pie de la aplicación)."
+    },
+    "ai": {
+      "title": "Uso de inteligencia artificial",
+      "body1": "Se ha utilizado inteligencia artificial para la generación de código de la aplicación. La idea original del desarrollo de software, las bases, toda la arquitectura de la app y su uso son de GenDoc94. La IA es una herramienta de implementación; no es autora del producto ni de su diseño de laboratorio.",
+      "disclaimer": "BionApp no ha sido creada por un informático profesional, sino por un médico aficionado a la informática. Puede haber errores de código e incluso de concepto. El autor no se responsabiliza de daños, pérdidas de datos, decisiones clínicas o de laboratorio, ni de cualquier otro perjuicio derivado del uso de esta aplicación. Se ofrece tal cual, en fase beta, bajo la licencia MIT."
+    },
+    "cite": {
+      "title": "Cómo citar",
+      "body": "Si usas BionApp en un trabajo, cítalo con los datos de <citation>CITATION.cff</citation> (autor, ORCID y DOI <doi>{{doi}}</doi>)."
+    },
+    "thanks": {
+      "title": "Agradecimientos",
+      "body": "Gracias a las comunidades y proyectos de código abierto que hacen posible esta pila tecnológica, y a quienes usan BionApp en el día a día del laboratorio."
+    }
+  },
+  "docs": {
+    "title": "Protocolos y documentos",
+    "help": "Los archivos se guardan en la carpeta `documentos/` dentro de la carpeta de datos compartida de esta instalación.",
+    "upload": "Subir documento",
+    "refresh": "Actualizar lista",
+    "loading": "Cargando documentos…",
+    "empty": "No hay documentos. Sube protocolos PDF, Word u otros archivos de la técnica.",
+    "download": "Descargar",
+    "delete": "Eliminar",
+    "confirmDelete": "¿Eliminar «{{name}}» de la carpeta de documentos?",
+    "toast": {
+      "loadError": "Error al cargar documentos",
+      "uploadedOne": "Documento subido",
+      "uploadedMany": "{{count}} documentos subidos",
+      "uploadError": "Error al subir",
+      "downloadError": "Error al descargar",
+      "deleted": "Documento eliminado",
+      "deleteError": "Error al eliminar"
+    },
+    "err": {
+      "invalidName": "Nombre de archivo no válido",
+      "notFound": "Archivo no encontrado"
+    }
+  },
+  "export": {
+    "title": "Exportar base de datos",
+    "help": "Exporta todas las tablas de la carpeta de datos. Excel y JSON generan un ZIP con un archivo por tabla. SQLite copia la base local a un archivo `.sqlite`. Se abrirá un diálogo para elegir la ubicación.",
+    "excel": "Exportar Excel (.xlsx → ZIP)",
+    "json": "Exportar JSON (.json → ZIP)",
+    "sqlite": "Exportar SQLite (.sqlite)",
+    "tablesIncluded": "Tablas incluidas: {{tables}}.",
+    "toast": {
+      "error": "Error al exportar",
+      "saved": "Exportación guardada:\n{{path}}"
+    }
+  },
+  "license": {
+    "title": "Licencia MIT"
+  },
+  "app": {
+    "loadingSamples": "Cargando muestras...",
+    "connectionError": "Error de conexión",
+    "retry": "Reintentar",
+    "empty": {
+      "noSamples": "No se ha añadido ninguna muestra",
+      "addFirst": "Añade la primera muestra"
+    },
+    "setupBanner": "Configuración inicial: elige un **tipo de muestra** y un **diagnóstico** en los desplegables y pulsa **Guardar** para ver la muestra 1.",
+    "nav": {
+      "record": "Registro:"
+    },
+    "search": {
+      "placeholder": "Buscar...",
+      "go": "Ir",
+      "goTitle": "Ir al NumBN"
+    },
+    "filters": {
+      "title": "Filtros",
+      "aria": "Filtros de muestras",
+      "byRequest": "Por petición",
+      "byStatus": "Por estado",
+      "tags": "Etiquetas",
+      "requestPlaceholder": "Nº petición",
+      "apply": "Aplicar",
+      "noTags": "No hay etiquetas definidas. Créalas en Opciones.",
+      "tagsHint": "Muestras con al menos una etiqueta seleccionada",
+      "tagsAria": "Filtrar por etiquetas",
+      "active": "Filtro activo: **{{label}}** — {{count}} muestras",
+      "clear": "Quitar filtro",
+      "requestLabel": "Petición {{q}}",
+      "tagsLabel": "Etiquetas: {{names}}"
+    },
+    "status": {
+      "completed": "Completadas",
+      "pending": "Pendientes",
+      "failed": "Fallidas"
+    },
+    "newSample": "Nueva muestra",
+    "user": {
+      "label": "Usuario:",
+      "unknown": "Desconocido"
+    },
+    "role": {
+      "label": "Rol:"
+    },
+    "deleteSample": "Eliminar muestra",
+    "edit": "Modificar",
+    "logout": "Cerrar sesión",
+    "state": {
+      "red": "Estado rojo (1)",
+      "yellow": "Estado amarillo (2)",
+      "green": "Estado verde (3)",
+      "undefined": "Estado sin definir"
+    },
+    "numBnTitle": "Número de BN: {{numBN}}",
+    "tags": {
+      "assign": "Asignar etiquetas",
+      "aria": "Etiquetas de muestra"
+    },
+    "preselect": {
+      "viewReason": "Ver motivo de preselección"
+    },
+    "field": {
+      "requestNo": "Nº Petición:",
+      "position": "Posición:",
+      "sampleType": "Tipo de muestra:",
+      "diagnosis": "Diagnóstico:",
+      "processing": "Procesamiento:",
+      "comment": "Comentario:",
+      "extractionDate": "Fecha de extracción:",
+      "viscosity": "Viscosidad:",
+      "number": "Nº:",
+      "date": "Fecha:",
+      "commentShort": "Coment:"
+    },
+    "quant": {
+      "left": "I",
+      "center": "C",
+      "right": "D"
+    },
+    "copy": {
+      "extractionTitle": "Copiar Fecha, PN, LN y Exp de la muestra anterior",
+      "labeledTitle": "Copiar Fecha, PN, LN, Exp, PNm, LNm y Expm de la muestra anterior (misma lectura y Nº LM)"
+    },
+    "extracted": {
+      "title": "Lectura de lo extraído",
+      "delete": "Eliminar esta lectura",
+      "add": "Añadir nueva lectura",
+      "addFirst": "Añadir lectura"
+    },
+    "labeled": {
+      "title": "Datos del marcado",
+      "delete": "Eliminar esta lectura marcada",
+      "add": "Añadir nueva lectura marcada",
+      "addFirst": "Añadir marcado",
+      "commentPlaceholder": "Comentario (Marcado)"
+    },
+    "chips": {
+      "label": "Chips:",
+      "fcPlaceholder": "— FC —",
+      "fcValue": "FC: {{fc}}",
+      "repeatOnEdit": "Repetir este chip (activo). Pulsa para quitar.",
+      "repeatOn": "Repetir este chip (activo)",
+      "repeatMarkEdit": "Marcar que este chip ha fallado y hay que repetirlo.",
+      "repeatMark": "Marcar repetir chip",
+      "commentPlaceholder": "Coment.",
+      "delete": "Eliminar este chip",
+      "addAnother": "— Añadir otro chip —",
+      "select": "— Selecciona chip —",
+      "addToLm": "Añadir chip a esta lectura marcada",
+      "none": "Sin chip"
+    },
+    "confirm": {
+      "addSample": "¿Añadir muestra {{numBN}}?",
+      "deleteSample": "¿Eliminar muestra {{numBN}}?",
+      "deleteReading": "¿Eliminar lectura {{numLectura}} de la muestra {{numBN}}? Esto eliminará todos los datos asociados.",
+      "deleteLm": "¿Eliminar lectura marcada {{numLectMarc}} de la lectura {{numLectura}} de la muestra {{numBN}}?",
+      "deleteChip": "¿Eliminar el chip {{chipNum}} ({{chipName}}) asignado a la lectura marcada {{numLectMarc}} de la lectura {{numLectura}} de la muestra {{numBN}}?"
+    },
+    "toast": {
+      "catalogsLoadError": "Error al cargar catálogos",
+      "sampleNotFoundNum": "No se encontró la muestra {{numBN}}",
+      "samplesLoadError": "Error al cargar muestras",
+      "logoutOk": "Sesión cerrada correctamente",
+      "logoutError": "Error al cerrar sesión",
+      "selectTypeDxSave": "Selecciona un tipo de muestra y un diagnóstico antes de guardar",
+      "fcTaken": "El hueco FC {{fc}} del chip #{{numChip}} ya está asignado a otra muestra",
+      "saveOk": "Cambios guardados correctamente",
+      "saveError": "Error al guardar cambios",
+      "selectTypeDxContinue": "Debes seleccionar tipo de muestra y diagnóstico para continuar",
+      "invalidNumber": "Introduce un número válido",
+      "notInFilter": "Esa muestra no está en el filtro activo",
+      "sampleNotFound": "No se encontró la muestra",
+      "filterOn": "Filtro activo: {{etiqueta}} ({{count}} muestras)",
+      "filterOff": "Filtro quitado — mostrando todas las muestras",
+      "enterRequest": "Introduce un número de petición",
+      "noSamplesForRequest": "No hay muestras con petición {{q}}",
+      "noSamplesStatus": "No hay muestras {{etiqueta}}",
+      "selectTag": "Selecciona al menos una etiqueta",
+      "noSamplesForTags": "No hay muestras con las etiquetas seleccionadas",
+      "sample1Exists": "La muestra 1 ya existe",
+      "sample1Created": "Muestra 1 creada. Define tipo de muestra y diagnóstico en Opciones.",
+      "firstSampleError": "Error al crear la primera muestra",
+      "sampleExists": "La muestra ya existe",
+      "sampleCreated": "Muestra creada correctamente",
+      "sampleCreateError": "Error al crear la muestra",
+      "noSampleToDelete": "No hay muestra seleccionada para eliminar",
+      "sampleDeleted": "Muestra {{numBN}} eliminada correctamente",
+      "sampleDeleteError": "Error al eliminar la muestra",
+      "readingDeleted": "Lectura {{numLectura}} eliminada correctamente",
+      "readingDeleteError": "Error al eliminar la lectura",
+      "lmDeleted": "Lectura marcada {{numLectMarc}} eliminada correctamente",
+      "lmDeleteError": "Error al eliminar la lectura marcada",
+      "noPreviousSample": "No hay muestra anterior para copiar",
+      "previousNotFound": "No se encontró la muestra anterior",
+      "copiedPrevious": "Copiado de la muestra anterior",
+      "previousNoLm": "La muestra anterior no tiene esta lectura de marcado (mismo Nº lectura / Nº LM)",
+      "labeledCopied": "Datos de marcado copiados de la muestra anterior",
+      "readingAdded": "Lectura añadida correctamente",
+      "readingCreateError": "Error al crear la lectura",
+      "lmAdded": "Lectura de marcado añadida correctamente",
+      "lmCreateError": "Error al crear la lectura de marcado",
+      "noLmSelected": "No hay lectura marcada seleccionada",
+      "selectChip": "Selecciona un chip",
+      "chipNotFound": "Chip no encontrado",
+      "chipAlreadyAssigned": "Ese chip ya está asignado a esta lectura marcada",
+      "chipNoFc": "Ese chip no tiene huecos FC libres (1–3 ya ocupados en otras muestras)",
+      "chipAdded": "Chip añadido correctamente",
+      "chipAddError": "Error al añadir chip",
+      "noChipToDelete": "No hay chip asignado para eliminar",
+      "chipDeleted": "Chip {{chipNum}} eliminado correctamente",
+      "chipDeleteError": "Error al eliminar chip",
+      "maxTags": "Máximo {{max}} etiquetas por muestra",
+      "tagsSaveError": "Error guardando etiquetas",
+      "repeatOn": "Marcado repetir para este chip (Repetir_Chip = 1)",
+      "repeatOff": "Repetición desmarcada para este chip",
+      "repeatError": "Error al actualizar repetición de chip"
+    }
+  },
+  "samples": {
+    "fetch": {
+      "network": "No se pudieron cargar las muestras. Suele deberse a un fallo de red o del proxy (VPN, antivirus, empresa). Comprueba la conexión y pulsa Reintentar.",
+      "generic": "No se pudieron cargar las muestras: {{msg}}"
+    }
+  },
+  "chips": {
+    "loading": "Cargando chips...",
+    "title": "Chips cargados",
+    "number": "Nº Chip",
+    "name": "Nombre de chip",
+    "add": "Añadir chip",
+    "searchPlaceholder": "Buscar por Nº chip, nombre o Nº muestra...",
+    "searchCount": "{{filtered}} de {{total}} chips",
+    "clear": "Limpiar",
+    "empty": "No hay chips en el catálogo. Añade el primero con el formulario de arriba.",
+    "noMatch": "No hay chips que coincidan con «{{query}}».",
+    "saveName": "Guardar nombre",
+    "cancel": "Cancelar",
+    "editName": "Editar nombre",
+    "delete": "Eliminar chip",
+    "goSample": "Ir a muestra {{numBN}} · lectura {{numLectura}} · LM {{numLectMarc}}",
+    "repeatMarked": "· Repetir chip marcado",
+    "fc": {
+      "allFree": "FC 1–3 libres",
+      "noneFree": "sin huecos",
+      "someFree": "FC {{slots}} libre(s)",
+      "slot": "FC {{n}}"
+    },
+    "toast": {
+      "loadError": "Error al cargar chips",
+      "loadAssignments": "Error al cargar muestras en chips",
+      "emptyName": "El nombre del chip no puede estar vacío",
+      "added": "Chip añadido correctamente",
+      "addError": "Error al añadir chip",
+      "deleted": "Chip eliminado",
+      "deleteError": "Error al eliminar chip",
+      "renamed": "Nombre del chip actualizado",
+      "renameError": "Error al actualizar nombre del chip"
+    },
+    "confirm": {
+      "delete": "¿Eliminar chip {{num}} - {{name}}?"
+    }
+  },
+  "preselect": {
+    "title": "Preselección",
+    "loading": "Cargando preselección...",
+    "intro": "Añade aquí las peticiones de muestras interesantes en cola para realizar OGM. Puedes indicar diagnóstico. Al crear el NºBionano se meterá a la base con la misma petición y diagnóstico.",
+    "requestNo": "Nº petición",
+    "comment": "Comentario",
+    "requestPlaceholder": "Ej. 12345",
+    "commentPlaceholder": "Opcional: motivo, notas...",
+    "add": "Añadir",
+    "empty": "No hay peticiones en preselección. Añade la primera con el formulario de arriba.",
+    "pending": "Pendiente",
+    "inSamples": "En Muestras",
+    "emptyPending": "No hay peticiones pendientes de Nº Bionano.",
+    "emptyInSamples": "Aún no hay peticiones pasadas a Muestras.",
+    "bnNo": "Nº Bionano",
+    "actions": "Acciones",
+    "added": "Añadida {{dir}}",
+    "sortByAdded": "Ordenar por fecha de Añadida",
+    "goSample": "Ir a la muestra",
+    "save": "Guardar cambios",
+    "cancel": "Cancelar",
+    "edit": "Editar comentario y diagnóstico",
+    "createSample": "Crear muestra en Muestras",
+    "createBn": "Crear BN",
+    "goToSample": "Ir a muestra",
+    "delete": "Eliminar de preselección",
+    "showingAll": "Mostrando todo",
+    "showingPage": "Mostrando <strong>{{shown}}</strong> / {{total}}",
+    "prevPage": "Página anterior",
+    "nextPage": "Página siguiente",
+    "pageSize": "Tamaño de la página",
+    "all": "Todos",
+    "inSamplesHint": "Para quitar una petición de esta lista, elimina primero su muestra en la app principal.",
+    "dxSuffix": "· Dx: {{dx}}",
+    "toast": {
+      "loadError": "Error al cargar preselección",
+      "dxLoadError": "Error al cargar diagnósticos",
+      "peticNotFound": "No se encontró la petición {{petic}} en preselección",
+      "invalidPetic": "Introduce un Nº de petición válido",
+      "duplicate": "Petición ya incluida en lista de preselección",
+      "added": "Petición añadida a preselección",
+      "addError": "Error al añadir preselección",
+      "alreadyInSamples": "La petición {{petic}} ya está en Muestras (Nº {{numBN}}). Elimina primero la muestra en la app principal.",
+      "deleted": "Petición eliminada de preselección",
+      "deleteError": "Error al eliminar preselección",
+      "updated": "Preselección actualizada",
+      "updateError": "Error al actualizar preselección",
+      "sampleCreated": "Muestra {{numBN}} creada para petición {{petic}}",
+      "createError": "Error al crear la muestra"
+    },
+    "confirm": {
+      "delete": "¿Eliminar petición {{petic}} de preselección?",
+      "create": "¿Crear muestra Nº {{numBN}} para la petición {{petic}}{{dxTexto}} y cargarla en Muestras?"
+    },
+    "err": {
+      "notFound": "No se encontró la petición en preselección",
+      "alreadyHasBn": "Esta petición ya tiene un Nº Bionano asignado",
+      "existsInSamples": "La petición {{petic}} ya existe en Muestras (Nº {{numBN}})"
+    }
+  },
+  "actions": {
+    "title": "Acciones",
+    "hacer": "Hacer",
+    "leerExtraido": "Leer Extraído",
+    "tirar": "¿Tirar?",
+    "marcar": "Marcar",
+    "leerMarcado": "Leer Marcado",
+    "pteChip": "Pte Chip",
+    "saving": "Guardando...",
+    "saveAll": "Guardar todo",
+    "print": {
+      "empty": "No hay muestras para imprimir",
+      "docTitle": "Hacer — Muestras",
+      "iframeTitle": "Impresión Hacer",
+      "heading": "Hacer — Muestras con Estado_Muestra = NULL",
+      "meta": "{{fecha}} · {{count}} muestra(s)",
+      "wbAria": "Registro de lavados WB",
+      "prepareError": "No se pudo preparar la impresión",
+      "dialogError": "Error al abrir el diálogo de impresión"
+    },
+    "edit": "Editar",
+    "cancel": "Cancelar",
+    "hacerHeading": "Muestras con Estado_Muestra = NULL",
+    "leerExtraidoHeading": "Leer Extraído — Estado_Muestra = 2 y lecturas sin cuantificar (Izq, Cen y Dcha vacías)",
+    "leerMarcadoHeading": "Leer Marcado — Estado_Muestra = 2, lectura marcada creada y sin cuantificar (Izq_LM y Dcha_LM vacías)",
+    "tirarHeading": "¿Tirar? — <status></status> y <mean></mean> {{cmp}} {{threshold}}",
+    "extractedMeanLabel": "Media de lo extraído",
+    "labeledMeanLabel": "Media de lo marcado",
+    "marcarHeading": "Marcar — <status></status> y <mean></mean> {{cmp}} {{threshold}}",
+    "pteChipHeading": "Pte Chip — <status></status> sin chip (<mean></mean> ≥ {{minMedia}}) o chip con <repeat></repeat>",
+    "hacerEditing": "Editando {{count}} muestra(s). NumBN no se puede modificar.",
+    "leerExtraidoEditing": "Editando {{count}} lectura(s). Media y CV se previsualizan al rellenar Izq, Cen y Dcha; se confirman al guardar.",
+    "preview": {
+      "lm": "Vista previa al escribir Izq_LM y Dcha_LM (se confirma al guardar)",
+      "extracted": "Vista previa al escribir Izq, Cen y Dcha (se confirma al guardar)"
+    },
+    "col": {
+      "sampleType": "Tipo de muestra",
+      "diagnosis": "Diagnóstico",
+      "viscosityGrade": "Grado viscosidad",
+      "readingNo": "Nº Lectura",
+      "readingDate": "Fecha lectura",
+      "extractedMean": "Media extraído",
+      "extractedCv": "CV extraído",
+      "lmNo": "Nº LM",
+      "mean": "Media",
+      "type": "Tipo",
+      "pendingChip": "Pendiente de chip (por lectura marcada)"
+    },
+    "marcarHelp": {
+      "amber": "Ámbar — volver a marcar: 1 lectura de marcado (LM) en esa lectura extraída y ≥2 chips con !. Con 2 LM en la misma lectura extraída no aparece (sin ADN para otro intento).",
+      "normal": "Fila normal: lectura extraída alta (> {{threshold}}) sin ninguna LM (p. ej. 2.ª lectura extraída tras fallar la 1.ª).",
+      "typeNone": "Sin marcado",
+      "typeRelabel": "Volver a marcar ({{lmCount}} LM, ≥{{minChips}} chips con !)"
+    },
+    "pteChipHelp": "Una fila por muestra. Lista lecturas marcadas con Media_LM ≥ 2 sin ningún chip, y también aquellas donde algún chip tiene Repetir_Chip = 1 en la app (icono junto a cada chip cargado). Las filas con repetición marcada se resaltan en amarillo e indican nº de chip y FC.",
+    "pteChipItem": "Lect. {{numLectura}} — LM {{numLectMarc}} — Media_LM {{media}} — Fecha lect. marc.: {{fecha}}",
+    "pteChipAssignPending": "· Pendiente asignar chip",
+    "pteChipRepeat": "· Repetir: {{detalle}}",
+    "pteChipChipDetail": "Chip #{{numChip}} FC {{fc}} ({{name}})",
+    "leerMarcadoEditing": "Editando {{count}} lectura(s) marcada(s). Media_LM y CV_LM se previsualizan al rellenar Izq_LM y Dcha_LM; se confirman al guardar.",
+    "err": {
+      "sampleNotFoundUpdate": "No se encontró la muestra NumBN {{numBN}} para actualizar",
+      "readingNotFoundUpdate": "No se encontró la lectura NumBN {{numBN}} / Nº {{numLectura}} para actualizar",
+      "lmNotFoundUpdate": "No se encontró LM {{numBN}} / L{{numLectura}} / LM{{numLectMarc}} para actualizar"
+    },
+    "toast": {
+      "saveSomeFailed": "No se pudieron guardar {{count}} actualización(es). Revisa la consola.",
+      "extractedSaved": "Se actualizaron {{count}} lectura(s) correctamente. Media y CV se recalculan en la base de datos.",
+      "lmSaved": "Se actualizaron {{count}} lectura(s) marcada(s). Media_LM y CV_LM se recalculan en la base de datos.",
+      "saveError": "Error al guardar los cambios",
+      "catalogsError": "Error al cargar tipos de muestra y diagnósticos",
+      "hacerPartial": "No se pudieron guardar {{failed}} de {{total}} muestra(s). Revisa la consola.",
+      "hacerSaved": "Se actualizaron {{count}} muestra(s) correctamente",
+      "loadSamples": "Error al cargar las muestras",
+      "noHacer": "No hay muestras con Estado_Muestra = NULL",
+      "loadReadings": "Error al cargar las lecturas",
+      "noLeerExtraido": "No hay lecturas pendientes de cuantificar (Izq, Cen y Dcha vacías) en muestras con estado 2",
+      "noEstado2": "No hay muestras con Estado_Muestra = 2",
+      "noTirar": "No hay lecturas con Media_Lectura < {{cutoff}}",
+      "loadLm": "Error al cargar lecturas de marcado",
+      "loadChips": "Error al cargar chips",
+      "noMarcar": "No hay lecturas que cumplan los criterios de Marcar",
+      "loadLeerMarcado": "Error al cargar las lecturas marcadas",
+      "noLeerMarcado": "No hay lecturas marcadas pendientes de cuantificar (Izq_LM y Dcha_LM vacías) en muestras con estado 2",
+      "noPteChip": "No hay lecturas marcadas pendientes (Media_LM ≥ {{min}} sin chip), ni chips con Repetir_Chip = 1",
+      "notImplemented": "Acción no implementada todavía",
+      "loadData": "Error al cargar los datos"
+    }
+  },
+  "calcs": {
+    "title": "Cálculos",
+    "print": "Imprimir",
+    "tab": {
+      "extraction": "Extracción DNA",
+      "labeling": "Marcaje DNA",
+      "dilution": "Dilución DNA"
+    },
+    "nSamplesMax6": "Nº muestras (máx. 6)",
+    "nSamplesMax12": "Nº muestras (máx. 12)",
+    "excessLd": "Excedente (LD MM):",
+    "concReactions": "Reacciones conc. DNA: {{n}} (muestras ×3 + 2 Stds + 1)",
+    "excessLabeling": "Excedente (Labeling MM):",
+    "excessStaining": "Excedente (Staining):",
+    "hsReactions": "Reacciones HS: {{n}} (muestras ×2 + 2 Stds + 1)",
+    "col": {
+      "order": "Orden",
+      "reagent": "Reactivo",
+      "ulPerSample": "(µL / muestra)",
+      "totalUl": "Total (µL)"
+    },
+    "total": "TOTAL",
+    "totalsIncludeExcess": "Totales incluyen excedente",
+    "noExcess": "Sin excedente",
+    "reactionsEq": "Reacciones = {{n}}",
+    "table": {
+      "sb": "Tampón estabilizador (SB) — EN HIELO",
+      "sbra": "Tampón estabilizador + RNAasa (SB/RA) — EN HIELO",
+      "ld": "Lisis y digestión (LD MM) — EN AMBIENTE",
+      "conc": "Concentración DNA",
+      "labelingMm": "Reacción de marcaje (Labeling Master Mix)",
+      "wetDisk": "Reacción para humedecer el disco",
+      "staining": "Reacción de tinción (DNA Staining)",
+      "hs": "Solución trabajo (180 µL)"
+    },
+    "reagent": {
+      "cellBuffer": "Tampón celular (cell buffer)",
+      "dnaStabilizer": "Estabilizador ADN (DNA Stabilizer)",
+      "stabilizerBuffer": "Tampón estabilizador",
+      "rnase": "RNAasa",
+      "digestionEnhancer": "Potenciador digestión (Digestion Enhancer)",
+      "nucleaseFreeWater": "Agua sin nucleasas (Ultrapure H2O)",
+      "lbb": "LBB*",
+      "deDetergent": "Detergente DE*",
+      "tlpk": "TLPK",
+      "brBuffer": "BR Buffer",
+      "dye": "Dye",
+      "dle1BufferRt": "5x DLE-1 Buffer (Tª amb)",
+      "dlGreenIce": "20x DL-Green (hielo)",
+      "dle1Enzyme": "10x DLE-1 Enzime (bloque -20°C)",
+      "dle1Buffer": "5x tampón para DLE-1 (5x DLE-1 Buffer)",
+      "ultrapureWater": "Agua ultrapura",
+      "flowBuffer": "4x tampón de flujo (Flow Buffer)",
+      "dtt": "10x DTT",
+      "dnaStain": "Colorante de ADN (DNA Stain)",
+      "ultraPureH2o": "Agua ultrapura (Ultra Pure H2O)",
+      "hsBuffer": "HS Buffer"
+    }
+  },
+  "dilution": {
+    "title": "Dilución DNA para Marcaje",
+    "help": "Objetivo: {{vol}} µL totales con {{ng}} ng de DNA (mín. {{minNg}} ng). Media ideal del extracto: 39–150 ng/µL. Muestras en curso Lecturas de BN con Estado_Muestra = 2 (pendiente), extracto cuantificado y sin marcaje iniciado (sin Lecturas_Marcado ni datos rellenados en Marcado; una fila vacía en Marcado no cuenta).",
+    "badge": {
+      "totalVol": "Volumen total: {{vol}} µL",
+      "targetDna": "DNA objetivo: {{ng}} ng",
+      "maxSamples": "Máx. {{n}} muestras",
+      "candidates": "{{n}} para diluir"
+    },
+    "addSample": "Añadir muestra",
+    "loading": "Cargando lecturas…",
+    "empty": "No hay lecturas en curso (estado 2), sin marcaje y con media de DNA. Cuantifica el extracto antes de calcular la dilución.",
+    "allAdded": "— Todas añadidas o sin más candidatas —",
+    "selectReading": "— Seleccionar lectura —",
+    "sampleLabel": "BN {{numBN}} - L{{numLectura}}",
+    "option": "{{label}} — media {{media}} ng/µL",
+    "add": "Añadir",
+    "refresh": "Actualizar lista",
+    "remove": "Quitar",
+    "volumes": "Volúmenes de dilución",
+    "col": {
+      "cv": "CV",
+      "sample": "Muestra",
+      "mean": "Media gDNA (ng/µL)",
+      "water": "Vol. H₂O (µL) 1º",
+      "dna": "Vol. gDNA (µL) 2º",
+      "ngMix": "ng en mezcla DNA",
+      "notes": "Notas"
+    },
+    "note": {
+      "outOfRange": "Media fuera de 39–150 ng/µL",
+      "belowMin": "Con 19,5 µL DNA < {{minNg}} ng",
+      "maxDna": "Volumen DNA al máximo (19,5 µL)"
+    },
+    "toast": {
+      "loadError": "Error al cargar lecturas para dilución",
+      "select": "Selecciona una lectura",
+      "max": "Máximo {{n}} muestras"
+    },
+    "err": {
+      "invalidMean": "Media de DNA no válida"
+    }
+  },
+  "auth": {
+    "err": {
+      "badCredentials": "Correo o contraseña incorrectos",
+      "noSession": "No hay sesión",
+      "method": "Método no soportado",
+      "adminCodeShort": "El código maestro debe tener al menos 4 caracteres",
+      "adminCodeExists": "Esta carpeta ya tiene un código maestro configurado",
+      "incompleteCreate": "Completa correo, contraseña y código maestro",
+      "invalidRole": "Rol no válido",
+      "passwordShort": "La contraseña es demasiado corta",
+      "noAdminCode": "No hay código maestro en esta carpeta. Configúralo en el setup inicial.",
+      "badAdminCode": "Código maestro incorrecto",
+      "userExists": "Ya existe un usuario con ese correo"
+    }
+  }
+}

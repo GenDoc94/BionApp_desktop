@@ -1,4 +1,5 @@
 import pkg from "bionapp-pkg";
+import i18n from "../i18n";
 import { getChangesForVersion } from "./changelog";
 
 export const UPDATE_REPO = "GenDoc94/BionApp_desktop";
@@ -71,7 +72,7 @@ async function fetchPackageJsonFromBranch(
   }
 
   if (rawRes.status !== 404) {
-    throw new Error(`No se pudo leer package.json en GitHub (${rawRes.status})`);
+    throw new Error(i18n.t("updates.err.packageJson", { status: rawRes.status }));
   }
 
   const apiUrl = `https://api.github.com/repos/${repo}/contents/package.json?ref=${encodeURIComponent(branch)}`;
@@ -84,12 +85,12 @@ async function fetchPackageJsonFromBranch(
 
   if (!apiRes.ok) {
     if (apiRes.status === 404) return null;
-    throw new Error(`No se pudo leer package.json en GitHub (${apiRes.status})`);
+    throw new Error(i18n.t("updates.err.packageJson", { status: apiRes.status }));
   }
 
   const payload = (await apiRes.json()) as { content?: string; encoding?: string };
   if (payload.encoding !== "base64" || !payload.content) {
-    throw new Error("La respuesta de GitHub no es válida");
+    throw new Error(i18n.t("updates.err.invalidGithub"));
   }
 
   const json = atob(payload.content.replace(/\n/g, ""));
@@ -104,7 +105,7 @@ async function fetchLatestReleaseVersion(repo: string): Promise<string | null> {
 
   if (res.status === 404) return null;
   if (!res.ok) {
-    throw new Error(`No se pudo leer el último Release de GitHub (${res.status})`);
+    throw new Error(i18n.t("updates.err.latestRelease", { status: res.status }));
   }
 
   const data = (await res.json()) as { tag_name?: string };
@@ -128,23 +129,23 @@ async function fetchRemotePackageJson(repo: string): Promise<{ version: string; 
 
       const version = remotePkg.version?.trim();
       if (!version) {
-        throw new Error("La versión remota no es válida");
+        throw new Error(i18n.t("updates.err.invalidRemoteVersion"));
       }
 
       return { version, branch };
     } catch (err) {
       if (err instanceof TypeError) {
-        throw new Error("No se pudo comprobar. ¿Hay conexión a internet?");
+        throw new Error(i18n.t("updates.err.offline"));
       }
       throw err;
     }
   }
 
   if (sawNotFound) {
-    throw new Error("No se encontró el repositorio en GitHub.");
+    throw new Error(i18n.t("updates.err.repoNotFound"));
   }
 
-  throw new Error("No se pudo leer la versión en GitHub");
+  throw new Error(i18n.t("updates.err.readVersion"));
 }
 
 async function resolveRemoteVersion(repo: string): Promise<{ version: string; branch: string }> {
@@ -157,7 +158,7 @@ async function resolveRemoteVersion(repo: string): Promise<{ version: string; br
     return fetchRemotePackageJson(repo);
   } catch (err) {
     if (err instanceof TypeError) {
-      throw new Error("No se pudo comprobar. ¿Hay conexión a internet?");
+      throw new Error(i18n.t("updates.err.offline"));
     }
     throw err;
   }
@@ -172,7 +173,7 @@ export async function checkForAppUpdate(): Promise<RemoteUpdateInfo> {
     remote = await resolveRemoteVersion(repo);
   } catch (err) {
     if (err instanceof Error) throw err;
-    throw new Error("No se pudo comprobar. ¿Hay conexión a internet?");
+    throw new Error(i18n.t("updates.err.offline"));
   }
 
   const latestVersion = remote.version;

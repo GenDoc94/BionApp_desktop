@@ -1,3 +1,5 @@
+import i18n from "../i18n";
+
 /** Mensaje legible cuando falla supabase.functions.invoke (p. ej. Edge Function 4xx/5xx). */
 export async function getFunctionErrorMessage(error) {
   const response = error?.context;
@@ -13,5 +15,5 @@ export async function getFunctionErrorMessage(error) {
     }
   }
 
-  return error?.message || "Error en la función del servidor";
+  return error?.message || i18n.t("errors.serverFunction");
 }

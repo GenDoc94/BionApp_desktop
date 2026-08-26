@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { MuestraPeriodoEstadistica } from "../../lib/muestraEstadisticas";
 
 type EstadisticasApiladasProps = {
@@ -7,6 +8,7 @@ type EstadisticasApiladasProps = {
 const CHART_HEIGHT = 180;
 
 export default function EstadisticasApiladas({ porPeriodo }: EstadisticasApiladasProps) {
+  const { t } = useTranslation();
   const maxTotal = Math.max(...porPeriodo.map((p) => p.total), 1);
 
   return (
@@ -18,7 +20,7 @@ export default function EstadisticasApiladas({ porPeriodo }: EstadisticasApilada
             <div
               key={periodo.period}
               className="flex flex-1 min-w-[2rem] max-w-[4rem] flex-col items-center justify-end gap-1"
-              title={`${periodo.label}: ${periodo.total} muestras`}
+              title={t("stats.bar.title", { label: periodo.label, total: periodo.total })}
             >
               <span className="text-[10px] tabular-nums text-slate-500">{periodo.total}</span>
               <div
@@ -29,21 +31,21 @@ export default function EstadisticasApiladas({ porPeriodo }: EstadisticasApilada
                   <div
                     className="w-full bionapp-chart-fill--danger"
                     style={{ flex: periodo.fallidas }}
-                    title={`Fallidas: ${periodo.fallidas}`}
+                    title={t("stats.bar.failed", { count: periodo.fallidas })}
                   />
                 ) : null}
                 {periodo.enProceso > 0 ? (
                   <div
                     className="w-full bionapp-chart-fill--warn"
                     style={{ flex: periodo.enProceso }}
-                    title={`En proceso: ${periodo.enProceso}`}
+                    title={t("stats.bar.inProgress", { count: periodo.enProceso })}
                   />
                 ) : null}
                 {periodo.completas > 0 ? (
                   <div
                     className="w-full bionapp-chart-fill--ok"
                     style={{ flex: periodo.completas }}
-                    title={`Completas: ${periodo.completas}`}
+                    title={t("stats.bar.completed", { count: periodo.completas })}
                   />
                 ) : null}
               </div>
@@ -57,15 +59,15 @@ export default function EstadisticasApiladas({ porPeriodo }: EstadisticasApilada
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded-sm bionapp-chart-fill--danger" />
-          Fallidas
+          {t("stats.legend.failedShort")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded-sm bionapp-chart-fill--warn" />
-          En proceso
+          {t("stats.legend.inProgressShort")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded-sm bionapp-chart-fill--ok" />
-          Completas
+          {t("stats.legend.completedShort")}
         </span>
       </div>
     </div>

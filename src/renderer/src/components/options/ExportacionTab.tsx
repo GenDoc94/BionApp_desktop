@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Download, FileArchive, FileJson, FileSpreadsheet, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { EXPORT_TABLES } from "@shared/exportTables";
+import { translateIpcError } from "../../i18n/ipcErrors";
 
 type Format = "xlsx" | "json" | "sqlite";
 
 export default function ExportacionTab() {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState<Format | null>(null);
 
   const runExport = async (format: Format) => {
@@ -15,13 +18,13 @@ export default function ExportacionTab() {
       const result = await window.api.exportDatabase(format);
       if (result.canceled) return;
       if (!result.ok) {
-        toast.error(result.error ?? "Error al exportar");
+        toast.error(result.error ? translateIpcError(result.error) : t("export.toast.error"));
         return;
       }
-      toast.success(`Exportación guardada:\n${result.path}`);
+      toast.success(t("export.toast.saved", { path: result.path }));
     } catch (e) {
       console.error(e);
-      toast.error(e instanceof Error ? e.message : "Error al exportar");
+      toast.error(e instanceof Error ? translateIpcError(e.message) : t("export.toast.error"));
     } finally {
       setBusy(null);
     }
@@ -30,11 +33,9 @@ export default function ExportacionTab() {
   return (
     <div className="bionapp-panel p-4 space-y-4">
       <div>
-        <p className="font-semibold mb-1">Exportar base de datos</p>
+        <p className="font-semibold mb-1">{t("export.title")}</p>
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Exporta todas las tablas de la carpeta de datos. Excel y JSON generan un ZIP con un
-          archivo por tabla. SQLite copia la base local a un archivo{" "}
-          <span className="font-mono">.sqlite</span>. Se abrirá un diálogo para elegir la ubicación.
+          {t("export.help")}
         </p>
       </div>
 
@@ -51,7 +52,7 @@ export default function ExportacionTab() {
           ) : (
             <FileSpreadsheet className="h-4 w-4" />
           )}
-          Exportar Excel (.xlsx → ZIP)
+          {t("export.excel")}
         </Button>
         <Button
           type="button"
@@ -65,7 +66,7 @@ export default function ExportacionTab() {
           ) : (
             <FileJson className="h-4 w-4" />
           )}
-          Exportar JSON (.json → ZIP)
+          {t("export.json")}
         </Button>
         <Button
           type="button"
@@ -79,13 +80,13 @@ export default function ExportacionTab() {
           ) : (
             <FileArchive className="h-4 w-4" />
           )}
-          Exportar SQLite (.sqlite)
+          {t("export.sqlite")}
         </Button>
       </div>
 
       <p className="text-xs text-muted-foreground flex items-start gap-1.5">
         <Download className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-        Tablas incluidas: {EXPORT_TABLES.join(", ")}.
+        {t("export.tablesIncluded", { tables: EXPORT_TABLES.join(", ") })}
       </p>
     </div>
   );

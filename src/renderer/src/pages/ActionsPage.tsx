@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import SubpageShell from "../components/SubpageShell";
-import { ClipboardList, Cpu, Edit, Eye, Highlighter, Loader2, Pickaxe, Printer, Save, Trash, X } from "lucide-react";
+import { CircleDot, ClipboardList, Cpu, Edit, Eye, Highlighter, Loader2, Pickaxe, Printer, Save, Trash, TriangleAlert, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../authContext";
 import { toast } from "sonner";
 import { cn } from "../components/ui/utils";
+import i18n from "../i18n";
 import { calcStatsLectura, calcStatsMarcado, formatCalcStat } from "../lib/calculations/lecturaCalculos";
 import {
   chipRepetirActivo,
   evaluarMarcarLectura,
-  labelMarcarTipo,
   MARCAR_MAX_MEDIA_LM,
+  MARCAR_MIN_CHIPS_FALLO,
   MARCAR_THRESHOLD_MEDIA,
   mediaDeMarcadoLM,
   mediaLecturaExtraidaEfectiva,
@@ -140,6 +142,109 @@ function marcadoCuantificacionBgClass(value: unknown): string {
   if (n < 4) return "lectura-cuant-bajo";
   if (n > 16) return "lectura-cuant-alto";
   return "lectura-cuant-ok";
+}
+
+function HeadingStatusDot({ children, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span className="inline-flex" {...props}>
+      <CircleDot
+        className="h-4 w-4 shrink-0"
+        color="var(--bion-warn-fill)"
+        strokeWidth={2}
+        aria-hidden
+      />
+      {children}
+    </span>
+  );
+}
+
+function HeadingMeanSymbol({ children, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span {...props}>
+      x̄
+      {children}
+    </span>
+  );
+}
+
+function AccionEstadoMediaHeading({
+  i18nKey,
+  cmp,
+  threshold,
+}: {
+  i18nKey: "actions.tirarHeading" | "actions.marcarHeading";
+  cmp: "<" | ">";
+  threshold: string;
+}) {
+  const { t } = useTranslation();
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <Trans
+        i18nKey={i18nKey}
+        values={{ cmp, threshold }}
+        components={{
+          status: (
+            <HeadingStatusDot
+              title={t("app.state.yellow")}
+              aria-label={t("app.state.yellow")}
+            />
+          ),
+          mean: (
+            <HeadingMeanSymbol
+              title={t("actions.extractedMeanLabel")}
+              aria-label={t("actions.extractedMeanLabel")}
+            />
+          ),
+        }}
+      />
+    </span>
+  );
+}
+
+function HeadingRepeatChipIcon({ children, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span className="inline-flex" {...props}>
+      <TriangleAlert
+        className="h-4 w-4 shrink-0"
+        color="var(--bion-warn-fill)"
+        strokeWidth={2.25}
+        aria-hidden
+      />
+      {children}
+    </span>
+  );
+}
+
+function AccionPteChipHeading({ minMedia }: { minMedia: string }) {
+  const { t } = useTranslation();
+  return (
+    <span className="inline-flex items-center gap-1.5 flex-wrap">
+      <Trans
+        i18nKey="actions.pteChipHeading"
+        values={{ minMedia }}
+        components={{
+          status: (
+            <HeadingStatusDot
+              title={t("app.state.yellow")}
+              aria-label={t("app.state.yellow")}
+            />
+          ),
+          mean: (
+            <HeadingMeanSymbol
+              title={t("actions.labeledMeanLabel")}
+              aria-label={t("actions.labeledMeanLabel")}
+            />
+          ),
+          repeat: (
+            <HeadingRepeatChipIcon
+              title={t("app.chips.repeatOn")}
+              aria-label={t("app.chips.repeatOn")}
+            />
+          ),
+        }}
+      />
+    </span>
+  );
 }
 
 function formatDateForInput(value: string | null | undefined) {
@@ -334,13 +439,18 @@ function escapeHtml(text: string) {
     .replace(/"/g, "&quot;");
 }
 
+function formatThreshold(n: number) {
+  const s = String(n);
+  return i18n.language.startsWith("en") ? s : s.replace(".", ",");
+}
+
 function printHacerMuestrasTable(
   rows: HacerMuestraRow[],
   tipos: CatalogTipo[],
   dxList: CatalogDx[]
 ) {
   if (!rows.length) {
-    toast.error("No hay muestras para imprimir");
+    toast.error(i18n.t("actions.print.empty"));
     return;
   }
 
@@ -349,11 +459,11 @@ function printHacerMuestrasTable(
     "Petic",
     "Posic",
     "Proces",
-    "Tipo de muestra",
-    "Diagnóstico",
+    i18n.t("actions.col.sampleType"),
+    i18n.t("actions.col.diagnosis"),
     "Pellet",
     "Medusa",
-    "Grado viscosidad",
+    i18n.t("actions.col.viscosityGrade"),
   ];
 
   const headHtml = headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("");
@@ -374,12 +484,12 @@ function printHacerMuestrasTable(
     })
     .join("");
 
-  const fecha = new Date().toLocaleString("es-ES");
+  const fecha = new Date().toLocaleString(i18n.language.startsWith("en") ? "en-GB" : "es-ES");
   const html = `<!DOCTYPE html>
-<html lang="es">
+<html lang="${i18n.language.startsWith("en") ? "en" : "es"}">
 <head>
   <meta charset="UTF-8" />
-  <title>Hacer — Muestras</title>
+  <title>${escapeHtml(i18n.t("actions.print.docTitle"))}</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -429,14 +539,14 @@ function printHacerMuestrasTable(
   </style>
 </head>
 <body>
-  <h1>Hacer — Muestras con Estado_Muestra = NULL</h1>
-  <p class="meta">${escapeHtml(fecha)} · ${rows.length} muestra(s)</p>
+  <h1>${escapeHtml(i18n.t("actions.print.heading"))}</h1>
+  <p class="meta">${escapeHtml(i18n.t("actions.print.meta", { fecha, count: rows.length }))}</p>
   <table class="muestras">
     <thead><tr>${headHtml}</tr></thead>
     <tbody>${bodyHtml}</tbody>
   </table>
   <div class="wb-section">
-    <table class="wb-wash" aria-label="Registro de lavados WB">
+    <table class="wb-wash" aria-label="${escapeHtml(i18n.t("actions.print.wbAria"))}">
       <tbody>
         <tr>
           <td class="wb-label">WB1</td>
@@ -459,7 +569,7 @@ function printHacerMuestrasTable(
 /** Abre el diálogo de impresión sin depender de ventanas emergentes vacías. */
 function openPrintDialog(html: string) {
   const iframe = document.createElement("iframe");
-  iframe.setAttribute("title", "Impresión Hacer");
+  iframe.setAttribute("title", i18n.t("actions.print.iframeTitle"));
   iframe.style.cssText =
     "position:fixed;left:0;top:0;width:0;height:0;border:0;opacity:0;pointer-events:none;";
 
@@ -476,7 +586,7 @@ function openPrintDialog(html: string) {
     const win = iframe.contentWindow;
     if (!win) {
       cleanup();
-      toast.error("No se pudo preparar la impresión");
+      toast.error(i18n.t("actions.print.prepareError"));
       return;
     }
     const doc = win.document;
@@ -489,7 +599,7 @@ function openPrintDialog(html: string) {
       win.print();
     } catch (err) {
       console.error(err);
-      toast.error("Error al abrir el diálogo de impresión");
+      toast.error(i18n.t("actions.print.dialogError"));
       cleanup();
       return;
     }
@@ -506,7 +616,7 @@ function openPrintDialog(html: string) {
   const doc = iframe.contentWindow?.document;
   if (!doc) {
     cleanup();
-    toast.error("No se pudo preparar la impresión");
+    toast.error(i18n.t("actions.print.prepareError"));
     return;
   }
 
@@ -670,6 +780,7 @@ async function fetchHacerMuestras() {
 }
 
 function ActionsPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [muestras, setMuestras] = useState<any[]>([]);
   const [mode, setMode] = useState<
@@ -790,7 +901,7 @@ function ActionsPage() {
           if (!data) {
             return {
               numBN,
-              error: new Error(`No se encontró la muestra NumBN ${numBN} para actualizar`),
+              error: new Error(t("actions.err.sampleNotFoundUpdate", { numBN })),
             };
           }
           return { numBN, error: null };
@@ -817,7 +928,7 @@ function ActionsPage() {
               numBN,
               numLectura,
               error: new Error(
-                `No se encontró la lectura NumBN ${numBN} / Nº ${numLectura} para actualizar`
+                t("actions.err.readingNotFoundUpdate", { numBN, numLectura })
               ),
             };
           }
@@ -836,19 +947,15 @@ function ActionsPage() {
           muestras: failedMuestras,
           lecturas: failedLecturas,
         });
-        toast.error(
-          `No se pudieron guardar ${totalFailed} actualización(es). Revisa la consola.`
-        );
+        toast.error(t("actions.toast.saveSomeFailed", { count: totalFailed }));
       } else {
-        toast.success(
-          `Se actualizaron ${editedLeerMuestras.length} lectura(s) correctamente. Media y CV se recalculan en la base de datos.`
-        );
+        toast.success(t("actions.toast.extractedSaved", { count: editedLeerMuestras.length }));
       }
 
       exitLeerEditMode();
     } catch (err) {
       console.error(err);
-      toast.error("Error al guardar los cambios");
+      toast.error(t("actions.toast.saveError"));
     } finally {
       setSavingLeer(false);
     }
@@ -914,7 +1021,7 @@ function ActionsPage() {
               numLectura,
               numLectMarc,
               error: new Error(
-                `No se encontró LM ${numBN} / L${numLectura} / LM${numLectMarc} para actualizar`
+                t("actions.err.lmNotFoundUpdate", { numBN, numLectura, numLectMarc })
               ),
             };
           }
@@ -928,19 +1035,15 @@ function ActionsPage() {
 
       if (failed.length > 0) {
         console.error("Errores al guardar leer marcado:", failed);
-        toast.error(
-          `No se pudieron guardar ${failed.length} actualización(es). Revisa la consola.`
-        );
+        toast.error(t("actions.toast.saveSomeFailed", { count: failed.length }));
       } else {
-        toast.success(
-          `Se actualizaron ${editedLeerMarcadoRows.length} lectura(s) marcada(s). Media_LM y CV_LM se recalculan en la base de datos.`
-        );
+        toast.success(t("actions.toast.lmSaved", { count: editedLeerMarcadoRows.length }));
       }
 
       exitLeerMarcadoEditMode();
     } catch (err) {
       console.error(err);
-      toast.error("Error al guardar los cambios");
+      toast.error(t("actions.toast.saveError"));
     } finally {
       setSavingLeerMarcado(false);
     }
@@ -955,7 +1058,7 @@ function ActionsPage() {
       }
     } catch (err) {
       console.error(err);
-      toast.error("Error al cargar tipos de muestra y diagnósticos");
+      toast.error(t("actions.toast.catalogsError"));
       return;
     }
     setEditedMuestras(
@@ -1021,7 +1124,7 @@ function ActionsPage() {
           if (!data) {
             return {
               numBN,
-              error: new Error(`No se encontró la muestra NumBN ${numBN} para actualizar`),
+              error: new Error(t("actions.err.sampleNotFoundUpdate", { numBN })),
             };
           }
           return { numBN, error: null, data };
@@ -1035,28 +1138,31 @@ function ActionsPage() {
       if (failed.length > 0) {
         console.error("Errores al guardar muestras:", failed);
         toast.error(
-          `No se pudieron guardar ${failed.length} de ${editedMuestras.length} muestra(s). Revisa la consola.`
+          t("actions.toast.hacerPartial", {
+            failed: failed.length,
+            total: editedMuestras.length,
+          })
         );
       } else {
-        toast.success(`Se actualizaron ${editedMuestras.length} muestra(s) correctamente`);
+        toast.success(t("actions.toast.hacerSaved", { count: editedMuestras.length }));
       }
 
       exitHacerEditMode();
     } catch (err) {
       console.error(err);
-      toast.error("Error al guardar los cambios");
+      toast.error(t("actions.toast.saveError"));
     } finally {
       setSavingHacer(false);
     }
   };
 
   const acciones: Array<{ label: string; key: string; icon: LucideIcon }> = [
-    { label: "Hacer", key: "hacer", icon: Pickaxe },
-    { label: "Leer Extraído", key: "leer-extraido", icon: Eye },
-    { label: "¿Tirar?", key: "tirar", icon: Trash },
-    { label: "Marcar", key: "marcar", icon: Highlighter },
-    { label: "Leer Marcado", key: "leer-marcado", icon: Eye },
-    { label: "Pte Chip", key: "pte-chip", icon: Cpu },
+    { label: t("actions.hacer"), key: "hacer", icon: Pickaxe },
+    { label: t("actions.leerExtraido"), key: "leer-extraido", icon: Eye },
+    { label: t("actions.tirar"), key: "tirar", icon: Trash },
+    { label: t("actions.marcar"), key: "marcar", icon: Highlighter },
+    { label: t("actions.leerMarcado"), key: "leer-marcado", icon: Eye },
+    { label: t("actions.pteChip"), key: "pte-chip", icon: Cpu },
   ];
 
   const handleActionClick = async (key: string) => {
@@ -1075,14 +1181,14 @@ function ActionsPage() {
           rows = await fetchHacerMuestras();
         } catch (error) {
           console.error("Error fetching muestras:", error);
-          toast.error("Error al cargar las muestras");
+          toast.error(t("actions.toast.loadSamples"));
           return;
         }
 
         setMode("hacer");
         setMuestras(rows);
         if (!(rows.length > 0)) {
-          toast.success("No hay muestras con Estado_Muestra = NULL");
+          toast.success(t("actions.toast.noHacer"));
         }
         return;
       }
@@ -1093,16 +1199,14 @@ function ActionsPage() {
           rows = await fetchLeerExtraidoRows();
         } catch (error) {
           console.error("Error fetching leer extraído:", error);
-          toast.error("Error al cargar las lecturas");
+          toast.error(t("actions.toast.loadReadings"));
           return;
         }
 
         setMode("leer-extraido");
         setMuestras(rows);
         if (rows.length === 0) {
-          toast.success(
-            "No hay lecturas pendientes de cuantificar (Izq, Cen y Dcha vacías) en muestras con estado 2"
-          );
+          toast.success(t("actions.toast.noLeerExtraido"));
         }
         return;
       }
@@ -1118,14 +1222,14 @@ function ActionsPage() {
 
         if (muestrasError) {
           console.error("Error fetching muestras:", muestrasError);
-          toast.error("Error al cargar las muestras");
+          toast.error(t("actions.toast.loadSamples"));
           return;
         }
 
         const numBNs = (muestrasData || []).map((m) => m.NumBN).filter((n) => n != null);
         if (numBNs.length === 0) {
           setMuestras([]);
-          toast.success("No hay muestras con Estado_Muestra = 2");
+          toast.success(t("actions.toast.noEstado2"));
           return;
         }
 
@@ -1139,7 +1243,7 @@ function ActionsPage() {
 
         if (lecturasError) {
           console.error("Error fetching lecturas:", lecturasError);
-          toast.error("Error al cargar las lecturas");
+          toast.error(t("actions.toast.loadReadings"));
           return;
         }
 
@@ -1166,7 +1270,7 @@ function ActionsPage() {
         setMode("tirar");
         setMuestras(rows);
         if (rows.length === 0) {
-          toast.success(`No hay lecturas con Media_Lectura < ${cutoff.toString().replace(".", ",")}`);
+          toast.success(t("actions.toast.noTirar", { cutoff: formatThreshold(cutoff) }));
         }
         return;
       }
@@ -1180,14 +1284,14 @@ function ActionsPage() {
 
         if (muestrasError) {
           console.error("Error fetching muestras:", muestrasError);
-          toast.error("Error al cargar las muestras");
+          toast.error(t("actions.toast.loadSamples"));
           return;
         }
 
         const numBNs = (muestrasData || []).map((m) => m.NumBN).filter((n) => n != null);
         if (numBNs.length === 0) {
           setMuestras([]);
-          toast.success("No hay muestras con Estado_Muestra = 2");
+          toast.success(t("actions.toast.noEstado2"));
           return;
         }
 
@@ -1213,17 +1317,17 @@ function ActionsPage() {
 
         if (lecturasError) {
           console.error("Error fetching lecturas:", lecturasError);
-          toast.error("Error al cargar las lecturas");
+          toast.error(t("actions.toast.loadReadings"));
           return;
         }
         if (lmError) {
           console.error("Error fetching lecturas marcado:", lmError);
-          toast.error("Error al cargar lecturas de marcado");
+          toast.error(t("actions.toast.loadLm"));
           return;
         }
         if (chipsError) {
           console.error("Error fetching chips:", chipsError);
-          toast.error("Error al cargar chips");
+          toast.error(t("actions.toast.loadChips"));
           return;
         }
 
@@ -1298,7 +1402,7 @@ function ActionsPage() {
         setMode("marcar");
         setMuestras(rows);
         if (rows.length === 0) {
-          toast.success("No hay lecturas que cumplan los criterios de Marcar");
+          toast.success(t("actions.toast.noMarcar"));
         }
         return;
       }
@@ -1309,16 +1413,14 @@ function ActionsPage() {
           rows = await fetchLeerMarcadoRows();
         } catch (error) {
           console.error("Error fetching leer marcado:", error);
-          toast.error("Error al cargar las lecturas marcadas");
+          toast.error(t("actions.toast.loadLeerMarcado"));
           return;
         }
 
         setMode("leer-marcado");
         setMuestras(rows);
         if (rows.length === 0) {
-          toast.success(
-            "No hay lecturas marcadas pendientes de cuantificar (Izq_LM y Dcha_LM vacías) en muestras con estado 2"
-          );
+          toast.success(t("actions.toast.noLeerMarcado"));
         }
         return;
       }
@@ -1334,7 +1436,7 @@ function ActionsPage() {
 
         if (muestrasError) {
           console.error("Error fetching muestras:", muestrasError);
-          toast.error("Error al cargar las muestras");
+          toast.error(t("actions.toast.loadSamples"));
           return;
         }
 
@@ -1342,7 +1444,7 @@ function ActionsPage() {
         if (numBNs.length === 0) {
           setMode("pte-chip");
           setMuestras([]);
-          toast.success("No hay muestras con Estado_Muestra = 2");
+          toast.success(t("actions.toast.noEstado2"));
           return;
         }
 
@@ -1358,7 +1460,7 @@ function ActionsPage() {
 
         if (lmError) {
           console.error("Error fetching lecturas marcado:", lmError);
-          toast.error("Error al cargar lecturas de marcado");
+          toast.error(t("actions.toast.loadLm"));
           return;
         }
 
@@ -1369,7 +1471,7 @@ function ActionsPage() {
 
         if (chipsError) {
           console.error("Error fetching chips:", chipsError);
-          toast.error("Error al cargar chips");
+          toast.error(t("actions.toast.loadChips"));
           return;
         }
 
@@ -1395,7 +1497,7 @@ function ActionsPage() {
           setMode("pte-chip");
           setMuestras([]);
           toast.success(
-            `No hay lecturas marcadas pendientes (Media_LM ≥ ${minMedia.toString().replace(".", ",")} sin chip), ni chips con Repetir_Chip = 1`
+            t("actions.toast.noPteChip", { min: formatThreshold(minMedia) })
           );
           return;
         }
@@ -1477,17 +1579,17 @@ function ActionsPage() {
         return;
       }
 
-      toast.message("Acción no implementada todavía");
+      toast.message(t("actions.toast.notImplemented"));
     } catch (err) {
       console.error(err);
-      toast.error("Error al cargar los datos");
+      toast.error(t("actions.toast.loadData"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SubpageShell title="Acciones" icon={ClipboardList} maxWidthClass="max-w-[1200px]">
+    <SubpageShell title={t("actions.title")} icon={ClipboardList} maxWidthClass="max-w-[1200px]">
         <div className="bionapp-panel p-4">
           <div className="flex flex-wrap gap-2">
             {acciones.map((accion) => {
@@ -1520,34 +1622,49 @@ function ActionsPage() {
           <div className="mt-6 bionapp-panel p-4">
             <h2 className="text-base font-semibold mb-2 text-foreground">
               {mode === "leer-extraido"
-                ? "Leer Extraído — Estado_Muestra = 2 y lecturas sin cuantificar (Izq, Cen y Dcha vacías)"
+                ? t("actions.leerExtraidoHeading")
                 : mode === "leer-marcado"
-                  ? "Leer Marcado — Estado_Muestra = 2, lectura marcada creada y sin cuantificar (Izq_LM y Dcha_LM vacías)"
+                  ? t("actions.leerMarcadoHeading")
                 : mode === "tirar"
-                ? "¿Tirar? — Estado_Muestra = 2 y Media_Lectura < 25,65"
+                ? (
+                  <AccionEstadoMediaHeading
+                    i18nKey="actions.tirarHeading"
+                    cmp="<"
+                    threshold={formatThreshold(MARCAR_THRESHOLD_MEDIA)}
+                  />
+                )
                 : mode === "marcar"
-                  ? "Marcar — Estado_Muestra = 2 y Media_Lectura > 25,65"
+                  ? (
+                    <AccionEstadoMediaHeading
+                      i18nKey="actions.marcarHeading"
+                      cmp=">"
+                      threshold={formatThreshold(MARCAR_THRESHOLD_MEDIA)}
+                    />
+                  )
                   : mode === "pte-chip"
-                    ? "Pte Chip — Estado_Muestra = 2, sin chip (Media_LM ≥ 2) o chip con Repetir_Chip = 1"
-                    : "Muestras con Estado_Muestra = NULL"}
+                    ? (
+                      <AccionPteChipHeading
+                        minMedia={formatThreshold(MIN_MEDIA_LM_PTE_CHIP)}
+                      />
+                    )
+                    : t("actions.hacerHeading")}
             </h2>
             {mode === "marcar" && (
               <div className="text-xs text-muted-foreground mb-4 space-y-1">
                 <p>
                   <span className="bionapp-swatch-warn mr-1" />{" "}
-                  Ámbar — volver a marcar: 1 lectura de marcado (LM) en esa lectura extraída y ≥2 chips con !.
-                  Con 2 LM en la misma lectura extraída no aparece (sin ADN para otro intento).
+                  {t("actions.marcarHelp.amber")}
                 </p>
                 <p>
-                  Fila normal: lectura extraída alta (&gt; {MARCAR_THRESHOLD_MEDIA.toString().replace(".", ",")})
-                  sin ninguna LM (p. ej. 2.ª lectura extraída tras fallar la 1.ª).
+                  {t("actions.marcarHelp.normal", {
+                    threshold: formatThreshold(MARCAR_THRESHOLD_MEDIA),
+                  })}
                 </p>
               </div>
             )}
             {mode === "pte-chip" && (
               <p className="text-xs text-muted-foreground mb-4 space-y-1">
-                Una fila por muestra. Lista lecturas marcadas con Media_LM ≥ 2 sin ningún chip, y también aquellas donde algún chip
-                tiene Repetir_Chip = 1 en la app (icono junto a cada chip cargado). Las filas con repetición marcada se resaltan en amarillo e indican nº de chip y FC.
+                {t("actions.pteChipHelp")}
               </p>
             )}
             {mode === "hacer" && (
@@ -1560,7 +1677,7 @@ function ActionsPage() {
                   disabled={loading || savingHacer || muestras.length === 0}
                 >
                   <Printer className="h-4 w-4" />
-                  Imprimir
+                  {t("common.print")}
                 </Button>
                 {isAdmin &&
                   (!hacerEditMode ? (
@@ -1571,7 +1688,7 @@ function ActionsPage() {
                       disabled={loading || savingHacer}
                     >
                       <Edit className="h-4 w-4" />
-                      Editar
+                      {t("actions.edit")}
                     </Button>
                   ) : (
                     <>
@@ -1586,7 +1703,7 @@ function ActionsPage() {
                         ) : (
                           <Save className="h-4 w-4" />
                         )}
-                        {savingHacer ? "Guardando..." : "Guardar todo"}
+                        {savingHacer ? t("actions.saving") : t("actions.saveAll")}
                       </Button>
                       <Button
                         size="sm"
@@ -1596,13 +1713,13 @@ function ActionsPage() {
                         disabled={savingHacer}
                       >
                         <X className="h-4 w-4" />
-                        Cancelar
+                        {t("actions.cancel")}
                       </Button>
                     </>
                   ))}
                 {hacerEditMode && (
                   <span className="text-xs text-muted-foreground">
-                    Editando {editedMuestras.length} muestra(s). NumBN no se puede modificar.
+                    {t("actions.hacerEditing", { count: editedMuestras.length })}
                   </span>
                 )}
               </div>
@@ -1618,7 +1735,7 @@ function ActionsPage() {
                       disabled={loading || savingLeerMarcado}
                     >
                       <Edit className="h-4 w-4" />
-                      Editar
+                      {t("actions.edit")}
                     </Button>
                   ) : (
                     <>
@@ -1633,7 +1750,7 @@ function ActionsPage() {
                         ) : (
                           <Save className="h-4 w-4" />
                         )}
-                        {savingLeerMarcado ? "Guardando..." : "Guardar todo"}
+                        {savingLeerMarcado ? t("actions.saving") : t("actions.saveAll")}
                       </Button>
                       <Button
                         size="sm"
@@ -1643,14 +1760,13 @@ function ActionsPage() {
                         disabled={savingLeerMarcado}
                       >
                         <X className="h-4 w-4" />
-                        Cancelar
+                        {t("actions.cancel")}
                       </Button>
                     </>
                   ))}
                 {leerMarcadoEditMode && (
                   <span className="text-xs text-muted-foreground">
-                    Editando {editedLeerMarcadoRows.length} lectura(s) marcada(s). Media_LM y CV_LM
-                    se previsualizan al rellenar Izq_LM y Dcha_LM; se confirman al guardar.
+                    {t("actions.leerMarcadoEditing", { count: editedLeerMarcadoRows.length })}
                   </span>
                 )}
               </div>
@@ -1666,7 +1782,7 @@ function ActionsPage() {
                       disabled={loading || savingLeer}
                     >
                       <Edit className="h-4 w-4" />
-                      Editar
+                      {t("actions.edit")}
                     </Button>
                   ) : (
                     <>
@@ -1681,7 +1797,7 @@ function ActionsPage() {
                         ) : (
                           <Save className="h-4 w-4" />
                         )}
-                        {savingLeer ? "Guardando..." : "Guardar todo"}
+                        {savingLeer ? t("actions.saving") : t("actions.saveAll")}
                       </Button>
                       <Button
                         size="sm"
@@ -1691,14 +1807,13 @@ function ActionsPage() {
                         disabled={savingLeer}
                       >
                         <X className="h-4 w-4" />
-                        Cancelar
+                        {t("actions.cancel")}
                       </Button>
                     </>
                   ))}
                 {leerEditMode && (
                   <span className="text-xs text-muted-foreground">
-                    Editando {editedLeerMuestras.length} lectura(s). Media y CV se previsualizan al
-                    rellenar Izq, Cen y Dcha; se confirman al guardar.
+                    {t("actions.leerExtraidoEditing", { count: editedLeerMuestras.length })}
                   </span>
                 )}
               </div>
@@ -1710,25 +1825,25 @@ function ActionsPage() {
                     <>
                       <TableHead>NumBN</TableHead>
                       <TableHead>Medusa</TableHead>
-                      <TableHead>Grado viscosidad</TableHead>
-                      <TableHead>Nº Lectura</TableHead>
-                      <TableHead>Izq</TableHead>
-                      <TableHead>Cen</TableHead>
-                      <TableHead>Dcha</TableHead>
+                      <TableHead>{t("actions.col.viscosityGrade")}</TableHead>
+                      <TableHead>{t("actions.col.readingNo")}</TableHead>
+                      <TableHead>{t("app.quant.left")}</TableHead>
+                      <TableHead>{t("app.quant.center")}</TableHead>
+                      <TableHead>{t("app.quant.right")}</TableHead>
                       <TableHead>Media_Lectura</TableHead>
                       <TableHead>CV_Lectura</TableHead>
-                      <TableHead>Fecha lectura</TableHead>
+                      <TableHead>{t("actions.col.readingDate")}</TableHead>
                       <TableHead>Coment_Lectura</TableHead>
                     </>
                   ) : mode === "leer-marcado" ? (
                     <>
                       <TableHead>NumBN</TableHead>
-                      <TableHead>Nº Lectura</TableHead>
-                      <TableHead>Nº LM</TableHead>
-                      <TableHead>Media extraído</TableHead>
-                      <TableHead>CV extraído</TableHead>
-                      <TableHead>Izq_LM</TableHead>
-                      <TableHead>Dcha_LM</TableHead>
+                      <TableHead>{t("actions.col.readingNo")}</TableHead>
+                      <TableHead>{t("actions.col.lmNo")}</TableHead>
+                      <TableHead>{t("actions.col.extractedMean")}</TableHead>
+                      <TableHead>{t("actions.col.extractedCv")}</TableHead>
+                      <TableHead>{t("app.quant.left")}_LM</TableHead>
+                      <TableHead>{t("app.quant.right")}_LM</TableHead>
                       <TableHead>Media_LM</TableHead>
                       <TableHead>CV_LM</TableHead>
                     </>
@@ -1740,28 +1855,28 @@ function ActionsPage() {
                       <TableHead>Proces</TableHead>
                       {mode === "hacer" && (
                         <>
-                          <TableHead>Tipo de muestra</TableHead>
-                          <TableHead>Diagnóstico</TableHead>
+                          <TableHead>{t("actions.col.sampleType")}</TableHead>
+                          <TableHead>{t("actions.col.diagnosis")}</TableHead>
                         </>
                       )}
                       <TableHead>Pellet</TableHead>
                       {mode === "hacer" && (
                         <>
                           <TableHead>Medusa</TableHead>
-                          <TableHead>Grado viscosidad</TableHead>
+                          <TableHead>{t("actions.col.viscosityGrade")}</TableHead>
                         </>
                       )}
                       {(mode === "tirar" || mode === "marcar") && (
                         <>
-                          <TableHead>Nº Lectura</TableHead>
-                          <TableHead>Media</TableHead>
+                          <TableHead>{t("actions.col.readingNo")}</TableHead>
+                          <TableHead>{t("actions.col.mean")}</TableHead>
                           <TableHead>Coment_Lectura</TableHead>
                         </>
                       )}
-                      {mode === "marcar" && <TableHead>Tipo</TableHead>}
+                      {mode === "marcar" && <TableHead>{t("actions.col.type")}</TableHead>}
                       {mode === "pte-chip" && (
                         <TableHead className="min-w-[320px]">
-                          Pendiente de chip (por lectura marcada)
+                          {t("actions.col.pendingChip")}
                         </TableHead>
                       )}
                     </>
@@ -1794,7 +1909,7 @@ function ActionsPage() {
                         : "—"
                       : displayNumLectura(row.CV_LM);
                     const statsPreviewTitle = leerMarcadoEditMode
-                      ? "Vista previa al escribir Izq_LM y Dcha_LM (se confirma al guardar)"
+                      ? t("actions.preview.lm")
                       : undefined;
                     return (
                       <TableRow key={tableRowKey(mode, row)}>
@@ -1890,7 +2005,7 @@ function ActionsPage() {
                         : "—"
                       : displayNumLectura(row.CV_Lectura);
                     const statsPreviewTitle = leerEditMode
-                      ? "Vista previa al escribir Izq, Cen y Dcha (se confirma al guardar)"
+                      ? t("actions.preview.extracted")
                       : undefined;
                     return (
                       <TableRow key={tableRowKey(mode, row)}>
@@ -2109,7 +2224,7 @@ function ActionsPage() {
                             }
                             className={HACER_SELECT_CLASS}
                           >
-                            <option value="">— Selecciona —</option>
+                            <option value="">{t("common.selectPlaceholder")}</option>
                             {tiposMuestra.map((tipo) => (
                               <option key={tipo.Cod} value={tipo.Cod}>
                                 {tipo.TipoMuestra}
@@ -2129,7 +2244,7 @@ function ActionsPage() {
                             }
                             className={HACER_SELECT_CLASS}
                           >
-                            <option value="">— Selecciona —</option>
+                            <option value="">{t("common.selectPlaceholder")}</option>
                             {dxs.map((d) => (
                               <option key={d.Cod} value={d.Cod}>
                                 {d.Dx}
@@ -2216,13 +2331,14 @@ function ActionsPage() {
                     {mode === "marcar" && (
                       <TableCell className="text-xs whitespace-nowrap">
                         {muestra.marcarVariant === "ambar" || muestra.marcarVariant === "normal" ? (
-                          labelMarcarTipo({
-                            variant: muestra.marcarVariant,
-                            lmCount: muestra.lmCount ?? 0,
-                            motivo: muestra.marcarMotivo ?? "sin-marcado",
-                          })
+                          muestra.marcarMotivo === "chip-fallo"
+                            ? t("actions.marcarHelp.typeRelabel", {
+                                lmCount: muestra.lmCount ?? 0,
+                                minChips: MARCAR_MIN_CHIPS_FALLO,
+                              })
+                            : t("actions.marcarHelp.typeNone")
                         ) : (
-                          "—"
+                          t("common.empty")
                         )}
                       </TableCell>
                     )}
@@ -2246,11 +2362,12 @@ function ActionsPage() {
                               const hayRepetir = (it.repetirDetalle?.length ?? 0) > 0;
                               const textoRepetir = hayRepetir
                                 ? it.repetirDetalle
-                                    .map(
-                                      (d) =>
-                                        `Chip #${d.NumChip}${d.FC != null ? ` FC ${d.FC}` : ""}${
-                                          d.Chip_Nombre ? ` (${d.Chip_Nombre})` : ""
-                                        }`
+                                    .map((d) =>
+                                      t("actions.pteChipChipDetail", {
+                                        numChip: d.NumChip,
+                                        fc: d.FC != null ? d.FC : t("common.empty"),
+                                        name: d.Chip_Nombre || t("common.empty"),
+                                      })
                                     )
                                     .join("; ")
                                 : "";
@@ -2260,11 +2377,19 @@ function ActionsPage() {
                                   className={cn(hayRepetir && "font-medium bionapp-text-warn-emphasis")}
                                 >
                                   <span>
-                                    Lect. {it.NumLectura} — LM {it.NumLectMarc} — Media_LM{" "}
-                                    {typeof it.Media_LM === "number" ? it.Media_LM.toFixed(2) : "—"} — Fecha lect.
-                                    marc.: {formatDateEs(it.Fecha_Lect_Marc)}
-                                    {it.sinChipPte ? " · Pendiente asignar chip" : ""}
-                                    {hayRepetir ? ` · Repetir: ${textoRepetir}` : ""}
+                                    {t("actions.pteChipItem", {
+                                      numLectura: it.NumLectura,
+                                      numLectMarc: it.NumLectMarc,
+                                      media:
+                                        typeof it.Media_LM === "number"
+                                          ? it.Media_LM.toFixed(2)
+                                          : t("common.empty"),
+                                      fecha: formatDateEs(it.Fecha_Lect_Marc),
+                                    })}
+                                    {it.sinChipPte ? t("actions.pteChipAssignPending") : ""}
+                                    {hayRepetir
+                                      ? t("actions.pteChipRepeat", { detalle: textoRepetir })
+                                      : ""}
                                   </span>
                                 </li>
                               );

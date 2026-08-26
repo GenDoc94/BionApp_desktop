@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, type LucideIcon } from "lucide-react";
 
 import AppFooter from "./AppFooter";
@@ -28,6 +29,7 @@ export default function SubpageShell({
   showBackButton = true,
   onBack,
 }: SubpageShellProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -49,7 +51,7 @@ export default function SubpageShell({
                 onClick={() => (onBack ? onBack() : navigate("/"))}
               >
                 <ArrowLeft className="h-4 w-4" />
-                Volver a la app
+                {t("nav.backToApp")}
               </Button>
             ) : null}
           </div>

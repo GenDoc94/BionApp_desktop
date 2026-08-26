@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
@@ -12,6 +13,7 @@ import { buildMuestraAppPath, saveMuestraNavegacion } from "../lib/navegacionMue
 import { Cpu, Plus, Save, Search, SquarePen, Trash2, X } from "lucide-react";
 
 function ChipPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [chips, setChips] = useState<any[]>([]);
   const [asignaciones, setAsignaciones] = useState<ChipAsignacion[]>([]);
@@ -46,7 +48,7 @@ function ChipPage() {
 
     if (chipsError) {
       console.error("Error al cargar chips:", chipsError);
-      toast.error("Error al cargar chips");
+      toast.error(t("chips.toast.loadError"));
     } else {
       const catalog = chipsData || [];
       setChips(catalog);
@@ -58,14 +60,14 @@ function ChipPage() {
 
     if (asigError) {
       console.error("Error al cargar asignaciones:", asigError);
-      toast.error("Error al cargar muestras en chips");
+      toast.error(t("chips.toast.loadAssignments"));
       setAsignaciones([]);
     } else {
       setAsignaciones((asigData || []) as ChipAsignacion[]);
     }
 
     setLoading(false);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void fetchChips();
@@ -81,7 +83,7 @@ function ChipPage() {
   async function handleAddChip() {
     const nombre = nextChipName.trim();
     if (!nombre) {
-      toast.error("El nombre del chip no puede estar vacío");
+      toast.error(t("chips.toast.emptyName"));
       return;
     }
 
@@ -93,16 +95,16 @@ function ChipPage() {
 
       if (error) throw error;
 
-      toast.success("Chip añadido correctamente");
+      toast.success(t("chips.toast.added"));
       await fetchChips();
     } catch (err) {
       console.error("Error al añadir chip:", err);
-      toast.error("Error al añadir chip");
+      toast.error(t("chips.toast.addError"));
     }
   }
 
   async function handleDeleteChip(chip: { NumChip_D: number; Nombre_Chip?: string | null }) {
-    if (!confirm(`¿Eliminar chip ${chip.NumChip_D} - ${chip.Nombre_Chip}?`)) return;
+    if (!confirm(t("chips.confirm.delete", { num: chip.NumChip_D, name: chip.Nombre_Chip }))) return;
 
     try {
       const { error: deleteDChipsError } = await supabase
@@ -119,12 +121,12 @@ function ChipPage() {
 
       if (deleteChipsError) throw deleteChipsError;
 
-      toast.success("Chip eliminado");
+      toast.success(t("chips.toast.deleted"));
       if (editingChipNum === chip.NumChip_D) handleCancelEditChipName();
       await fetchChips();
     } catch (err) {
       console.error("Error al eliminar chip:", err);
-      toast.error("Error al eliminar chip");
+      toast.error(t("chips.toast.deleteError"));
     }
   }
 
@@ -141,7 +143,7 @@ function ChipPage() {
   async function handleSaveChipName(chipNum: number) {
     const nombre = editingChipName.trim();
     if (!nombre) {
-      toast.error("El nombre del chip no puede estar vacío");
+      toast.error(t("chips.toast.emptyName"));
       return;
     }
 
@@ -166,11 +168,11 @@ function ChipPage() {
           chip.NumChip_D === chipNum ? { ...chip, Nombre_Chip: nombre } : chip
         )
       );
-      toast.success("Nombre del chip actualizado");
+      toast.success(t("chips.toast.renamed"));
       handleCancelEditChipName();
     } catch (err) {
       console.error("Error al actualizar nombre del chip:", err);
-      toast.error("Error al actualizar nombre del chip");
+      toast.error(t("chips.toast.renameError"));
     } finally {
       setSavingChipName(false);
     }
@@ -191,22 +193,22 @@ function ChipPage() {
       <div className="bionapp-subpage min-h-screen p-4 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground">Cargando chips...</p>
+          <p className="text-muted-foreground">{t("chips.loading")}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <SubpageShell title="Chips cargados" icon={Cpu} maxWidthClass="max-w-[1400px]">
+    <SubpageShell title={t("chips.title")} icon={Cpu} maxWidthClass="max-w-[1400px]">
       <div className="bionapp-panel p-4 mb-6">
         <div className="grid gap-4 md:grid-cols-[90px_minmax(320px,1fr)_auto] md:items-center">
           <div>
-            <p className="text-xs text-slate-500">Nº Chip</p>
+            <p className="text-xs text-slate-500">{t("chips.number")}</p>
             <p className="text-sm font-medium">{nextChipNum}</p>
           </div>
           <div className="min-w-0">
-            <p className="text-xs text-slate-500 mb-1">Nombre de chip</p>
+            <p className="text-xs text-slate-500 mb-1">{t("chips.name")}</p>
             <Input
               value={nextChipName}
               onChange={(e) => setNextChipName(e.target.value)}
@@ -217,7 +219,7 @@ function ChipPage() {
           <div className="flex justify-end">
             <Button onClick={handleAddChip} size="sm" className="h-9 gap-2 bionapp-btn-green">
               <Plus className="h-4 w-4" />
-              Añadir chip
+              {t("chips.add")}
             </Button>
           </div>
         </div>
@@ -232,13 +234,16 @@ function ChipPage() {
                 value={chipSearchQuery}
                 onChange={(e) => setChipSearchQuery(e.target.value)}
                 className="h-9 pl-9 text-sm"
-                placeholder="Buscar por Nº chip, nombre o Nº muestra..."
+                placeholder={t("chips.searchPlaceholder")}
               />
             </div>
             {chipSearchActive ? (
               <div className="flex items-center gap-2 shrink-0">
                 <p className="text-xs text-slate-500">
-                  {filteredChipPanels.length} de {chipPanels.length} chips
+                  {t("chips.searchCount", {
+                    filtered: filteredChipPanels.length,
+                    total: chipPanels.length,
+                  })}
                 </p>
                 <Button
                   type="button"
@@ -247,7 +252,7 @@ function ChipPage() {
                   className="h-8 px-2 text-xs"
                   onClick={() => setChipSearchQuery("")}
                 >
-                  Limpiar
+                  {t("chips.clear")}
                 </Button>
               </div>
             ) : null}
@@ -257,11 +262,11 @@ function ChipPage() {
 
       {chipPanels.length === 0 ? (
         <div className="bionapp-panel p-6 text-center text-sm text-muted-foreground">
-          No hay chips en el catálogo. Añade el primero con el formulario de arriba.
+          {t("chips.empty")}
         </div>
       ) : filteredChipPanels.length === 0 ? (
         <div className="bionapp-panel p-6 text-center text-sm text-muted-foreground">
-          No hay chips que coincidan con «{chipSearchQuery.trim()}».
+          {t("chips.noMatch", { query: chipSearchQuery.trim() })}
         </div>
       ) : (
         <div className="bionapp-chip-grid">
@@ -285,7 +290,7 @@ function ChipPage() {
                     />
                   ) : (
                     <span className="text-sm font-medium truncate" title={chip.Nombre_Chip || ""}>
-                      {chip.Nombre_Chip || "—"}
+                      {chip.Nombre_Chip || t("common.empty")}
                     </span>
                   )}
                 </div>
@@ -298,7 +303,7 @@ function ChipPage() {
                         onClick={() => void handleSaveChipName(chip.NumChip_D)}
                         disabled={savingChipName}
                         className="h-7 w-7 p-0"
-                        title="Guardar nombre"
+                        title={t("chips.saveName")}
                       >
                         <Save className="h-3.5 w-3.5 bionapp-text-success" />
                       </Button>
@@ -308,7 +313,7 @@ function ChipPage() {
                         onClick={handleCancelEditChipName}
                         disabled={savingChipName}
                         className="h-7 w-7 p-0"
-                        title="Cancelar"
+                        title={t("chips.cancel")}
                       >
                         <X className="h-3.5 w-3.5 text-slate-700" />
                       </Button>
@@ -320,7 +325,7 @@ function ChipPage() {
                         size="sm"
                         onClick={() => handleStartEditChipName(chip)}
                         className="h-7 w-7 p-0"
-                        title="Editar nombre"
+                        title={t("chips.editName")}
                       >
                         <SquarePen className="h-3.5 w-3.5 text-slate-700" />
                       </Button>
@@ -329,7 +334,7 @@ function ChipPage() {
                         size="sm"
                         onClick={() => handleDeleteChip(chip)}
                         className="h-7 w-7 p-0"
-                        title="Eliminar chip"
+                        title={t("chips.delete")}
                       >
                         <Trash2 className="h-3.5 w-3.5 text-destructive" />
                       </Button>
@@ -351,20 +356,22 @@ function ChipPage() {
                         className={`bionapp-chip-fc bionapp-chip-fc--ocupada bionapp-chip-fc--btn${
                           repetir ? " bionapp-chip-fc--repetir" : ""
                         }`}
-                        title={`Ir a muestra ${row.NumBN_C} · lectura ${row.NumLectura_C} · LM ${row.NumLectMarc_C}${
-                          repetir ? " · Repetir chip marcado" : ""
-                        }`}
+                        title={`${t("chips.goSample", {
+                          numBN: row.NumBN_C,
+                          numLectura: row.NumLectura_C,
+                          numLectMarc: row.NumLectMarc_C,
+                        })}${repetir ? t("chips.repeatMarked") : ""}`}
                         onClick={() => handleOpenMuestra(row)}
                       >
-                        <span className="bionapp-chip-fc__label">FC {fcNumber}</span>
-                        <span className="bionapp-chip-fc__muestra">{row.NumBN_C}</span>
+                      <span className="bionapp-chip-fc__label">{t("chips.fc.slot", { n: fcNumber })}</span>
+                      <span className="bionapp-chip-fc__muestra">{row.NumBN_C}</span>
                       </button>
                     );
                   }
                   return (
                     <div key={fcNumber} className="bionapp-chip-fc">
-                      <span className="bionapp-chip-fc__label">FC {fcNumber}</span>
-                      <span className="bionapp-chip-fc__vacio">—</span>
+                      <span className="bionapp-chip-fc__label">{t("chips.fc.slot", { n: fcNumber })}</span>
+                      <span className="bionapp-chip-fc__vacio">{t("common.empty")}</span>
                     </div>
                   );
                 })}

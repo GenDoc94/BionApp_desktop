@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import "../i18n";
 import {
   agrupacionLabel,
   buildEstadisticas,
@@ -61,7 +62,7 @@ describe("exportEstadisticasCsv", () => {
       "mes"
     );
     const csv = exportEstadisticasCsv(porPeriodo, "mes");
-    expect(csv).toContain("Mes,Fallidas,En proceso,Completas,Total,% Fallidas,% En proceso,% Completas");
+    expect(csv).toContain("Periodo,Fallidas,En proceso,Completas,Total,% Fallidas,% En proceso,% Completas");
     expect(csv).toContain("jun 2026");
   });
 });

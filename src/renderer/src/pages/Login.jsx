@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabaseClient";
 import { getFunctionErrorMessage } from "../lib/functionErrors";
 import { checkForAppUpdate, isLocalInstall } from "../lib/appUpdates";
 import UpdateCheckDialog from "../components/UpdateCheckDialog";
+import LanguageToggle from "../components/LanguageToggle";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -12,10 +14,12 @@ import { Toaster, toast } from "sonner@2.0.3";
 import { LogIn, Mail, Lock, UserPlus } from "lucide-react";
 import pkg from "bionapp-pkg";
 import logo from "../assets/BionApp.svg";
+import { translateIpcError } from "../i18n/ipcErrors";
 
 const version = pkg.version;
 
 export default function Login({ onLogin }) {
+  const { t } = useTranslation();
   const localInstall = isLocalInstall();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,7 +49,7 @@ export default function Login({ onLogin }) {
 
       if (error) {
         setHasUsers(false);
-        setUsersCheckError(await getFunctionErrorMessage(error));
+        setUsersCheckError(translateIpcError(await getFunctionErrorMessage(error)));
       } else {
         setHasUsers(Boolean(data?.hasUsers));
       }
@@ -61,8 +65,8 @@ export default function Login({ onLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!hasUsers) return toast.error("Primero crea el primer usuario de esta instalación");
-    if (!email || !password) return toast.error("Introduce correo y contraseña");
+    if (!hasUsers) return toast.error(t("login.needFirstUser"));
+    if (!email || !password) return toast.error(t("login.needEmailPassword"));
 
     setLoading(true);
 
@@ -73,19 +77,19 @@ export default function Login({ onLogin }) {
 
     setLoading(false);
 
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateIpcError(error.message));
 
     setEmail("");
     setPassword("");
     onLogin(data.user || data.session?.user);
-    toast.success("Sesión iniciada correctamente");
+    toast.success(t("login.signedIn"));
   };
 
   const handleCheckUpdates = async () => {
     if (!localInstall || checkingUpdate) return;
 
     setCheckingUpdate(true);
-    const toastId = toast.loading("Buscando actualizaciones en GitHub…");
+    const toastId = toast.loading(t("login.checkingGithub"));
 
     try {
       const info = await checkForAppUpdate();
@@ -96,7 +100,7 @@ export default function Login({ onLogin }) {
       const message =
         err instanceof Error && err.message
           ? err.message
-          : "No se pudo comprobar. ¿Hay conexión a internet?";
+          : t("login.offline");
       toast.error(message);
     } finally {
       setCheckingUpdate(false);
@@ -125,14 +129,16 @@ export default function Login({ onLogin }) {
                 className="bionapp-login__version-btn"
                 onClick={handleCheckUpdates}
                 disabled={checkingUpdate}
-                title="Buscar actualizaciones en GitHub"
+                title={t("login.checkUpdatesTitle")}
               >
-                {checkingUpdate ? "Buscando actualizaciones…" : `v${version} (beta) · Buscar actualizaciones`}
+                {checkingUpdate
+                  ? t("login.checkingUpdates")
+                  : t("login.checkUpdates", { version })}
               </button>
             </Badge>
           ) : (
             <Badge variant="default" className="text-xs mt-1.5">
-              v{version} (beta)
+              {t("login.versionBeta", { version })}
             </Badge>
           )}
         </div>
@@ -146,26 +152,26 @@ export default function Login({ onLogin }) {
             <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
               {!checkingUsers && !hasUsers && !usersCheckError && (
                 <div className="bionapp-alert-warn px-3 py-2 text-xs">
-                  No hay usuarios creados todavía. Crea tu primer usuario en «Añadir nuevo usuario» con el código maestro que has creado antes.
+                  {t("login.noUsers")}
                 </div>
               )}
 
               {usersCheckError && (
                 <div className="bionapp-alert-warn px-3 py-2 text-xs">
-                  No se pudo comprobar si hay usuarios: {usersCheckError}
+                  {t("login.usersCheckError", { error: usersCheckError })}
                 </div>
               )}
 
               <div className="flex flex-col gap-2">
                 <Label className="text-xs flex items-center gap-1.5">
                   <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                  Correo electrónico
+                  {t("login.email")}
                 </Label>
                 <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="usuario@ejemplo.com"
+                  placeholder={t("login.emailPlaceholder")}
                   className="h-9 text-sm"
                   autoComplete="email"
                 />
@@ -174,7 +180,7 @@ export default function Login({ onLogin }) {
               <div className="flex flex-col gap-2">
                 <Label className="text-xs flex items-center gap-1.5">
                   <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                  Contraseña
+                  {t("login.password")}
                 </Label>
                 <Input
                   type="password"
@@ -194,16 +200,16 @@ export default function Login({ onLogin }) {
               >
                 <LogIn className="h-4 w-4" />
                 {checkingUsers
-                  ? "Comprobando instalación..."
+                  ? t("login.checking")
                   : loading
-                    ? "Iniciando sesión..."
-                    : "Entrar"}
+                    ? t("login.signingIn")
+                    : t("login.enter")}
               </Button>
 
               <Button variant="outline" className="w-full gap-2" size="sm" asChild>
                 <Link to="/nuevo-usuario">
                   <UserPlus className="h-4 w-4" />
-                  Añadir nuevo usuario
+                  {t("login.addUser")}
                 </Link>
               </Button>
             </form>
@@ -212,9 +218,13 @@ export default function Login({ onLogin }) {
           {/* Footer */}
           <div className="bionapp-panel-footer px-4 py-2 rounded-b-lg">
             <p className="text-xs text-muted-foreground text-center">
-              Acceso restringido a personal autorizado
+              {t("login.restricted")}
             </p>
           </div>
+        </div>
+
+        <div className="flex justify-center mt-3">
+          <LanguageToggle />
         </div>
 
         <div className="bionapp-login__credits">

@@ -17,7 +17,10 @@ import type {
   UserSession
 } from '../shared/types'
 
-const store = new Store<{ dataPath?: string }>({ name: 'bionapp-desktop-config' })
+import type { AppLocale } from '../shared/locale'
+import { mt, setMainLocale } from './i18n'
+
+const store = new Store<{ dataPath?: string; locale?: AppLocale }>({ name: 'bionapp-desktop-config' })
 
 let mainWindow: BrowserWindow | null = null
 let db: Database.Database | null = null
@@ -91,24 +94,31 @@ function broadcastAuth(user: AuthUser | null): void {
   mainWindow?.webContents.send('auth:state', user)
 }
 
-function createWindow(): void {
+function applyNativeLocale(): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setTitle(mt('windowTitle'))
+  }
   const isMac = process.platform === 'darwin'
   const template: Electron.MenuItemConstructorOptions[] = [
     ...(isMac ? [{ role: 'appMenu' as const }] : []),
     {
-      label: 'Editar',
+      label: mt('edit'),
       submenu: [
-        { role: 'undo', label: 'Deshacer' },
-        { role: 'redo', label: 'Rehacer' },
+        { role: 'undo', label: mt('undo') },
+        { role: 'redo', label: mt('redo') },
         { type: 'separator' },
-        { role: 'cut', label: 'Cortar' },
-        { role: 'copy', label: 'Copiar' },
-        { role: 'paste', label: 'Pegar' },
-        { role: 'selectAll', label: 'Seleccionar todo' }
+        { role: 'cut', label: mt('cut') },
+        { role: 'copy', label: mt('copy') },
+        { role: 'paste', label: mt('paste') },
+        { role: 'selectAll', label: mt('selectAll') }
       ]
     }
   ]
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
+function createWindow(): void {
+  applyNativeLocale()
 
   const iconPath = join(__dirname, '../../resources/icon.ico')
 
@@ -118,7 +128,7 @@ function createWindow(): void {
     minWidth: 480,
     minHeight: 560,
     show: false,
-    title: 'BionApp (beta)',
+    title: mt('windowTitle'),
     icon: iconPath,
     autoHideMenuBar: true,
     webPreferences: {
@@ -146,9 +156,16 @@ function createWindow(): void {
 function registerIpc(): void {
   ipcMain.handle('app:getState', () => getState())
 
+  ipcMain.handle('app:setLocale', (_e, locale: unknown) => {
+    const next = setMainLocale(locale)
+    store.set('locale', next)
+    applyNativeLocale()
+    return next
+  })
+
   ipcMain.handle('app:pickDataFolder', async () => {
     const result = await dialog.showOpenDialog(mainWindow!, {
-      title: 'Seleccionar carpeta compartida de datos BionApp',
+      title: mt('pickDataFolder'),
       properties: ['openDirectory', 'createDirectory']
     })
     if (result.canceled || !result.filePaths[0]) return null
@@ -264,6 +281,7 @@ app.whenReady().then(() => {
   if (process.platform === 'win32') {
     app.setAppUserModelId('es.hospital.bionapp')
   }
+  setMainLocale(store.get('locale'))
   registerIpc()
   const saved = store.get('dataPath')
   if (saved && fs.existsSync(saved)) {

@@ -1,0 +1,896 @@
+{
+  "language": {
+    "es": "ES",
+    "en": "EN",
+    "title": "Language",
+    "help": "Choose the interface language. The preference is saved on this computer."
+  },
+  "common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "add": "Add",
+    "print": "Print",
+    "close": "Close",
+    "all": "All",
+    "actions": "Actions",
+    "empty": "—",
+    "unnamed": "unnamed",
+    "selectPlaceholder": "— Select —",
+    "nOfTotal": "{{current}} of {{total}}",
+    "retry": "Retry"
+  },
+  "errors": {
+    "unknown": "Unknown error",
+    "serverFunction": "Server function error"
+  },
+  "nav": {
+    "backToApp": "Back to app",
+    "preselect": "Preselection",
+    "chips": "Chips",
+    "actions": "Actions",
+    "calcs": "Calculations",
+    "options": "Options"
+  },
+  "footer": {
+    "tagline": "BionApp v{{version}} (beta) · OGM sample management",
+    "createdBy": "Created by"
+  },
+  "role": {
+    "admin": "Administrator",
+    "user": "User",
+    "unassigned": "Unassigned"
+  },
+  "setup": {
+    "title": "BionApp desktop (beta)",
+    "body": "Choose the folder that will hold the data and the master code used to create new users. It CANNOT be changed later.",
+    "pickFolder": "Select folder…",
+    "adminCode": "Master code (min. 4 characters)",
+    "adminCodePlaceholder": "Master code",
+    "confirmCode": "Confirm master code",
+    "confirmPlaceholder": "Repeat the master code",
+    "mismatch": "The codes do not match",
+    "continue": "Continue",
+    "preparing": "Preparing…",
+    "remember": "Write down the master code; it cannot be changed.",
+    "languageHint": "You can also choose the interface language."
+  },
+  "login": {
+    "needFirstUser": "Create the first user for this install first",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "user@example.com",
+    "enter": "Sign in",
+    "checking": "Checking installation...",
+    "signingIn": "Signing in...",
+    "addUser": "Add new user",
+    "restricted": "Access restricted to authorized staff",
+    "checkUpdates": "v{{version}} (beta) · Check for updates",
+    "checkUpdatesTitle": "Check GitHub for updates",
+    "checkingUpdates": "Checking for updates…",
+    "checkingGithub": "Checking GitHub for updates…",
+    "versionBeta": "v{{version}} (beta)",
+    "noUsers": "No users have been created yet. Create your first user in “Add new user” with the master code you set earlier.",
+    "usersCheckError": "Could not check whether there are users: {{error}}",
+    "createFirst": "Create the first user for this install",
+    "needEmailPassword": "Enter email and password",
+    "signedIn": "Signed in successfully",
+    "offline": "Could not check. Is there an internet connection?"
+  },
+  "createUser": {
+    "title": "Create new user",
+    "email": "Email",
+    "password": "Password",
+    "role": "Role",
+    "roleHelp": "user can only view samples; admin can add new samples.",
+    "adminCode": "Master code",
+    "adminCodePlaceholder": "Private code",
+    "creating": "Creating user...",
+    "submit": "Create user",
+    "backToLogin": "Back to login",
+    "incomplete": "Fill in email, password, role and master code",
+    "created": "User {{email}} created as {{role}}",
+    "emailPlaceholder": "user@example.com"
+  },
+  "updates": {
+    "newVersion": "A new version is available: {{version}}",
+    "upToDate": "You’re up to date",
+    "installed": "Installed version: **v{{current}}**",
+    "availableOnGithub": "· Available on GitHub: **v{{latest}}**",
+    "changes": "Changes:",
+    "howToTitle": "How to update (local mode)",
+    "howToBody": "Close BionApp, download the new **BionApp.exe** from GitHub Releases and replace the previous executable. Keep your data folder (`bionapp.sqlite` and `documentos/`).",
+    "howToSmartscreen": "The executable is not signed. If Windows SmartScreen warns you, use *More info* → *Run anyway*.",
+    "none": "There are no newer versions on GitHub for this install.",
+    "openGithub": "Open on GitHub",
+    "close": "Close",
+    "whatsNewTitle": "New version {{version}}",
+    "gotIt": "Got it",
+    "err": {
+      "packageJson": "Could not read package.json on GitHub ({{status}})",
+      "invalidGithub": "GitHub response is not valid",
+      "latestRelease": "Could not read the latest GitHub Release ({{status}})",
+      "invalidRemoteVersion": "Remote version is not valid",
+      "offline": "Could not check. Is there an internet connection?",
+      "repoNotFound": "Repository not found on GitHub.",
+      "readVersion": "Could not read the version on GitHub"
+    }
+  },
+  "options": {
+    "title": "Options",
+    "loading": "Loading…",
+    "tab": {
+      "profile": "Profile",
+      "variables": "Variables",
+      "tags": "Tags",
+      "stats": "Statistics",
+      "docs": "Documents",
+      "export": "Export",
+      "appearance": "Appearance",
+      "manual": "Manual",
+      "authorship": "Authorship"
+    },
+    "setup": {
+      "continue": "Continue to the database",
+      "title": "Initial setup",
+      "body": "In **Variables**, create at least one sample type and one diagnosis. Then press **Continue to the database**.",
+      "counts": "Types: {{tipos}} · Diagnoses: {{dx}}",
+      "backBlocked": "Add at least one sample type and one diagnosis before going back",
+      "needCatalogs": "Add at least one sample type and one diagnosis"
+    },
+    "restricted": {
+      "title": "Restricted access",
+      "catalogs": "You need the admin role to edit the DMuestra and DDx catalogs.",
+      "tags": "You need the admin role to create and edit tags."
+    },
+    "vars": {
+      "sampleTypes": "Sample types",
+      "diagnoses": "Diagnoses",
+      "addSampleType": "Add sample type",
+      "sampleTypeHint": "Name (e.g. Node, PB, BM…)",
+      "sampleTypePlaceholder": "New sample type…",
+      "deleteHint": "Only the last entry (highest Cod) can be deleted, to avoid gaps in numbering.",
+      "addDx": "Add diagnosis",
+      "dxHint": "Name (e.g. AML, ALL, CLL…)",
+      "dxPlaceholder": "New diagnosis…"
+    },
+    "list": {
+      "current": "Current list"
+    },
+    "col": {
+      "sampleType": "Sample type",
+      "actions": "Actions",
+      "name": "Name"
+    },
+    "empty": {
+      "values": "No values."
+    },
+    "toast": {
+      "emptyName": "Name cannot be empty",
+      "catalogUpdated": "Catalog updated",
+      "deleteLastOnly": "Only the last catalog entry (highest Cod) can be deleted",
+      "inUse": "Cannot delete: {{count}} sample(s) use this value. Edit or reassign them first.",
+      "lastDeleted": "Last entry deleted",
+      "tagAdded": "Tag added",
+      "tagUpdated": "Tag updated",
+      "tagDeleted": "Tag deleted"
+    },
+    "err": {
+      "load": "Error loading options",
+      "addSampleType": "Error adding sample type",
+      "saveCatalog": "Error saving the catalog",
+      "deleteCatalog": "Error deleting from the catalog",
+      "addDx": "Error adding diagnosis",
+      "addTag": "Error adding tag",
+      "saveTag": "Error saving tag",
+      "deleteTag": "Error deleting tag"
+    },
+    "tags": {
+      "add": "Add tag",
+      "nameHint": "Name (e.g. Thesis, EC-XXX, QC…)",
+      "namePlaceholder": "New tag…",
+      "color": "Color",
+      "colorAria": "Tag color",
+      "colorHint": "Choose a color to identify the tag on samples.",
+      "empty": "No tags.",
+      "confirmDelete": "Delete tag “{{name}}”?"
+    },
+    "profile": {
+      "email": "Email",
+      "role": "Role",
+      "roleLocked": "The role cannot be changed once assigned."
+    },
+    "theme": {
+      "title": "Interface theme",
+      "help": "Choose how BionApp is displayed. The preference is saved in this browser.",
+      "light": "Light",
+      "dark": "Dark"
+    }
+  },
+  "catalog": {
+    "deleteLastOnly": "Delete (last catalog entry only)"
+  },
+  "stats": {
+    "filters": "Filters",
+    "sampleType": "Sample type",
+    "diagnosis": "Diagnosis",
+    "clearFilters": "Clear filters",
+    "card": {
+      "completed": "Completed (status 3)",
+      "inProgress": "In progress (status 2)",
+      "failed": "Failed (status 1)"
+    },
+    "evolution": "Trend by extraction {{agrupacion}}",
+    "group": {
+      "months": "Months",
+      "quarters": "Quarters",
+      "years": "Years",
+      "year": "year",
+      "quarter": "quarter",
+      "month": "month"
+    },
+    "exportCsv": "Export CSV",
+    "groupHint": "Grouped by Fecha (extraction date). Only samples with status 1, 2 or 3.",
+    "stackedView": "Stacked column view",
+    "barsView": "Horizontal bars by period",
+    "empty": "No samples with an assigned status and extraction date to display.",
+    "tableTitle": "Table by {{agrupacion}}",
+    "failed": "Failed",
+    "inProgress": "In progress",
+    "completed": "Completed",
+    "total": "Total",
+    "pctFailed": "% Failed",
+    "pctInProgress": "% In progress",
+    "pctCompleted": "% Completed",
+    "note": {
+      "noDate": "{{count}} sample(s) with status 1–3 and no extraction date are omitted from the chart.",
+      "noStatus": "{{count}} sample(s) with no status (“Process” queue) are not included."
+    },
+    "period": {
+      "samples": "{{count}} samples",
+      "quarter": "Q{{q}} {{year}}"
+    },
+    "tooltip": {
+      "failed": "Failed: {{count}}",
+      "inProgress": "In progress: {{count}}",
+      "completed": "Completed: {{count}}"
+    },
+    "legend": {
+      "failed": "Failed: {{count}} ({{pct}})",
+      "inProgress": "In progress: {{count}} ({{pct}})",
+      "completed": "Completed: {{count}} ({{pct}})",
+      "failedShort": "Failed",
+      "inProgressShort": "In progress",
+      "completedShort": "Completed"
+    },
+    "bar": {
+      "title": "{{label}}: {{total}} samples",
+      "failed": "Failed: {{count}}",
+      "inProgress": "In progress: {{count}}",
+      "completed": "Completed: {{count}}"
+    },
+    "csv": {
+      "period": "Period",
+      "failed": "Failed",
+      "inProgress": "In progress",
+      "completed": "Completed",
+      "total": "Total",
+      "pctFailed": "% Failed",
+      "pctInProgress": "% In progress",
+      "pctCompleted": "% Completed"
+    },
+    "months": {
+      "ene": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "abr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "ago": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dic": "Dec"
+    }
+  },
+  "manual": {
+    "workflow": {
+      "title": "Logical work order",
+      "body": "You can create samples from **Preselection** or from the **main page**. In Preselection you queue interesting requests for OGM; when you create the Bionano number they go into the database with the same request and diagnosis. On the main page you can add and edit samples directly."
+    },
+    "status": {
+      "title": "Sample status",
+      "body": "The icon to the left of the BN no. shows status. In edit mode you can change it; if you cancel without saving, it reverts.",
+      "gray": "Gray — not started",
+      "red": "Red — not assessable",
+      "yellow": "Yellow — pending",
+      "green": "Green — done"
+    },
+    "actions": {
+      "title": "Actions",
+      "hacer": "**Process**: process samples you have entered that are not yet extracted.",
+      "leerExtraido": "**Read extracted**: once extracted, used to enter extracted concentrations.",
+      "tirar": "**Discard**: for those with little extracted material.",
+      "marcar": "**Label**: for extracted samples pending labeling.",
+      "leerMarcado": "**Read labeled**: to quantify labeled material.",
+      "pteChip": "**Pending chip**: for labeled and quantified samples pending loading."
+    },
+    "other": {
+      "title": "Other screens",
+      "chips": "**Chips**: manage chips and FC slots linked to labeled readings.",
+      "calcs": "**Calculations**: lab utilities (e.g. dilutions) from already recorded data.",
+      "options": "**Options**: profile, variables, tags, statistics, documents, export, appearance and manual."
+    },
+    "roles": {
+      "title": "Roles and users",
+      "body": "The user role is for viewing samples. The admin role can add samples and manage catalogs and tags. New users are created with the **master code** set when configuring the app."
+    },
+    "edit": {
+      "title": "Edit and save",
+      "body": "On the main page, **Edit** lets you change data and status. **Save** confirms changes; **Cancel** discards everything unsaved, including the status color."
+    }
+  },
+  "credits": {
+    "author": {
+      "title": "Author",
+      "body": "BionApp was conceived, designed and developed by <github>GenDoc94</github> (Juan José Domínguez-García, <orcid>ORCID</orcid>)."
+    },
+    "origin": {
+      "title": "Project origin",
+      "body": "It is an original idea by GenDoc94, continued from a previous project also called **BionApp**, created and developed 100% by the author in Microsoft Access. This version (online and desktop) is the improved evolution of that app: the same OGM sample workflow, with a modern UI, multi-user support, and web or local use."
+    },
+    "version": {
+      "title": "Current version",
+      "intro": "BionApp v{{version}} (beta). There are two editions with the same business logic:",
+      "online": "**Online**: React, Vite, Tailwind CSS, React Router, Supabase (Auth, Postgres, Edge Functions, storage) and web hosting (e.g. Vercel).",
+      "desktop": "**Desktop**: Electron, React, Vite (electron-vite), Tailwind CSS, SQLite (better-sqlite3), local authentication (bcrypt) and data in a user-chosen folder.",
+      "common": "Shared UI: Radix UI components, Lucide icons and Sonner notifications. MIT license (link in the app footer)."
+    },
+    "ai": {
+      "title": "Use of artificial intelligence",
+      "body1": "Artificial intelligence was used to generate application code. The original software idea, foundations, full app architecture and intended use are by GenDoc94. AI is an implementation tool; it is not the author of the product or its laboratory design.",
+      "disclaimer": "BionApp was not created by a professional software engineer, but by a physician interested in computing. There may be code errors and even conceptual ones. The author is not liable for damage, data loss, clinical or laboratory decisions, or any other harm arising from use of this application. It is provided as-is, in beta, under the MIT license."
+    },
+    "cite": {
+      "title": "How to cite",
+      "body": "If you use BionApp in a paper, cite it with the data in <citation>CITATION.cff</citation> (author, ORCID and DOI <doi>{{doi}}</doi>)."
+    },
+    "thanks": {
+      "title": "Acknowledgements",
+      "body": "Thanks to the open-source communities and projects that make this stack possible, and to those who use BionApp in day-to-day lab work."
+    }
+  },
+  "docs": {
+    "title": "Protocols and documents",
+    "help": "Files are stored in the `documentos/` folder inside this install’s shared data folder.",
+    "upload": "Upload document",
+    "refresh": "Refresh list",
+    "loading": "Loading documents…",
+    "empty": "No documents. Upload PDF, Word or other protocol files for the technique.",
+    "download": "Download",
+    "delete": "Delete",
+    "confirmDelete": "Delete “{{name}}” from the documents folder?",
+    "toast": {
+      "loadError": "Error loading documents",
+      "uploadedOne": "Document uploaded",
+      "uploadedMany": "{{count}} documents uploaded",
+      "uploadError": "Error uploading",
+      "downloadError": "Error downloading",
+      "deleted": "Document deleted",
+      "deleteError": "Error deleting"
+    },
+    "err": {
+      "invalidName": "Invalid file name",
+      "notFound": "File not found"
+    }
+  },
+  "export": {
+    "title": "Export database",
+    "help": "Export all tables from the data folder. Excel and JSON produce a ZIP with one file per table. SQLite copies the local database to a `.sqlite` file. A dialog will open to choose the location.",
+    "excel": "Export Excel (.xlsx → ZIP)",
+    "json": "Export JSON (.json → ZIP)",
+    "sqlite": "Export SQLite (.sqlite)",
+    "tablesIncluded": "Tables included: {{tables}}.",
+    "toast": {
+      "error": "Error exporting",
+      "saved": "Export saved:\n{{path}}"
+    }
+  },
+  "license": {
+    "title": "MIT License"
+  },
+  "app": {
+    "loadingSamples": "Loading samples...",
+    "connectionError": "Connection error",
+    "retry": "Retry",
+    "empty": {
+      "noSamples": "No samples have been added",
+      "addFirst": "Add the first sample"
+    },
+    "setupBanner": "Initial setup: pick a **sample type** and a **diagnosis** in the dropdowns and press **Save** to view sample 1.",
+    "nav": {
+      "record": "Record:"
+    },
+    "search": {
+      "placeholder": "Search...",
+      "go": "Go",
+      "goTitle": "Go to NumBN"
+    },
+    "filters": {
+      "title": "Filters",
+      "aria": "Sample filters",
+      "byRequest": "By request",
+      "byStatus": "By status",
+      "tags": "Tags",
+      "requestPlaceholder": "Request no.",
+      "apply": "Apply",
+      "noTags": "No tags defined. Create them in Options.",
+      "tagsHint": "Samples with at least one selected tag",
+      "tagsAria": "Filter by tags",
+      "active": "Active filter: **{{label}}** — {{count}} samples",
+      "clear": "Clear filter",
+      "requestLabel": "Request {{q}}",
+      "tagsLabel": "Tags: {{names}}"
+    },
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed"
+    },
+    "newSample": "New sample",
+    "user": {
+      "label": "User:",
+      "unknown": "Unknown"
+    },
+    "role": {
+      "label": "Role:"
+    },
+    "deleteSample": "Delete sample",
+    "edit": "Edit",
+    "logout": "Sign out",
+    "state": {
+      "red": "Red status (1)",
+      "yellow": "Yellow status (2)",
+      "green": "Green status (3)",
+      "undefined": "Status not set"
+    },
+    "numBnTitle": "BN number: {{numBN}}",
+    "tags": {
+      "assign": "Assign tags",
+      "aria": "Sample tags"
+    },
+    "preselect": {
+      "viewReason": "View preselection reason"
+    },
+    "field": {
+      "requestNo": "Request no.:",
+      "position": "Position:",
+      "sampleType": "Sample type:",
+      "diagnosis": "Diagnosis:",
+      "processing": "Processing:",
+      "comment": "Comment:",
+      "extractionDate": "Extraction date:",
+      "viscosity": "Viscosity:",
+      "number": "No.:",
+      "date": "Date:",
+      "commentShort": "Comment:"
+    },
+    "quant": {
+      "left": "L",
+      "center": "C",
+      "right": "R"
+    },
+    "copy": {
+      "extractionTitle": "Copy Date, PN, LN and Exp from the previous sample",
+      "labeledTitle": "Copy Date, PN, LN, Exp, PNm, LNm and Expm from the previous sample (same reading and LM no.)"
+    },
+    "extracted": {
+      "title": "Extracted reading",
+      "delete": "Delete this reading",
+      "add": "Add new reading",
+      "addFirst": "Add reading"
+    },
+    "labeled": {
+      "title": "Labeling data",
+      "delete": "Delete this labeled reading",
+      "add": "Add new labeled reading",
+      "addFirst": "Add labeling",
+      "commentPlaceholder": "Comment (Labeling)"
+    },
+    "chips": {
+      "label": "Chips:",
+      "fcPlaceholder": "— FC —",
+      "fcValue": "FC: {{fc}}",
+      "repeatOnEdit": "Repeat this chip (active). Click to clear.",
+      "repeatOn": "Repeat this chip (active)",
+      "repeatMarkEdit": "Mark that this chip failed and must be repeated.",
+      "repeatMark": "Mark chip for repeat",
+      "commentPlaceholder": "Comment",
+      "delete": "Delete this chip",
+      "addAnother": "— Add another chip —",
+      "select": "— Select chip —",
+      "addToLm": "Add chip to this labeled reading",
+      "none": "No chip"
+    },
+    "confirm": {
+      "addSample": "Add sample {{numBN}}?",
+      "deleteSample": "Delete sample {{numBN}}?",
+      "deleteReading": "Delete reading {{numLectura}} of sample {{numBN}}? This will delete all associated data.",
+      "deleteLm": "Delete labeled reading {{numLectMarc}} of reading {{numLectura}} of sample {{numBN}}?",
+      "deleteChip": "Delete chip {{chipNum}} ({{chipName}}) assigned to labeled reading {{numLectMarc}} of reading {{numLectura}} of sample {{numBN}}?"
+    },
+    "toast": {
+      "catalogsLoadError": "Error loading catalogs",
+      "sampleNotFoundNum": "Sample {{numBN}} was not found",
+      "samplesLoadError": "Error loading samples",
+      "logoutOk": "Signed out successfully",
+      "logoutError": "Error signing out",
+      "selectTypeDxSave": "Select a sample type and a diagnosis before saving",
+      "fcTaken": "FC slot {{fc}} of chip #{{numChip}} is already assigned to another sample",
+      "saveOk": "Changes saved successfully",
+      "saveError": "Error saving changes",
+      "selectTypeDxContinue": "You must select a sample type and diagnosis to continue",
+      "invalidNumber": "Enter a valid number",
+      "notInFilter": "That sample is not in the active filter",
+      "sampleNotFound": "Sample not found",
+      "filterOn": "Active filter: {{etiqueta}} ({{count}} samples)",
+      "filterOff": "Filter cleared — showing all samples",
+      "enterRequest": "Enter a request number",
+      "noSamplesForRequest": "No samples with request {{q}}",
+      "noSamplesStatus": "No {{etiqueta}} samples",
+      "selectTag": "Select at least one tag",
+      "noSamplesForTags": "No samples with the selected tags",
+      "sample1Exists": "Sample 1 already exists",
+      "sample1Created": "Sample 1 created. Set sample type and diagnosis in Options.",
+      "firstSampleError": "Error creating the first sample",
+      "sampleExists": "Sample already exists",
+      "sampleCreated": "Sample created successfully",
+      "sampleCreateError": "Error creating the sample",
+      "noSampleToDelete": "No sample selected to delete",
+      "sampleDeleted": "Sample {{numBN}} deleted successfully",
+      "sampleDeleteError": "Error deleting the sample",
+      "readingDeleted": "Reading {{numLectura}} deleted successfully",
+      "readingDeleteError": "Error deleting the reading",
+      "lmDeleted": "Labeled reading {{numLectMarc}} deleted successfully",
+      "lmDeleteError": "Error deleting the labeled reading",
+      "noPreviousSample": "No previous sample to copy from",
+      "previousNotFound": "Previous sample not found",
+      "copiedPrevious": "Copied from the previous sample",
+      "previousNoLm": "The previous sample does not have this labeled reading (same reading no. / LM no.)",
+      "labeledCopied": "Labeling data copied from the previous sample",
+      "readingAdded": "Reading added successfully",
+      "readingCreateError": "Error creating the reading",
+      "lmAdded": "Labeled reading added successfully",
+      "lmCreateError": "Error creating the labeled reading",
+      "noLmSelected": "No labeled reading selected",
+      "selectChip": "Select a chip",
+      "chipNotFound": "Chip not found",
+      "chipAlreadyAssigned": "That chip is already assigned to this labeled reading",
+      "chipNoFc": "That chip has no free FC slots (1–3 already used on other samples)",
+      "chipAdded": "Chip added successfully",
+      "chipAddError": "Error adding chip",
+      "noChipToDelete": "No assigned chip to delete",
+      "chipDeleted": "Chip {{chipNum}} deleted successfully",
+      "chipDeleteError": "Error deleting chip",
+      "maxTags": "Maximum {{max}} tags per sample",
+      "tagsSaveError": "Error saving tags",
+      "repeatOn": "Marked this chip for repeat (Repetir_Chip = 1)",
+      "repeatOff": "Repeat cleared for this chip",
+      "repeatError": "Error updating chip repeat"
+    }
+  },
+  "samples": {
+    "fetch": {
+      "network": "Samples could not be loaded. This is usually a network or proxy issue (VPN, antivirus, company). Check the connection and press Retry.",
+      "generic": "Samples could not be loaded: {{msg}}"
+    }
+  },
+  "chips": {
+    "loading": "Loading chips...",
+    "title": "Loaded chips",
+    "number": "Chip no.",
+    "name": "Chip name",
+    "add": "Add chip",
+    "searchPlaceholder": "Search by chip no., name or sample no....",
+    "searchCount": "{{filtered}} of {{total}} chips",
+    "clear": "Clear",
+    "empty": "There are no chips in the catalog. Add the first one with the form above.",
+    "noMatch": "No chips match “{{query}}”.",
+    "saveName": "Save name",
+    "cancel": "Cancel",
+    "editName": "Edit name",
+    "delete": "Delete chip",
+    "goSample": "Go to sample {{numBN}} · reading {{numLectura}} · LM {{numLectMarc}}",
+    "repeatMarked": "· Chip marked for repeat",
+    "fc": {
+      "allFree": "FC 1–3 free",
+      "noneFree": "no slots",
+      "someFree": "FC {{slots}} free",
+      "slot": "FC {{n}}"
+    },
+    "toast": {
+      "loadError": "Error loading chips",
+      "loadAssignments": "Error loading samples on chips",
+      "emptyName": "Chip name cannot be empty",
+      "added": "Chip added successfully",
+      "addError": "Error adding chip",
+      "deleted": "Chip deleted",
+      "deleteError": "Error deleting chip",
+      "renamed": "Chip name updated",
+      "renameError": "Error updating chip name"
+    },
+    "confirm": {
+      "delete": "Delete chip {{num}} - {{name}}?"
+    }
+  },
+  "preselect": {
+    "title": "Preselection",
+    "loading": "Loading preselection...",
+    "intro": "Add interesting sample requests queued for OGM here. You can set a diagnosis. When the Bionano number is created it is inserted into the database with the same request and diagnosis.",
+    "requestNo": "Request no.",
+    "comment": "Comment",
+    "requestPlaceholder": "E.g. 12345",
+    "commentPlaceholder": "Optional: reason, notes...",
+    "add": "Add",
+    "empty": "No requests in preselection. Add the first one with the form above.",
+    "pending": "Pending",
+    "inSamples": "In Samples",
+    "emptyPending": "No requests pending a Bionano number.",
+    "emptyInSamples": "No requests have been moved to Samples yet.",
+    "bnNo": "Bionano no.",
+    "actions": "Actions",
+    "added": "Added {{dir}}",
+    "sortByAdded": "Sort by date added",
+    "goSample": "Go to sample",
+    "save": "Save changes",
+    "cancel": "Cancel",
+    "edit": "Edit comment and diagnosis",
+    "createSample": "Create sample in Samples",
+    "createBn": "Create BN",
+    "goToSample": "Go to sample",
+    "delete": "Remove from preselection",
+    "showingAll": "Showing all",
+    "showingPage": "Showing <strong>{{shown}}</strong> / {{total}}",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "pageSize": "Page size",
+    "all": "All",
+    "inSamplesHint": "To remove a request from this list, delete its sample in the main app first.",
+    "dxSuffix": "· Dx: {{dx}}",
+    "toast": {
+      "loadError": "Error loading preselection",
+      "dxLoadError": "Error loading diagnoses",
+      "peticNotFound": "Request {{petic}} was not found in preselection",
+      "invalidPetic": "Enter a valid request number",
+      "duplicate": "Request already in the preselection list",
+      "added": "Request added to preselection",
+      "addError": "Error adding to preselection",
+      "alreadyInSamples": "Request {{petic}} is already in Samples (no. {{numBN}}). Delete the sample in the main app first.",
+      "deleted": "Request removed from preselection",
+      "deleteError": "Error deleting from preselection",
+      "updated": "Preselection updated",
+      "updateError": "Error updating preselection",
+      "sampleCreated": "Sample {{numBN}} created for request {{petic}}",
+      "createError": "Error creating the sample"
+    },
+    "confirm": {
+      "delete": "Delete request {{petic}} from preselection?",
+      "create": "Create sample no. {{numBN}} for request {{petic}}{{dxTexto}} and load it into Samples?"
+    },
+    "err": {
+      "notFound": "Request was not found in preselection",
+      "alreadyHasBn": "This request already has a Bionano number assigned",
+      "existsInSamples": "Request {{petic}} already exists in Samples (no. {{numBN}})"
+    }
+  },
+  "actions": {
+    "title": "Actions",
+    "hacer": "Process",
+    "leerExtraido": "Read extracted",
+    "tirar": "Discard?",
+    "marcar": "Label",
+    "leerMarcado": "Read labeled",
+    "pteChip": "Pending chip",
+    "saving": "Saving...",
+    "saveAll": "Save all",
+    "print": {
+      "empty": "There are no samples to print",
+      "docTitle": "Process — Samples",
+      "iframeTitle": "Process print",
+      "heading": "Process — Samples with Estado_Muestra = NULL",
+      "meta": "{{fecha}} · {{count}} sample(s)",
+      "wbAria": "WB wash log",
+      "prepareError": "Could not prepare printing",
+      "dialogError": "Error opening the print dialog"
+    },
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "hacerHeading": "Samples with Estado_Muestra = NULL",
+    "leerExtraidoHeading": "Read extracted — Estado_Muestra = 2 and unquantified readings (left, center and right empty)",
+    "leerMarcadoHeading": "Read labeled — Estado_Muestra = 2, labeled reading created and unquantified (Izq_LM and Dcha_LM empty)",
+    "tirarHeading": "Discard? — <status></status> and <mean></mean> {{cmp}} {{threshold}}",
+    "extractedMeanLabel": "Extracted reading mean",
+    "labeledMeanLabel": "Labeled reading mean",
+    "marcarHeading": "Label — <status></status> and <mean></mean> {{cmp}} {{threshold}}",
+    "pteChipHeading": "Pending chip — <status></status> no chip (<mean></mean> ≥ {{minMedia}}) or chip with <repeat></repeat>",
+    "hacerEditing": "Editing {{count}} sample(s). NumBN cannot be changed.",
+    "leerExtraidoEditing": "Editing {{count}} reading(s). Mean and CV are previewed when left, center and right are filled; they are confirmed on save.",
+    "preview": {
+      "lm": "Preview while typing Izq_LM and Dcha_LM (confirmed on save)",
+      "extracted": "Preview while typing left, center and right (confirmed on save)"
+    },
+    "col": {
+      "sampleType": "Sample type",
+      "diagnosis": "Diagnosis",
+      "viscosityGrade": "Viscosity grade",
+      "readingNo": "Reading no.",
+      "readingDate": "Reading date",
+      "extractedMean": "Extracted mean",
+      "extractedCv": "Extracted CV",
+      "lmNo": "LM no.",
+      "mean": "Mean",
+      "type": "Type",
+      "pendingChip": "Pending chip (by labeled reading)"
+    },
+    "marcarHelp": {
+      "amber": "Amber — relabel: 1 labeled reading (LM) on that extracted reading and ≥2 chips with !. With 2 LMs on the same extracted reading it does not appear (no DNA for another attempt).",
+      "normal": "Normal row: high extracted reading (> {{threshold}}) with no LM (e.g. 2nd extracted reading after the 1st failed).",
+      "typeNone": "Not labeled",
+      "typeRelabel": "Relabel ({{lmCount}} LM, ≥{{minChips}} chips with !)"
+    },
+    "pteChipHelp": "One row per sample. Lists labeled readings with Media_LM ≥ 2 and no chip, and also those where a chip has Repetir_Chip = 1 in the app (icon next to each loaded chip). Rows marked for repeat are highlighted in yellow and show chip no. and FC.",
+    "pteChipItem": "Reading {{numLectura}} — LM {{numLectMarc}} — Media_LM {{media}} — Labeled reading date: {{fecha}}",
+    "pteChipAssignPending": "· Pending chip assignment",
+    "pteChipRepeat": "· Repeat: {{detalle}}",
+    "pteChipChipDetail": "Chip #{{numChip}} FC {{fc}} ({{name}})",
+    "leerMarcadoEditing": "Editing {{count}} labeled reading(s). Media_LM and CV_LM are previewed when Izq_LM and Dcha_LM are filled; they are confirmed on save.",
+    "err": {
+      "sampleNotFoundUpdate": "Sample NumBN {{numBN}} was not found for update",
+      "readingNotFoundUpdate": "Reading NumBN {{numBN}} / no. {{numLectura}} was not found for update",
+      "lmNotFoundUpdate": "LM {{numBN}} / L{{numLectura}} / LM{{numLectMarc}} was not found for update"
+    },
+    "toast": {
+      "saveSomeFailed": "Could not save {{count}} update(s). Check the console.",
+      "extractedSaved": "{{count}} reading(s) updated successfully. Mean and CV are recalculated in the database.",
+      "lmSaved": "{{count}} labeled reading(s) updated. Media_LM and CV_LM are recalculated in the database.",
+      "saveError": "Error saving changes",
+      "catalogsError": "Error loading sample types and diagnoses",
+      "hacerPartial": "Could not save {{failed}} of {{total}} sample(s). Check the console.",
+      "hacerSaved": "{{count}} sample(s) updated successfully",
+      "loadSamples": "Error loading samples",
+      "noHacer": "No samples with Estado_Muestra = NULL",
+      "loadReadings": "Error loading readings",
+      "noLeerExtraido": "No readings pending quantification (left, center and right empty) in status-2 samples",
+      "noEstado2": "No samples with Estado_Muestra = 2",
+      "noTirar": "No readings with Media_Lectura < {{cutoff}}",
+      "loadLm": "Error loading labeled readings",
+      "loadChips": "Error loading chips",
+      "noMarcar": "No readings meet the Label criteria",
+      "loadLeerMarcado": "Error loading labeled readings",
+      "noLeerMarcado": "No labeled readings pending quantification (Izq_LM and Dcha_LM empty) in status-2 samples",
+      "noPteChip": "No pending labeled readings (Media_LM ≥ {{min}} with no chip), nor chips with Repetir_Chip = 1",
+      "notImplemented": "Action not implemented yet",
+      "loadData": "Error loading data"
+    }
+  },
+  "calcs": {
+    "title": "Calculations",
+    "print": "Print",
+    "tab": {
+      "extraction": "DNA extraction",
+      "labeling": "DNA labeling",
+      "dilution": "DNA dilution"
+    },
+    "nSamplesMax6": "No. of samples (max. 6)",
+    "nSamplesMax12": "No. of samples (max. 12)",
+    "excessLd": "Excess (LD MM):",
+    "concReactions": "DNA conc. reactions: {{n}} (samples ×3 + 2 Stds + 1)",
+    "excessLabeling": "Excess (Labeling MM):",
+    "excessStaining": "Excess (Staining):",
+    "hsReactions": "HS reactions: {{n}} (samples ×2 + 2 Stds + 1)",
+    "col": {
+      "order": "Order",
+      "reagent": "Reagent",
+      "ulPerSample": "(µL / sample)",
+      "totalUl": "Total (µL)"
+    },
+    "total": "TOTAL",
+    "totalsIncludeExcess": "Totals include excess",
+    "noExcess": "No excess",
+    "reactionsEq": "Reactions = {{n}}",
+    "table": {
+      "sb": "Stabilizer buffer (SB) — ON ICE",
+      "sbra": "Stabilizer buffer + RNase (SB/RA) — ON ICE",
+      "ld": "Lysis and digestion (LD MM) — AT ROOM TEMP",
+      "conc": "DNA concentration",
+      "labelingMm": "Labeling reaction (Labeling Master Mix)",
+      "wetDisk": "Disk wetting reaction",
+      "staining": "Staining reaction (DNA Staining)",
+      "hs": "Working solution (180 µL)"
+    },
+    "reagent": {
+      "cellBuffer": "Cell buffer",
+      "dnaStabilizer": "DNA stabilizer",
+      "stabilizerBuffer": "Stabilizer buffer",
+      "rnase": "RNase",
+      "digestionEnhancer": "Digestion enhancer",
+      "nucleaseFreeWater": "Nuclease-free water (Ultrapure H2O)",
+      "lbb": "LBB*",
+      "deDetergent": "DE detergent*",
+      "tlpk": "TLPK",
+      "brBuffer": "BR Buffer",
+      "dye": "Dye",
+      "dle1BufferRt": "5x DLE-1 Buffer (room temp)",
+      "dlGreenIce": "20x DL-Green (ice)",
+      "dle1Enzyme": "10x DLE-1 Enzyme (−20°C block)",
+      "dle1Buffer": "5x DLE-1 buffer",
+      "ultrapureWater": "Ultrapure water",
+      "flowBuffer": "4x flow buffer",
+      "dtt": "10x DTT",
+      "dnaStain": "DNA stain",
+      "ultraPureH2o": "Ultrapure water (Ultra Pure H2O)",
+      "hsBuffer": "HS Buffer"
+    }
+  },
+  "dilution": {
+    "title": "DNA dilution for labeling",
+    "help": "Target: {{vol}} µL total with {{ng}} ng of DNA (min. {{minNg}} ng). Ideal extract mean: 39–150 ng/µL. In-progress BN readings with Estado_Muestra = 2 (pending), quantified extract and labeling not started (no Lecturas_Marcado and no filled Marcado data; an empty Marcado row does not count).",
+    "badge": {
+      "totalVol": "Total volume: {{vol}} µL",
+      "targetDna": "Target DNA: {{ng}} ng",
+      "maxSamples": "Max. {{n}} samples",
+      "candidates": "{{n}} to dilute"
+    },
+    "addSample": "Add sample",
+    "loading": "Loading readings…",
+    "empty": "No in-progress readings (status 2) without labeling and with a DNA mean. Quantify the extract before calculating the dilution.",
+    "allAdded": "— All added or no more candidates —",
+    "selectReading": "— Select reading —",
+    "sampleLabel": "BN {{numBN}} - L{{numLectura}}",
+    "option": "{{label}} — mean {{media}} ng/µL",
+    "add": "Add",
+    "refresh": "Refresh list",
+    "remove": "Remove",
+    "volumes": "Dilution volumes",
+    "col": {
+      "cv": "CV",
+      "sample": "Sample",
+      "mean": "gDNA mean (ng/µL)",
+      "water": "H₂O vol. (µL) 1st",
+      "dna": "gDNA vol. (µL) 2nd",
+      "ngMix": "ng in DNA mix",
+      "notes": "Notes"
+    },
+    "note": {
+      "outOfRange": "Mean outside 39–150 ng/µL",
+      "belowMin": "With 19.5 µL DNA < {{minNg}} ng",
+      "maxDna": "DNA volume at maximum (19.5 µL)"
+    },
+    "toast": {
+      "loadError": "Error loading readings for dilution",
+      "select": "Select a reading",
+      "max": "Maximum {{n}} samples"
+    },
+    "err": {
+      "invalidMean": "Invalid DNA mean"
+    }
+  },
+  "auth": {
+    "err": {
+      "badCredentials": "Incorrect email or password",
+      "noSession": "No session",
+      "method": "Method not supported",
+      "adminCodeShort": "The master code must be at least 4 characters",
+      "adminCodeExists": "This folder already has a master code configured",
+      "incompleteCreate": "Fill in email, password and master code",
+      "invalidRole": "Invalid role",
+      "passwordShort": "Password is too short",
+      "noAdminCode": "There is no master code in this folder. Set it during initial setup.",
+      "badAdminCode": "Incorrect master code",
+      "userExists": "A user with that email already exists"
+    }
+  }
+}

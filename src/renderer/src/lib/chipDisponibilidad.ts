@@ -1,3 +1,5 @@
+import i18n from "../i18n";
+
 export const CHIP_FC_SLOTS = [1, 2, 3] as const;
 
 export type ChipAsignacionRow = {
@@ -86,9 +88,9 @@ export function chipTieneHuecoDisponible(
 }
 
 export function formatFcLibresLabel(libres: number[]): string {
-  if (libres.length === CHIP_FC_SLOTS.length) return "FC 1–3 libres";
-  if (libres.length === 0) return "sin huecos";
-  return `FC ${libres.join(", ")} libre${libres.length > 1 ? "s" : ""}`;
+  if (libres.length === CHIP_FC_SLOTS.length) return i18n.t("chips.fc.allFree");
+  if (libres.length === 0) return i18n.t("chips.fc.noneFree");
+  return i18n.t("chips.fc.someFree", { slots: libres.join(", ") });
 }
 
 export function fcYaOcupado(

@@ -1,3 +1,5 @@
+import i18n from "../i18n";
+
 export type MuestraEstadoRow = {
   Fecha?: string | null;
   Estado_Muestra?: number | null;
@@ -25,7 +27,7 @@ export type MuestraEstadisticasResumen = {
   totalConEstado: number;
 };
 
-const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"] as const;
 
 export function parseFechaExtraccion(fecha: string | null | undefined): Date | null {
   const raw = (fecha ?? "").trim();
@@ -66,19 +68,19 @@ function periodLabel(period: string, agrupacion: AgrupacionTemporal): string {
   if (agrupacion === "trimestre") {
     const match = period.match(/^(\d{4})-Q([1-4])$/);
     if (!match) return period;
-    return `T${match[2]} ${match[1]}`;
+    return i18n.t("stats.period.quarter", { q: match[2], year: match[1] });
   }
 
   const [year, month] = period.split("-");
   const idx = Number(month) - 1;
   if (!year || idx < 0 || idx > 11) return period;
-  return `${MESES[idx]} ${year}`;
+  return `${i18n.t(`stats.months.${MESES[idx]}`)} ${year}`;
 }
 
 export function agrupacionLabel(agrupacion: AgrupacionTemporal): string {
-  if (agrupacion === "ano") return "año";
-  if (agrupacion === "trimestre") return "trimestre";
-  return "mes";
+  if (agrupacion === "ano") return i18n.t("stats.group.year");
+  if (agrupacion === "trimestre") return i18n.t("stats.group.quarter");
+  return i18n.t("stats.group.month");
 }
 
 export function formatPorcentaje(value: number, total: number, decimals = 1): string {
@@ -148,18 +150,17 @@ export function exportEstadisticasCsv(
   porPeriodo: MuestraPeriodoEstadistica[],
   agrupacion: AgrupacionTemporal
 ): string {
-  const periodoCol =
-    agrupacion === "ano" ? "Año" : agrupacion === "trimestre" ? "Trimestre" : "Mes";
+  void agrupacion;
   const lines = [
     [
-      periodoCol,
-      "Fallidas",
-      "En proceso",
-      "Completas",
-      "Total",
-      "% Fallidas",
-      "% En proceso",
-      "% Completas",
+      i18n.t("stats.csv.period"),
+      i18n.t("stats.csv.failed"),
+      i18n.t("stats.csv.inProgress"),
+      i18n.t("stats.csv.completed"),
+      i18n.t("stats.csv.total"),
+      i18n.t("stats.csv.pctFailed"),
+      i18n.t("stats.csv.pctInProgress"),
+      i18n.t("stats.csv.pctCompleted"),
     ].join(","),
     ...porPeriodo.map((p) =>
       [

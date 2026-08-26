@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { AppLocale } from '../shared/locale'
 import type {
   AppConfigState,
   AuthUser,
@@ -12,6 +13,7 @@ import type {
 
 const api = {
   getState: (): Promise<AppConfigState> => ipcRenderer.invoke('app:getState'),
+  setLocale: (locale: AppLocale): Promise<AppLocale> => ipcRenderer.invoke('app:setLocale', locale),
   pickDataFolder: (): Promise<string | null> => ipcRenderer.invoke('app:pickDataFolder'),
   setDataFolder: (path: string, adminCode?: string): Promise<AppConfigState> =>
     ipcRenderer.invoke('app:setDataFolder', path, adminCode),

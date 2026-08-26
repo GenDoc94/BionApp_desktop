@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -118,11 +120,12 @@ async function fetchLecturasDilucionCandidatasFromRows(
   return buildCandidatasFromLecturas(lecturas);
 }
 
-function labelMuestra(row: LecturaDilucionCandidata): string {
-  return `BN ${row.numBN} - L${row.numLectura}`;
+function labelMuestra(row: LecturaDilucionCandidata, t: TFunction): string {
+  return t("dilution.sampleLabel", { numBN: row.numBN, numLectura: row.numLectura });
 }
 
 export default function DilucionDnaTab() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [candidatas, setCandidatas] = useState<LecturaDilucionCandidata[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -139,11 +142,11 @@ export default function DilucionDnaTab() {
       );
     } catch (err) {
       console.error(err);
-      toast.error("Error al cargar lecturas para dilución");
+      toast.error(t("dilution.toast.loadError"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     reload();
@@ -174,12 +177,12 @@ export default function DilucionDnaTab() {
 
   const handleAdd = () => {
     if (!pickKey) {
-      toast.message("Selecciona una lectura");
+      toast.message(t("dilution.toast.select"));
       return;
     }
     if (selectedKeys.includes(pickKey)) return;
     if (selectedKeys.length >= DILUCION_MAX_MUESTRAS) {
-      toast.error(`Máximo ${DILUCION_MAX_MUESTRAS} muestras`);
+      toast.error(t("dilution.toast.max", { n: DILUCION_MAX_MUESTRAS }));
       return;
     }
     setSelectedKeys((prev) => [...prev, pickKey]);
@@ -194,37 +197,42 @@ export default function DilucionDnaTab() {
     <div className="space-y-4">
       <div className="bionapp-panel p-4 space-y-3">
         <div>
-          <div className="font-semibold">Dilución DNA para Marcaje</div>
+          <div className="font-semibold">{t("dilution.title")}</div>
           <p className="text-xs text-slate-500 mt-1">
-            Objetivo: {DILUCION_VOL_TOTAL_UL} µL totales con {DILUCION_TARGET_NG} ng de DNA (mín.{" "}
-            {DILUCION_MIN_NG} ng). Media ideal del extracto: 39–150 ng/µL. Muestras en curso
-            Lecturas de BN con Estado_Muestra = 2 (pendiente), extracto cuantificado y sin
-            marcaje iniciado (sin Lecturas_Marcado ni datos rellenados en Marcado; una fila vacía
-            en Marcado no cuenta).
+            {t("dilution.help", {
+              vol: DILUCION_VOL_TOTAL_UL,
+              ng: DILUCION_TARGET_NG,
+              minNg: DILUCION_MIN_NG,
+            })}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
-          <Badge variant="outline">Volumen total: {DILUCION_VOL_TOTAL_UL} µL</Badge>
-          <Badge variant="outline">DNA objetivo: {DILUCION_TARGET_NG} ng</Badge>
-          <Badge variant="outline">Máx. {DILUCION_MAX_MUESTRAS} muestras</Badge>
+          <Badge variant="outline">
+            {t("dilution.badge.totalVol", { vol: DILUCION_VOL_TOTAL_UL })}
+          </Badge>
+          <Badge variant="outline">
+            {t("dilution.badge.targetDna", { ng: DILUCION_TARGET_NG })}
+          </Badge>
+          <Badge variant="outline">
+            {t("dilution.badge.maxSamples", { n: DILUCION_MAX_MUESTRAS })}
+          </Badge>
           {!loading ? (
-            <Badge variant="secondary">{candidatas.length} para diluir</Badge>
+            <Badge variant="secondary">
+              {t("dilution.badge.candidates", { n: candidatas.length })}
+            </Badge>
           ) : null}
         </div>
       </div>
 
       <div className="bionapp-panel p-4">
-        <div className="text-sm font-medium mb-2">Añadir muestra</div>
+        <div className="text-sm font-medium mb-2">{t("dilution.addSample")}</div>
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Cargando lecturas…
+            {t("dilution.loading")}
           </div>
         ) : disponibles.length === 0 && selectedKeys.length === 0 ? (
-          <p className="text-sm text-slate-500">
-            No hay lecturas en curso (estado 2), sin marcaje y con media de DNA. Cuantifica el
-            extracto antes de calcular la dilución.
-          </p>
+          <p className="text-sm text-slate-500">{t("dilution.empty")}</p>
         ) : (
           <div className="flex flex-wrap items-center gap-2">
             <select
@@ -235,12 +243,15 @@ export default function DilucionDnaTab() {
             >
               <option value="">
                 {disponibles.length === 0
-                  ? "— Todas añadidas o sin más candidatas —"
-                  : "— Seleccionar lectura —"}
+                  ? t("dilution.allAdded")
+                  : t("dilution.selectReading")}
               </option>
               {disponibles.map((c) => (
                 <option key={c.key} value={c.key}>
-                  {labelMuestra(c)} — media {c.mediaNgPerUl.toFixed(2)} ng/µL
+                  {t("dilution.option", {
+                    label: labelMuestra(c, t),
+                    media: c.mediaNgPerUl.toFixed(2),
+                  })}
                 </option>
               ))}
             </select>
@@ -254,10 +265,10 @@ export default function DilucionDnaTab() {
               }
             >
               <Plus className="h-4 w-4 mr-1" />
-              Añadir
+              {t("dilution.add")}
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={() => reload()}>
-              Actualizar lista
+              {t("dilution.refresh")}
             </Button>
           </div>
         )}
@@ -269,12 +280,12 @@ export default function DilucionDnaTab() {
               if (!c) return null;
               return (
                 <Badge key={key} variant="default" className="gap-1 pr-1">
-                  <span className="text-xs">{labelMuestra(c)}</span>
+                  <span className="text-xs">{labelMuestra(c, t)}</span>
                   <button
                     type="button"
                     className="rounded hover:bg-white/20 p-0.5"
                     onClick={() => handleRemove(key)}
-                    title="Quitar"
+                    title={t("dilution.remove")}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -287,34 +298,34 @@ export default function DilucionDnaTab() {
 
       {filas.length > 0 ? (
         <div className="bionapp-panel p-4">
-          <div className="font-semibold mb-3">Volúmenes de dilución</div>
+          <div className="font-semibold mb-3">{t("dilution.volumes")}</div>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-16">CV</TableHead>
-                <TableHead>Muestra</TableHead>
-                <TableHead className="text-right">Media gDNA (ng/µL)</TableHead>
-                <TableHead className="text-right">Vol. H₂O (µL) 1º</TableHead>
-                <TableHead className="text-right">Vol. gDNA (µL) 2º</TableHead>
-                <TableHead className="text-right">ng en mezcla DNA</TableHead>
-                <TableHead>Notas</TableHead>
+                <TableHead className="w-16">{t("dilution.col.cv")}</TableHead>
+                <TableHead>{t("dilution.col.sample")}</TableHead>
+                <TableHead className="text-right">{t("dilution.col.mean")}</TableHead>
+                <TableHead className="text-right">{t("dilution.col.water")}</TableHead>
+                <TableHead className="text-right">{t("dilution.col.dna")}</TableHead>
+                <TableHead className="text-right">{t("dilution.col.ngMix")}</TableHead>
+                <TableHead>{t("dilution.col.notes")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filas.map((f) => {
                 const r = f.resultado;
                 const notas: string[] = [];
-                if (r.error) notas.push(r.error);
-                if (r.mediaFueraRangoIdeal) notas.push("Media fuera de 39–150 ng/µL");
-                if (r.bajoMinimoNg) notas.push(`Con 19,5 µL DNA < ${DILUCION_MIN_NG} ng`);
+                if (r.error) notas.push(t("dilution.err.invalidMean"));
+                if (r.mediaFueraRangoIdeal) notas.push(t("dilution.note.outOfRange"));
+                if (r.bajoMinimoNg) notas.push(t("dilution.note.belowMin", { minNg: DILUCION_MIN_NG }));
                 if (r.volumenDnaAlMaximo && !r.bajoMinimoNg && r.ngEnMezclaDna != null) {
-                  notas.push("Volumen DNA al máximo (19,5 µL)");
+                  notas.push(t("dilution.note.maxDna"));
                 }
 
                 return (
                   <TableRow key={f.key}>
                     <TableCell>{formatDilucionCv(f.cv)}</TableCell>
-                    <TableCell className="font-medium">{labelMuestra(f)}</TableCell>
+                    <TableCell className="font-medium">{labelMuestra(f, t)}</TableCell>
                     <TableCell className="text-right">{f.mediaNgPerUl.toFixed(2)}</TableCell>
                     <TableCell className="text-right font-medium">
                       {formatDilucionUl(r.volH2OUl)}
@@ -323,10 +334,10 @@ export default function DilucionDnaTab() {
                       {formatDilucionUl(r.volDnaUl)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {r.volumenDnaAlMaximo ? formatDilucionNg(r.ngEnMezclaDna) : "—"}
+                      {r.volumenDnaAlMaximo ? formatDilucionNg(r.ngEnMezclaDna) : t("common.empty")}
                     </TableCell>
                     <TableCell className="text-xs bionapp-text-warn">
-                      {notas.length ? notas.join(" · ") : "—"}
+                      {notas.length ? notas.join(" · ") : t("common.empty")}
                     </TableCell>
                   </TableRow>
                 );

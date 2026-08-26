@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.11
+
+- Añadiendo la opción de idioma (español e inglés) en la interfaz.
+
 ## 3.0.10
 
 - Añadiendo pestaña de exportación de datos.

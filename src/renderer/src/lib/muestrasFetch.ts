@@ -1,3 +1,4 @@
+import i18n from "../i18n";
 import { supabase } from "./supabaseClient";
 
 type MuestraRow = Record<string, unknown> & { NumBN: number; lecturas?: unknown[] };
@@ -124,10 +125,10 @@ export function formatMuestrasFetchError(err: unknown): string {
       (err as { details?: string })?.details ??
       (err as { hint?: string })?.hint ??
       err ??
-      "Error desconocido"
+      i18n.t("errors.unknown")
   );
   if (/failed to fetch|network|proxy|timeout|aborted/i.test(msg)) {
-    return "No se pudieron cargar las muestras. Suele deberse a un fallo de red o del proxy (VPN, antivirus, empresa). Comprueba la conexión y pulsa Reintentar.";
+    return i18n.t("samples.fetch.network");
   }
-  return `No se pudieron cargar las muestras: ${msg}`;
+  return i18n.t("samples.fetch.generic", { msg });
 }

@@ -1,9 +1,12 @@
+import "./i18n";
 import React, { Suspense, lazy, useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter, Navigate, Routes, Route } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { AuthProvider } from "./authContext";
 import { supabase } from "./lib/supabaseClient";
 import { applyTheme, getStoredTheme } from "./lib/theme";
+import { getStoredLocale } from "./i18n";
 import SetupPage from "./components/SetupPage";
 import "./index.css";
 
@@ -20,9 +23,10 @@ const Options = lazy(() => import("./pages/options"));
 const LicensePage = lazy(() => import("./pages/LicensePage"));
 
 function LoadingScreen() {
+  const { t } = useTranslation();
   return (
     <div className="bionapp-subpage min-h-screen flex items-center justify-center text-muted-foreground">
-      Cargando...
+      {t("common.loading")}
     </div>
   );
 }
@@ -58,6 +62,7 @@ function Main() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    void window.api.setLocale(getStoredLocale());
     void window.api.getState().then((s) => {
       setDbReady(!!s.dbReady && !!s.dataPath);
       setReady(true);
