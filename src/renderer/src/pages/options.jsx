@@ -1481,7 +1481,16 @@ export default function Options() {
                   >
                     CITATION.cff
                   </a>{" "}
-                  (autor, ORCID y, cuando esté disponible, el DOI de Zenodo).
+                  (autor, ORCID y DOI{" "}
+                  <a
+                    href="https://doi.org/10.5281/zenodo.22116491"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
+                  >
+                    10.5281/zenodo.22116491
+                  </a>
+                  ).
                 </p>
               </div>
 

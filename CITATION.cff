@@ -6,7 +6,14 @@ version: 3.0.10
 date-released: 2026-08-26
 license: MIT
 repository-code: "https://github.com/GenDoc94/BionApp_desktop"
-url: "https://github.com/GenDoc94/BionApp_desktop"
+url: "https://doi.org/10.5281/zenodo.22116491"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.22116491
+    description: DOI de concepto (todas las versiones)
+  - type: doi
+    value: 10.5281/zenodo.22116492
+    description: DOI de la versión 3.0.10
 abstract: >-
   BionApp (beta) is a desktop application for laboratory management of GMO
   (OGM) samples. This edition runs fully locally (Electron and SQLite):

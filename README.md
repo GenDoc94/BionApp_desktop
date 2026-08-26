@@ -15,11 +15,14 @@ El `.exe` no está firmado. Si Windows SmartScreen avisa: *Más información* �
 
 ## Citar
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22116491.svg)](https://doi.org/10.5281/zenodo.22116491)
+
 Usa el botón **Cite this repository** de GitHub o el archivo [`CITATION.cff`](CITATION.cff).
 
 Autor: [Juan José Domínguez-García](https://orcid.org/0000-0001-6210-1294) ([GenDoc94](https://github.com/GenDoc94)).
 
-Tras el primer depósito en Zenodo, el DOI de concepto irá en `CITATION.cff` y en esta sección.
+- DOI de concepto (citar BionApp): [10.5281/zenodo.22116491](https://doi.org/10.5281/zenodo.22116491)
+- DOI de esta versión (v3.0.10): [10.5281/zenodo.22116492](https://doi.org/10.5281/zenodo.22116492)
 
 ## Declaración de inteligencia artificial y aviso
 
