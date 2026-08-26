@@ -3,6 +3,9 @@
 ## 3.0.10
 
 - Añadiendo pestaña de exportación de datos.
+- Primera publicación como GitHub Release (`BionApp.exe` portable).
+- Comprobación de actualizaciones desde el último Release.
+- Metadatos de citación (`CITATION.cff`) y declaración de uso de IA / aviso de responsabilidad.
 
 ## 3.0.9
 

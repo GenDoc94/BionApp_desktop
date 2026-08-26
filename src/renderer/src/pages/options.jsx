@@ -1403,8 +1403,17 @@ export default function Options() {
                     className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
                   >
                     GenDoc94
+                  </a>{" "}
+                  (Juan José Domínguez-García,{" "}
+                  <a
+                    href="https://orcid.org/0000-0001-6210-1294"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
+                  >
+                    ORCID
                   </a>
-                  .
+                  ).
                 </p>
               </div>
 
@@ -1446,11 +1455,33 @@ export default function Options() {
               <div>
                 <p className="font-semibold mb-1">Uso de inteligencia artificial</p>
                 <p>
-                  En el desarrollo y perfeccionamiento de estas versiones se ha utilizado
-                  asistencia por inteligencia artificial (Cursor / modelos de lenguaje) como apoyo
-                  a la implementación, refactorización y documentación. La concepción del
-                  producto, el flujo de laboratorio, las decisiones de diseño y la dirección del
-                  proyecto corresponden a GenDoc94.
+                  Se ha utilizado inteligencia artificial para la generación de código de la
+                  aplicación. La idea original del desarrollo de software, las bases, toda la
+                  arquitectura de la app y su uso son de GenDoc94. La IA es una herramienta de
+                  implementación; no es autora del producto ni de su diseño de laboratorio.
+                </p>
+                <p className="mt-2">
+                  BionApp no ha sido creada por un informático profesional, sino por un médico
+                  aficionado a la informática. Puede haber errores de código e incluso de
+                  concepto. El autor no se responsabiliza de daños, pérdidas de datos, decisiones
+                  clínicas o de laboratorio, ni de cualquier otro perjuicio derivado del uso de
+                  esta aplicación. Se ofrece tal cual, en fase beta, bajo la licencia MIT.
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">Cómo citar</p>
+                <p>
+                  Si usas BionApp en un trabajo, cítalo con los datos de{" "}
+                  <a
+                    href="https://github.com/GenDoc94/BionApp_desktop/blob/master/CITATION.cff"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
+                  >
+                    CITATION.cff
+                  </a>{" "}
+                  (autor, ORCID y, cuando esté disponible, el DOI de Zenodo).
                 </p>
               </div>
 

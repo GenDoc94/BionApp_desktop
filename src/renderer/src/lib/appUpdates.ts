@@ -5,6 +5,11 @@ export const UPDATE_REPO = "GenDoc94/BionApp_desktop";
 export const UPDATE_BRANCH = "master";
 const BRANCH_FALLBACKS = ["master", "main"];
 
+/** Quita el prefijo `v` de un tag de GitHub (`v3.0.10` → `3.0.10`). */
+export function stripVersionPrefix(tag: string): string {
+  return tag.trim().replace(/^v/i, "");
+}
+
 export type RemoteUpdateInfo = {
   currentVersion: string;
   latestVersion: string;
@@ -91,6 +96,22 @@ async function fetchPackageJsonFromBranch(
   return JSON.parse(json) as { version?: string };
 }
 
+async function fetchLatestReleaseVersion(repo: string): Promise<string | null> {
+  const res = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
+    headers: { Accept: "application/vnd.github+json" },
+    cache: "no-store",
+  });
+
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    throw new Error(`No se pudo leer el último Release de GitHub (${res.status})`);
+  }
+
+  const data = (await res.json()) as { tag_name?: string };
+  const version = stripVersionPrefix(data.tag_name ?? "");
+  return version || null;
+}
+
 async function fetchRemotePackageJson(repo: string): Promise<{ version: string; branch: string }> {
   const defaultBranch = await resolveDefaultBranch(repo);
   const branches = [...new Set([defaultBranch, ...BRANCH_FALLBACKS].filter(Boolean))] as string[];
@@ -120,12 +141,26 @@ async function fetchRemotePackageJson(repo: string): Promise<{ version: string; 
   }
 
   if (sawNotFound) {
-    throw new Error(
-      "No se encontró el repositorio en GitHub. Si es privado, hazlo público o usa Actualizar-BionApp.bat."
-    );
+    throw new Error("No se encontró el repositorio en GitHub.");
   }
 
   throw new Error("No se pudo leer la versión en GitHub");
+}
+
+async function resolveRemoteVersion(repo: string): Promise<{ version: string; branch: string }> {
+  try {
+    const fromRelease = await fetchLatestReleaseVersion(repo);
+    if (fromRelease) {
+      const branch = (await resolveDefaultBranch(repo)) || UPDATE_BRANCH;
+      return { version: fromRelease, branch };
+    }
+    return fetchRemotePackageJson(repo);
+  } catch (err) {
+    if (err instanceof TypeError) {
+      throw new Error("No se pudo comprobar. ¿Hay conexión a internet?");
+    }
+    throw err;
+  }
 }
 
 export async function checkForAppUpdate(): Promise<RemoteUpdateInfo> {
@@ -134,7 +169,7 @@ export async function checkForAppUpdate(): Promise<RemoteUpdateInfo> {
 
   let remote: { version: string; branch: string };
   try {
-    remote = await fetchRemotePackageJson(repo);
+    remote = await resolveRemoteVersion(repo);
   } catch (err) {
     if (err instanceof Error) throw err;
     throw new Error("No se pudo comprobar. ¿Hay conexión a internet?");

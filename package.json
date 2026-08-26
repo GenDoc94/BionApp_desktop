@@ -1,11 +1,19 @@
 {
   "name": "bionapp-desktop",
   "version": "3.0.10",
-  "description": "BionApp Desktop (beta)",
+  "description": "BionApp Desktop (beta) — gestión local de muestras de OGM",
   "main": "./out/main/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GenDoc94/BionApp_desktop.git"
+  },
+  "homepage": "https://github.com/GenDoc94/BionApp_desktop",
+  "bugs": {
+    "url": "https://github.com/GenDoc94/BionApp_desktop/issues"
+  },
   "author": {
-    "name": "GenDoc94",
-    "url": "https://github.com/GenDoc94"
+    "name": "Juan José Domínguez-García (GenDoc94)",
+    "url": "https://orcid.org/0000-0001-6210-1294"
   },
   "license": "MIT",
   "private": true,

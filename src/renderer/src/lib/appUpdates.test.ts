@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { compareVersions } from "./appUpdates";
+import { compareVersions, stripVersionPrefix } from "./appUpdates";
+
+describe("stripVersionPrefix", () => {
+  it("quita la v de un tag", () => {
+    expect(stripVersionPrefix("v3.0.10")).toBe("3.0.10");
+  });
+
+  it("deja la versión si ya va sin prefijo", () => {
+    expect(stripVersionPrefix("3.0.10")).toBe("3.0.10");
+  });
+});
 
 describe("compareVersions", () => {
   it("detecta versión mayor", () => {

@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "Si usas BionApp, cítalo con estos datos."
+type: software
+title: "BionApp"
+version: 3.0.10
+date-released: 2026-08-26
+license: MIT
+repository-code: "https://github.com/GenDoc94/BionApp_desktop"
+url: "https://github.com/GenDoc94/BionApp_desktop"
+abstract: >-
+  BionApp (beta) is a desktop application for laboratory management of GMO
+  (OGM) samples. This edition runs fully locally (Electron and SQLite):
+  no cloud account is required. Data stay in a folder chosen by the user.
+  The software is under testing and is not a certified clinical system.
+keywords:
+  - BionApp
+  - OGM
+  - GMO
+  - laboratory
+  - sample management
+  - Electron
+  - SQLite
+authors:
+  - family-names: "Domínguez-García"
+    given-names: "Juan José"
+    alias: "GenDoc94"
+    orcid: "https://orcid.org/0000-0001-6210-1294"
+    affiliation: "Servicio Cántabro de Salud"
+    website: "https://github.com/GenDoc94"

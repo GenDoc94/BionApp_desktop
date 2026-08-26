@@ -66,13 +66,13 @@ export default function UpdateCheckDialog({ info, onDismiss }: UpdateCheckDialog
           <div className="bionapp-version-dialog__instructions">
             <p className="bionapp-version-dialog__subtitle">Cómo actualizar (modo local)</p>
             <p>
-              Si instalaste con <strong>Git</strong>: cierra BionApp y haz doble clic en{" "}
-              <strong>Actualizar-BionApp.bat</strong> (o en terminal: <code>git pull</code> y{" "}
-              <code>npm install</code>).
+              Cierra BionApp, descarga el <strong>BionApp.exe</strong> nuevo desde GitHub Releases y
+              sustituye el ejecutable anterior. Conserva tu carpeta de datos (
+              <code>bionapp.sqlite</code> y <code>documentos/</code>).
             </p>
             <p>
-              Si usaste un <strong>ZIP</strong>: descarga la versión nueva desde GitHub y conserva tu
-              carpeta <code>datos/</code> y el archivo <code>.env</code>.
+              El ejecutable no está firmado. Si Windows SmartScreen avisa, usa{" "}
+              <em>Más información</em> → <em>Ejecutar de todas formas</em>.
             </p>
           </div>
         )}
