@@ -1,7 +1,7 @@
 import type Database from 'better-sqlite3'
 import type { DbFilter, DbOrder, DbRequest, DbResponse } from '../shared/types'
-import { applyLotWrite, attachLotFields } from './lotes'
 import { ensureFiltrosSchema } from './db'
+import { applyLotWrite, attachLotFields, ensureLotesChipsSchema } from './lotes'
 
 const ALLOWED_TABLES = new Set([
   'Muestras',
@@ -18,6 +18,7 @@ const ALLOWED_TABLES = new Set([
   'Lotes_Extraido',
   'Lotes_Marcado',
   'Lotes_Membrana',
+  'Lotes_Chips',
   'Filtros',
   'profiles',
   'users'
@@ -46,6 +47,14 @@ const EMBEDS: Record<
       localKey: 'Tag_Number',
       foreignKey: 'Tag_Number',
       columns: ['Tag_Name', 'Tag_Color']
+    }
+  },
+  DChips: {
+    Lotes_Chips: {
+      table: 'Lotes_Chips',
+      localKey: 'Id_LtC',
+      foreignKey: 'Id_LtC',
+      columns: ['PN', 'LN', 'Exp']
     }
   }
 }
@@ -284,6 +293,9 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
     }
     if (req.table === 'Filtros') {
       ensureFiltrosSchema(db)
+    }
+    if (req.table === 'Lotes_Chips' || req.table === 'DChips') {
+      ensureLotesChipsSchema(db)
     }
 
     const alias = 't'

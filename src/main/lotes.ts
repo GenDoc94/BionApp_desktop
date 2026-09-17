@@ -3,13 +3,15 @@ import type Database from 'better-sqlite3'
 export const LOTE_TABLE = {
   extraido: 'Lotes_Extraido',
   marcado: 'Lotes_Marcado',
-  membrana: 'Lotes_Membrana'
+  membrana: 'Lotes_Membrana',
+  chip: 'Lotes_Chips'
 } as const
 
 export const LOTE_ID_COL = {
   extraido: 'Id_LtE',
   marcado: 'Id_LtM',
-  membrana: 'Id_LtMm'
+  membrana: 'Id_LtMm',
+  chip: 'Id_LtC'
 } as const
 
 const SKIP_MARCADO_MEMBRANA = new Set(['1:1', '1:3', '1:4'])
@@ -40,7 +42,7 @@ export function lotKey(pn: string, ln: string, exp: string): string {
   return `${pn}\u0000${ln}\u0000${exp}`
 }
 
-export type LoteKind = 'extraido' | 'marcado' | 'membrana'
+export type LoteKind = 'extraido' | 'marcado' | 'membrana' | 'chip'
 
 /** Caducidad canónica (DD/MM/AAAA) cuando el LN está duplicado por formato o error. */
 const LOT_EXP_BY_LN: Record<LoteKind, Record<string, string>> = {
@@ -59,7 +61,8 @@ const LOT_EXP_BY_LN: Record<LoteKind, Record<string, string>> = {
     '240209012': '30/01/2026',
     '250506015': '19/05/2028',
     '251125001': '10/12/2028'
-  }
+  },
+  chip: {}
 }
 
 function pad2(n: number): string {
@@ -124,6 +127,7 @@ export function loteKindFromTable(table: string): LoteKind | null {
   if (table === LOTE_TABLE.extraido) return 'extraido'
   if (table === LOTE_TABLE.marcado) return 'marcado'
   if (table === LOTE_TABLE.membrana) return 'membrana'
+  if (table === LOTE_TABLE.chip) return 'chip'
   return null
 }
 
@@ -256,6 +260,13 @@ export function attachLotFields(db: Database.Database, table: string, rows: Reco
       row.ExpM_LM = lot?.Exp ?? null
     })
   }
+  if (table === 'DChips' && tableHasColumn(db, 'DChips', 'Id_LtC')) {
+    attachById(db, rows, LOTE_TABLE.chip, LOTE_ID_COL.chip, (lot, row) => {
+      row.PN = lot?.PN ?? null
+      row.LN = lot?.LN ?? null
+      row.Exp = lot?.Exp ?? null
+    })
+  }
 }
 
 export function applyLotWrite(
@@ -310,10 +321,27 @@ export function applyLotWrite(
       delete next.ExpM_LM
     }
   }
+  if (table === 'DChips' && tableHasColumn(db, 'DChips', 'Id_LtC')) {
+    if ('PN' in next || 'LN' in next || 'Exp' in next) {
+      const id = loteIdForTriple(
+        db,
+        LOTE_TABLE.chip,
+        LOTE_ID_COL.chip,
+        normalizePN(next.PN),
+        next.LN,
+        next.Exp
+      )
+      delete next.PN
+      delete next.LN
+      delete next.Exp
+      next.Id_LtC = id
+    }
+  }
   if (
     table === LOTE_TABLE.extraido ||
     table === LOTE_TABLE.marcado ||
-    table === LOTE_TABLE.membrana
+    table === LOTE_TABLE.membrana ||
+    table === LOTE_TABLE.chip
   ) {
     if ('PN' in next) {
       const pn = normalizePN(next.PN)
@@ -496,6 +524,26 @@ export function migrateHomogenizeLotExps(db: Database.Database): void {
         db.prepare(`UPDATE Lecturas_Marcado SET Id_LtMm = ? WHERE Id_LtMm = ?`).run(toId, fromId)
       }
     })
+    mergeLotCatalog(db, LOTE_TABLE.chip, LOTE_ID_COL.chip, 'chip', (fromId, toId) => {
+      if (tableHasColumn(db, 'DChips', 'Id_LtC')) {
+        db.prepare(`UPDATE DChips SET Id_LtC = ? WHERE Id_LtC = ?`).run(toId, fromId)
+      }
+    })
   })
   run()
+}
+
+/** Catálogo de lotes de chip (PN+LN+Exp) y FK inferencial DChips.Id_LtC. Idempotente. */
+export function ensureLotesChipsSchema(db: Database.Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS Lotes_Chips (
+      Id_LtC INTEGER PRIMARY KEY AUTOINCREMENT,
+      PN TEXT NOT NULL,
+      LN TEXT NOT NULL DEFAULT '',
+      Exp TEXT NOT NULL DEFAULT '',
+      UNIQUE (PN, LN, Exp)
+    );
+  `)
+  addFkColumnIfMissing(db, 'DChips', 'Id_LtC', LOTE_TABLE.chip, LOTE_ID_COL.chip)
+  db.exec(`CREATE INDEX IF NOT EXISTS DChips_Id_LtC_idx ON DChips(Id_LtC);`)
 }

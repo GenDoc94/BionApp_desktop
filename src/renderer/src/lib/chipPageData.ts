@@ -10,6 +10,10 @@ export type ChipAsignacion = {
 export type ChipCatalogo = {
   NumChip_D: number;
   Nombre_Chip?: string | null;
+  Id_LtC?: number | null;
+  LN?: string | null;
+  PN?: string | null;
+  Exp?: string | null;
 };
 
 export type ChipPanelData = {
@@ -74,6 +78,7 @@ export function chipPanelMatchesQuery(panel: ChipPanelData, query: string): bool
 
   if (matchesNumericField(chip.NumChip_D, q)) return true;
   if (!qIsNumeric && matchesTextField(chip.Nombre_Chip, q)) return true;
+  if (matchesTextField(chip.LN, q) || matchesTextField(chip.PN, q)) return true;
 
   for (const fc of flowcells) {
     if (fc?.NumBN_C != null && matchesNumericField(fc.NumBN_C, q)) return true;
@@ -86,4 +91,15 @@ export function filterChipPanels(panels: ChipPanelData[], query: string): ChipPa
   const q = query.trim();
   if (!q) return panels;
   return panels.filter((panel) => chipPanelMatchesQuery(panel, q));
+}
+
+export function chipCardDomId(numChip: number): string {
+  return `chip-card-${numChip}`;
+}
+
+export function parseChipHighlight(params: URLSearchParams): number | null {
+  const raw = params.get("chip")?.trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
 }

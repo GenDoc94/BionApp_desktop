@@ -2,7 +2,7 @@ import Database from 'better-sqlite3'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import { migrateHomogenizeLotExps, migrateLegacyLotColumns } from './lotes'
+import { ensureLotesChipsSchema, migrateHomogenizeLotExps, migrateLegacyLotColumns } from './lotes'
 
 export const DB_FILENAME = 'bionapp.sqlite'
 
@@ -121,8 +121,8 @@ export function migratePeticColumnsToText(db: Database.Database): void {
 /**
  * Esquema equivalente al Postgres de BionApp_online (sin RLS/auth.users).
  * Jerarquía cascade: Muestras → Lectura → Marcado → Lecturas_Marcado → Chips
- * Lotes_Extraido / Lotes_Marcado / Lotes_Membrana son catálogos (PN+LN+Exp)
- * referenciados por Muestras.Id_LtE y Lecturas_Marcado.Id_LtM / Id_LtMm.
+ * Lotes_Extraido / Lotes_Marcado / Lotes_Membrana / Lotes_Chips son catálogos (PN+LN+Exp)
+ * referenciados por Muestras.Id_LtE, Lecturas_Marcado.Id_LtM / Id_LtMm y DChips.Id_LtC.
  * Filtros registra colocación/retirada de filtros (NumFiltro, FechaColoc, FechaRetir).
  * Media/SD/CV se calculan en la capa de escritura (SQLite no permite mutar NEW).
  */
@@ -197,6 +197,14 @@ export function initSchema(db: Database.Database): void {
 
     CREATE TABLE IF NOT EXISTS Lotes_Membrana (
       Id_LtMm INTEGER PRIMARY KEY AUTOINCREMENT,
+      PN TEXT NOT NULL,
+      LN TEXT NOT NULL DEFAULT '',
+      Exp TEXT NOT NULL DEFAULT '',
+      UNIQUE (PN, LN, Exp)
+    );
+
+    CREATE TABLE IF NOT EXISTS Lotes_Chips (
+      Id_LtC INTEGER PRIMARY KEY AUTOINCREMENT,
       PN TEXT NOT NULL,
       LN TEXT NOT NULL DEFAULT '',
       Exp TEXT NOT NULL DEFAULT '',
@@ -322,9 +330,11 @@ export function initSchema(db: Database.Database): void {
   migrateHomogenizeLotExps(db)
   migratePeticColumnsToText(db)
   ensureFiltrosSchema(db)
+  ensureLotesChipsSchema(db)
   db.exec(`
     CREATE INDEX IF NOT EXISTS Muestras_Id_LtE_idx ON Muestras(Id_LtE);
     CREATE INDEX IF NOT EXISTS Lecturas_Marcado_Id_LtM_idx ON Lecturas_Marcado(Id_LtM);
     CREATE INDEX IF NOT EXISTS Lecturas_Marcado_Id_LtMm_idx ON Lecturas_Marcado(Id_LtMm);
+    CREATE INDEX IF NOT EXISTS DChips_Id_LtC_idx ON DChips(Id_LtC);
   `)
 }

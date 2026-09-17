@@ -1,10 +1,18 @@
-export const LOTE_TIPOS = ["extraido", "marcado", "membrana"] as const
+export const LOTE_TIPOS = ["extraido", "marcado", "membrana", "chip"] as const
 export type LoteTipo = (typeof LOTE_TIPOS)[number]
 
 export const LOTE_ID_COL: Record<LoteTipo, string> = {
   extraido: "Id_LtE",
   marcado: "Id_LtM",
   membrana: "Id_LtMm",
+  chip: "Id_LtC",
+}
+
+export const LOTE_TABLE: Record<LoteTipo, string> = {
+  extraido: "Lotes_Extraido",
+  marcado: "Lotes_Marcado",
+  membrana: "Lotes_Membrana",
+  chip: "Lotes_Chips",
 }
 
 function pad2(n: number): string {
@@ -77,11 +85,10 @@ export type LoteRow = {
 }
 
 export type LoteUsoExtraido = { NumBN: number; Estado_Muestra: number | null }
-export type LoteUsoLm = {
-  NumBN: number
-  NumLectura: number
-  NumLectMarc: number
-  mediaLm: number | null
+export type LoteUsoChip = {
+  NumChip: number
+  Nombre_Chip: string | null
+  fcColors: [LoteEstadoColor, LoteEstadoColor, LoteEstadoColor]
 }
 
 export type LoteEstadoColor = "green" | "yellow" | "red" | "none"
@@ -154,6 +161,32 @@ export function countEstadosLm(usos: LoteUsoLm[]): LoteEstadoCounts {
   return countLoteEstados(usos.map((u) => loteLmMediaColor(u.mediaLm)))
 }
 
+const CHIP_FC_SLOTS = [1, 2, 3] as const
+
+/** En Chips: FC ocupada verde; con Repetir_Chip, amarilla; vacía, sin color. */
+export function chipFcEstadoColor(row: {
+  NumBN_C?: unknown
+  Repetir_Chip?: unknown
+} | null | undefined): LoteEstadoColor {
+  if (row == null || row.NumBN_C == null || row.NumBN_C === "") return "none"
+  if (row.Repetir_Chip != null && Number(row.Repetir_Chip) === 1) return "yellow"
+  return "green"
+}
+
+/** Amarillo si alguna FC está amarilla; verde solo si las 3 FC están verdes. */
+export function loteChipEstadoColor(
+  fcColors: LoteEstadoColor[] | null | undefined
+): LoteEstadoColor {
+  const slots: LoteEstadoColor[] = CHIP_FC_SLOTS.map((fc) => fcColors?.[fc - 1] ?? "none")
+  if (slots.some((c) => c === "yellow")) return "yellow"
+  if (slots.every((c) => c === "green")) return "green"
+  return "none"
+}
+
+export function countEstadosChip(usos: LoteUsoChip[]): LoteEstadoCounts {
+  return countLoteEstados(usos.map((u) => loteChipEstadoColor(u.fcColors)))
+}
+
 export type LotesHighlight = {
   tipo: LoteTipo
   id?: number
@@ -161,15 +194,14 @@ export type LotesHighlight = {
 }
 
 export function isLoteTipo(value: string | null | undefined): value is LoteTipo {
-  return value === "extraido" || value === "marcado" || value === "membrana"
+  return value === "extraido" || value === "marcado" || value === "membrana" || value === "chip"
 }
 
 export function lotIdFromRow(
   row: Record<string, unknown>,
   tipo: LoteTipo
 ): number | null {
-  const key = tipo === "extraido" ? "Id_LtE" : tipo === "marcado" ? "Id_LtM" : "Id_LtMm"
-  const n = Number(row[key])
+  const n = Number(row[LOTE_ID_COL[tipo]])
   return Number.isFinite(n) ? n : null
 }
 
@@ -264,6 +296,20 @@ export function hydrateLecturasMarcadoFromLots(
     row.PNM_LM = lotMm?.PN ?? null
     row.LNM_LM = lotMm?.LN ?? null
     row.ExpM_LM = lotMm?.Exp ?? null
+  }
+}
+
+export function hydrateDChipsFromLots(
+  chips: Array<Record<string, unknown>>,
+  chipLots: LoteRow[]
+): void {
+  const byId = new Map(chipLots.map((l) => [l.id, l]))
+  for (const row of chips) {
+    const id = Number(row.Id_LtC)
+    const lot = Number.isFinite(id) ? byId.get(id) : undefined
+    row.PN = lot?.PN ?? null
+    row.LN = lot?.LN ?? null
+    row.Exp = lot?.Exp ?? null
   }
 }
 
@@ -370,11 +416,53 @@ export function groupUsosLm(
   return map
 }
 
+export function groupUsosChip(
+  rows: Array<{ Id_LtC?: unknown; NumChip_D?: unknown; NumChip?: unknown; Nombre_Chip?: unknown }>,
+  asignaciones: Array<{
+    NumChip?: unknown
+    FC?: unknown
+    NumBN_C?: unknown
+    Repetir_Chip?: unknown
+  }> = []
+): Map<number, LoteUsoChip[]> {
+  const byChip = new Map<number, Map<number, { NumBN_C?: unknown; Repetir_Chip?: unknown }>>()
+  for (const row of asignaciones) {
+    const chipNum = Number(row.NumChip)
+    const fc = Number(row.FC)
+    if (!Number.isFinite(chipNum) || !Number.isFinite(fc)) continue
+    let fcMap = byChip.get(chipNum)
+    if (!fcMap) {
+      fcMap = new Map()
+      byChip.set(chipNum, fcMap)
+    }
+    fcMap.set(fc, { NumBN_C: row.NumBN_C, Repetir_Chip: row.Repetir_Chip })
+  }
+
+  const map = new Map<number, LoteUsoChip[]>()
+  for (const row of rows) {
+    const id = Number(row.Id_LtC)
+    const numChip = Number(row.NumChip_D ?? row.NumChip)
+    if (!Number.isFinite(id) || !Number.isFinite(numChip)) continue
+    const fcMap = byChip.get(numChip) ?? new Map()
+    const uso: LoteUsoChip = {
+      NumChip: numChip,
+      Nombre_Chip: row.Nombre_Chip == null ? null : String(row.Nombre_Chip),
+      fcColors: CHIP_FC_SLOTS.map((fc) => chipFcEstadoColor(fcMap.get(fc))) as LoteUsoChip["fcColors"],
+    }
+    const arr = map.get(id)
+    if (arr) arr.push(uso)
+    else map.set(id, [uso])
+  }
+  for (const arr of map.values()) arr.sort((a, b) => a.NumChip - b.NumChip)
+  return map
+}
+
 export function filterLots(
   lots: LoteRow[],
   usosExtraido: Map<number, LoteUsoExtraido[]>,
   usosLm: Map<number, LoteUsoLm[]>,
-  query: string
+  query: string,
+  usosChip: Map<number, LoteUsoChip[]> = new Map()
 ): LoteRow[] {
   const q = query.trim().toLowerCase()
   if (!q) return lots
@@ -389,11 +477,21 @@ export function filterLots(
     const extra = usosExtraido.get(lot.id) || []
     if (extra.some((u) => String(u.NumBN).includes(q))) return true
     const lm = usosLm.get(lot.id) || []
-    return lm.some(
+    if (
+      lm.some(
+        (u) =>
+          String(u.NumBN).includes(q) ||
+          String(u.NumLectura).includes(q) ||
+          String(u.NumLectMarc).includes(q)
+      )
+    ) {
+      return true
+    }
+    const chips = usosChip.get(lot.id) || []
+    return chips.some(
       (u) =>
-        String(u.NumBN).includes(q) ||
-        String(u.NumLectura).includes(q) ||
-        String(u.NumLectMarc).includes(q)
+        String(u.NumChip).includes(q) ||
+        (u.Nombre_Chip != null && u.Nombre_Chip.toLowerCase().includes(q))
     )
   })
 }

@@ -8,6 +8,7 @@ import {
   lotLnForDisplay,
   groupUsosExtraido,
   groupUsosLm,
+  groupUsosChip,
   lotExpFromInputValue,
   lotExpToInputValue,
   lotOptionLabel,
@@ -16,8 +17,12 @@ import {
   sortLots,
   countEstadosExtraido,
   countEstadosLm,
+  countEstadosChip,
   estadoMuestraColor,
   loteLmMediaColor,
+  loteChipEstadoColor,
+  chipFcEstadoColor,
+  hydrateDChipsFromLots,
   type LoteRow,
 } from "./lotesPageData"
 
@@ -58,6 +63,11 @@ describe("lotesPageData", () => {
     const lm = [{ Id_LtM: 1, Id_LtMm: 3 }]
     hydrateLecturasMarcadoFromLots(lm, lots, lots)
     expect(lm[0]).toMatchObject({ LN_LM: "250428048", LNM_LM: "240515028" })
+
+    const dchips = [{ NumChip_D: 7, Id_LtC: 3 }, { NumChip_D: 8 }]
+    hydrateDChipsFromLots(dchips, lots)
+    expect(dchips[0]).toMatchObject({ PN: "80060", LN: "240515028", Exp: "07/28/2025" })
+    expect(dchips[1].LN).toBeNull()
   })
 
   it("parses highlight query", () => {
@@ -71,6 +81,13 @@ describe("lotesPageData", () => {
     })
     expect(buildLotesHighlightPath({ tipo: "membrana", id: 4 })).toBe(
       "/calidad?tipo=membrana&id=4&tab=lotes"
+    )
+    expect(parseLotesHighlight(new URLSearchParams("tipo=chip&id=2"))).toEqual({
+      tipo: "chip",
+      id: 2,
+    })
+    expect(buildLotesHighlightPath({ tipo: "chip", ln: "C123" })).toBe(
+      "/calidad?tipo=chip&ln=C123&tab=lotes"
     )
   })
 
@@ -96,6 +113,12 @@ describe("lotesPageData", () => {
       { lotId: 1, NumBN: 72, NumLectura: 2, NumLectMarc: 1 },
     ])
     expect(filterLots(lots, extra, lm, "99").map((l) => l.id)).toEqual([3])
+    const chips = groupUsosChip([
+      { Id_LtC: 2, NumChip_D: 12, Nombre_Chip: "20250702_Chip12" },
+      { Id_LtC: 2, NumChip_D: 4, Nombre_Chip: "Chip4" },
+    ])
+    expect(chips.get(2)?.map((u) => u.NumChip)).toEqual([4, 12])
+    expect(filterLots(lots, extra, lm, "Chip4", chips).map((l) => l.id)).toEqual([2])
   })
 
   it("colors extraido samples by Estado_Muestra and counts them", () => {
@@ -132,6 +155,39 @@ describe("lotesPageData", () => {
       yellow: 0,
       red: 2,
       none: 0,
+    })
+  })
+
+  it("colors chip lots from FC green/yellow like the Chips tab", () => {
+    expect(chipFcEstadoColor({ NumBN_C: 10 })).toBe("green")
+    expect(chipFcEstadoColor({ NumBN_C: 10, Repetir_Chip: 1 })).toBe("yellow")
+    expect(chipFcEstadoColor(null)).toBe("none")
+    expect(loteChipEstadoColor(["green", "green", "green"])).toBe("green")
+    expect(loteChipEstadoColor(["green", "yellow", "green"])).toBe("yellow")
+    expect(loteChipEstadoColor(["green", "green", "none"])).toBe("none")
+    const chips = groupUsosChip(
+      [
+        { Id_LtC: 1, NumChip_D: 4, Nombre_Chip: "A" },
+        { Id_LtC: 1, NumChip_D: 5, Nombre_Chip: "B" },
+        { Id_LtC: 1, NumChip_D: 6, Nombre_Chip: "C" },
+      ],
+      [
+        { NumChip: 4, FC: 1, NumBN_C: 1 },
+        { NumChip: 4, FC: 2, NumBN_C: 2 },
+        { NumChip: 4, FC: 3, NumBN_C: 3 },
+        { NumChip: 5, FC: 1, NumBN_C: 10, Repetir_Chip: 1 },
+        { NumChip: 5, FC: 2, NumBN_C: 11 },
+        { NumChip: 6, FC: 1, NumBN_C: 20 },
+      ]
+    )
+    expect(loteChipEstadoColor(chips.get(1)?.[0].fcColors ?? [])).toBe("green")
+    expect(loteChipEstadoColor(chips.get(1)?.[1].fcColors ?? [])).toBe("yellow")
+    expect(loteChipEstadoColor(chips.get(1)?.[2].fcColors ?? [])).toBe("none")
+    expect(countEstadosChip(chips.get(1) ?? [])).toEqual({
+      green: 1,
+      yellow: 1,
+      red: 0,
+      none: 1,
     })
   })
 })

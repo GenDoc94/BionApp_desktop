@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   buildChipPanels,
+  chipCardDomId,
   chipPanelMatchesQuery,
   filterChipPanels,
+  parseChipHighlight,
   type ChipAsignacion,
   type ChipCatalogo,
 } from "./chipPageData";
 
 const chips: ChipCatalogo[] = [
-  { NumChip_D: 1, Nombre_Chip: "20250702_Chip1" },
+  { NumChip_D: 1, Nombre_Chip: "20250702_Chip1", LN: "240101001" },
   { NumChip_D: 25, Nombre_Chip: "20250702_Chip25" },
 ];
 
@@ -48,5 +50,16 @@ describe("chipPageData search", () => {
     expect(filterChipPanels(panels, "100")[0].chip.NumChip_D).toBe(1);
     expect(filterChipPanels(panels, "Chip25")).toHaveLength(1);
     expect(filterChipPanels(panels, "999")).toHaveLength(0);
+  });
+
+  it("matches by chip LN", () => {
+    expect(chipPanelMatchesQuery(panels[0], "240101001")).toBe(true);
+    expect(chipPanelMatchesQuery(panels[1], "240101001")).toBe(false);
+  });
+
+  it("parses chip highlight and card id", () => {
+    expect(parseChipHighlight(new URLSearchParams("chip=12"))).toBe(12);
+    expect(parseChipHighlight(new URLSearchParams(""))).toBeNull();
+    expect(chipCardDomId(12)).toBe("chip-card-12");
   });
 });

@@ -34,6 +34,7 @@ import {
   findLotId,
   lotLnForDisplay,
   lotOptionLabel,
+  LOTE_TABLE,
   sortLots,
   toLoteRow,
   type LoteRow,
@@ -902,9 +903,7 @@ async function fetchHacerCatalogs() {
 }
 
 async function fetchLotesCatalog(tipo: LoteTipo): Promise<LoteRow[]> {
-  const table =
-    tipo === "extraido" ? "Lotes_Extraido" : tipo === "marcado" ? "Lotes_Marcado" : "Lotes_Membrana";
-  const { data, error } = await supabase.from(table).select("*");
+  const { data, error } = await supabase.from(LOTE_TABLE[tipo]).select("*");
   if (error) throw error;
   return sortLots(
     (data || [])

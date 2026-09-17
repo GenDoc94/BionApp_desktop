@@ -323,8 +323,8 @@
     "other": {
       "title": "Otras pantallas",
       "chips": "**Chips**: gestión de chips y huecos FC asociados a las lecturas marcadas.",
-      "calidad": "**Calidad**: catálogo de lotes (extracción, marcado y membrana) y registro de filtros de aire del aparato.",
-      "lotes": "**Lotes**: catálogo de lotes de extracción, marcado y membrana, con las muestras y lecturas asociadas.",
+      "calidad": "**Calidad**: catálogo de lotes (extracción, marcado, membrana y chip) y registro de filtros de aire del aparato.",
+      "lotes": "**Lotes**: catálogo de lotes de extracción, marcado, membrana y chip, con las muestras, lecturas y chips asociados.",
       "calcs": "**Cálculos**: utilidades de laboratorio (p. ej. diluciones) a partir de los datos ya registrados.",
       "options": "**Opciones**: perfil, variables, etiquetas, estadísticas, documentos, exportación, apariencia y manual."
     },
@@ -598,15 +598,16 @@
     "number": "Nº Chip",
     "name": "Nombre de chip",
     "add": "Añadir chip",
-    "searchPlaceholder": "Buscar por Nº chip, nombre o Nº muestra...",
+    "searchPlaceholder": "Buscar por Nº chip, nombre, LN o Nº muestra...",
     "searchCount": "{{filtered}} de {{total}} chips",
     "clear": "Limpiar",
     "empty": "No hay chips en el catálogo. Añade el primero con el formulario de arriba.",
     "noMatch": "No hay chips que coincidan con «{{query}}».",
-    "saveName": "Guardar nombre",
+    "saveName": "Guardar chip",
     "cancel": "Cancelar",
-    "editName": "Editar nombre",
+    "editName": "Editar chip",
     "delete": "Eliminar chip",
+    "noLots": "No hay lotes de chip. Créalos en Calidad.",
     "goSample": "Ir a muestra {{numBN}} · lectura {{numLectura}} · LM {{numLectMarc}}",
     "repeatMarked": "· Repetir chip marcado",
     "fc": {
@@ -617,14 +618,16 @@
     },
     "toast": {
       "loadError": "Error al cargar chips",
+      "loadLots": "Error al cargar lotes de chip",
       "loadAssignments": "Error al cargar muestras en chips",
       "emptyName": "El nombre del chip no puede estar vacío",
       "added": "Chip añadido correctamente",
       "addError": "Error al añadir chip",
       "deleted": "Chip eliminado",
       "deleteError": "Error al eliminar chip",
-      "renamed": "Nombre del chip actualizado",
-      "renameError": "Error al actualizar nombre del chip"
+      "renamed": "Chip actualizado",
+      "renameError": "Error al actualizar el chip",
+      "notFound": "No se encontró el chip"
     },
     "confirm": {
       "delete": "¿Eliminar chip {{num}} - {{name}}?"
@@ -674,21 +677,24 @@
     "title": "Lotes",
     "loading": "Cargando lotes...",
     "goToLot": "Ver lote",
-    "createHint": "Alta de un lote en el catálogo actual. Luego podrás asignarlo a muestras o lecturas por su LN. También puedes editar PN, LN y caducidad de un lote existente.",
+    "createHint": "Alta de un lote en el catálogo actual. Luego podrás asignarlo a muestras, lecturas o chips por su LN. También puedes editar PN, LN y caducidad de un lote existente.",
     "add": "Añadir lote",
     "edit": "Editar lote",
     "save": "Guardar lote",
     "cancel": "Cancelar",
-    "searchPlaceholder": "Buscar por LN, PN, caducidad o Nº BN...",
+    "searchPlaceholder": "Buscar por LN, PN, caducidad, Nº BN o chip...",
     "searchCount": "{{filtered}} de {{total}} lotes",
     "empty": "No hay lotes en este catálogo. Añade el primero con el formulario de arriba.",
     "noMatch": "Ningún lote coincide con la búsqueda.",
     "noUsos": "Todavía no hay muestras ni lecturas asociadas.",
+    "noUsosChip": "Todavía no hay chips asociados a este LN.",
     "samplesCount": "{{count}} muestras",
     "readingsCount": "{{count}} lecturas",
+    "chipsCount": "{{count}} chips",
     "viewStates": "Ver Estados",
     "statesHintExtraido": "Color según Estado_Muestra: verde (3), amarillo (2), rojo (1). El número junto al LN es el conteo de cada color.",
     "statesHintMarcado": "Color según media de lectura marcada: verde si es ≥ 3, rojo si es < 3. El número junto al LN es el conteo de cada color.",
+    "statesHintChip": "Color según las FC de la pestaña Chips: amarillo si alguna de las 3 FC tiene la lectura marcada en amarillo (repetir); verde solo si las 3 FC están en verde.",
     "statesCountTitle": "Conteo de estados en este LN",
     "countGreen": "{{count}} verdes",
     "countYellow": "{{count}} amarillos",
@@ -696,7 +702,8 @@
     "tipo": {
       "extraido": "Extracción",
       "marcado": "Marcado",
-      "membrana": "Membrana"
+      "membrana": "Membrana",
+      "chip": "Chip"
     },
     "toast": {
       "loadError": "Error al cargar lotes",

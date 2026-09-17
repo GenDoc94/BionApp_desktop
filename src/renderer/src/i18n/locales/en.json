@@ -323,8 +323,8 @@
     "other": {
       "title": "Other screens",
       "chips": "**Chips**: manage chips and FC slots linked to labeled readings.",
-      "calidad": "**Quality**: lot catalog (extraction, labeling and membrane) and air-filter change log.",
-      "lotes": "**Lots**: catalog of extraction, labeling and membrane lots, with the linked samples and readings.",
+      "calidad": "**Quality**: lot catalog (extraction, labeling, membrane and chip) and air-filter change log.",
+      "lotes": "**Lots**: catalog of extraction, labeling, membrane and chip lots, with the linked samples, readings and chips.",
       "calcs": "**Calculations**: lab utilities (e.g. dilutions) from already recorded data.",
       "options": "**Options**: profile, variables, tags, statistics, documents, export, appearance and manual."
     },
@@ -598,15 +598,16 @@
     "number": "Chip no.",
     "name": "Chip name",
     "add": "Add chip",
-    "searchPlaceholder": "Search by chip no., name or sample no....",
+    "searchPlaceholder": "Search by chip no., name, LN or sample no....",
     "searchCount": "{{filtered}} of {{total}} chips",
     "clear": "Clear",
     "empty": "There are no chips in the catalog. Add the first one with the form above.",
     "noMatch": "No chips match “{{query}}”.",
-    "saveName": "Save name",
+    "saveName": "Save chip",
     "cancel": "Cancel",
-    "editName": "Edit name",
+    "editName": "Edit chip",
     "delete": "Delete chip",
+    "noLots": "There are no chip lots. Create them in Quality.",
     "goSample": "Go to sample {{numBN}} · reading {{numLectura}} · LM {{numLectMarc}}",
     "repeatMarked": "· Chip marked for repeat",
     "fc": {
@@ -617,14 +618,16 @@
     },
     "toast": {
       "loadError": "Error loading chips",
+      "loadLots": "Error loading chip lots",
       "loadAssignments": "Error loading samples on chips",
       "emptyName": "Chip name cannot be empty",
       "added": "Chip added successfully",
       "addError": "Error adding chip",
       "deleted": "Chip deleted",
       "deleteError": "Error deleting chip",
-      "renamed": "Chip name updated",
-      "renameError": "Error updating chip name"
+      "renamed": "Chip updated",
+      "renameError": "Error updating the chip",
+      "notFound": "Chip not found"
     },
     "confirm": {
       "delete": "Delete chip {{num}} - {{name}}?"
@@ -674,21 +677,24 @@
     "title": "Lots",
     "loading": "Loading lots...",
     "goToLot": "View lot",
-    "createHint": "Add a lot to the current catalog. You can then assign it to samples or readings by LN. You can also edit PN, LN and expiry of an existing lot.",
+    "createHint": "Add a lot to the current catalog. You can then assign it to samples, readings or chips by LN. You can also edit PN, LN and expiry of an existing lot.",
     "add": "Add lot",
     "edit": "Edit lot",
     "save": "Save lot",
     "cancel": "Cancel",
-    "searchPlaceholder": "Search by LN, PN, expiry or sample no....",
+    "searchPlaceholder": "Search by LN, PN, expiry, sample no. or chip...",
     "searchCount": "{{filtered}} of {{total}} lots",
     "empty": "There are no lots in this catalog. Add the first one with the form above.",
     "noMatch": "No lots match the search.",
     "noUsos": "No samples or readings linked yet.",
+    "noUsosChip": "No chips linked to this LN yet.",
     "samplesCount": "{{count}} samples",
     "readingsCount": "{{count}} readings",
+    "chipsCount": "{{count}} chips",
     "viewStates": "View statuses",
     "statesHintExtraido": "Color by Estado_Muestra: green (3), yellow (2), red (1). The numbers next to the LN are the counts for each color.",
     "statesHintMarcado": "Color by labeled-reading mean: green if ≥ 3, red if < 3. The numbers next to the LN are the counts for each color.",
+    "statesHintChip": "Color from the Chips tab FCs: yellow if any of the 3 FCs has a labeled reading in yellow (repeat); green only if all 3 FCs are green.",
     "statesCountTitle": "Status counts for this LN",
     "countGreen": "{{count}} green",
     "countYellow": "{{count}} yellow",
@@ -696,7 +702,8 @@
     "tipo": {
       "extraido": "Extraction",
       "marcado": "Labeling",
-      "membrana": "Membrane"
+      "membrana": "Membrane",
+      "chip": "Chip"
     },
     "toast": {
       "loadError": "Error loading lots",

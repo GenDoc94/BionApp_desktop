@@ -13,12 +13,15 @@ import { supabase } from "../lib/supabaseClient";
 import { buildMuestraAppPath, saveMuestraNavegacion } from "../lib/navegacionMuestra";
 import {
   filterLots,
+  groupUsosChip,
   groupUsosExtraido,
   groupUsosLm,
   lotExpFromInputValue,
   lotExpToInputValue,
   loteCardDomId,
   LOTE_ID_COL,
+  LOTE_TABLE,
+  LOTE_TIPOS,
   parseLotesHighlight,
   resolveHighlightedLotId,
   sortLots,
@@ -26,19 +29,16 @@ import {
   type LoteEstadoColor,
   type LoteRow,
   type LoteTipo,
+  type LoteUsoChip,
   type LoteUsoExtraido,
   type LoteUsoLm,
   countEstadosExtraido,
   countEstadosLm,
+  countEstadosChip,
   estadoMuestraColor,
+  loteChipEstadoColor,
   loteLmMediaColor,
 } from "../lib/lotesPageData";
-
-const TABLE_BY_TIPO: Record<LoteTipo, string> = {
-  extraido: "Lotes_Extraido",
-  marcado: "Lotes_Marcado",
-  membrana: "Lotes_Membrana",
-};
 
 function usoEstadoClass(color: LoteEstadoColor, active: boolean): string {
   if (!active || color === "none") return "";
@@ -58,10 +58,12 @@ function LotesPage({ embedded = false }: LotesPageProps) {
     extraido: [],
     marcado: [],
     membrana: [],
+    chip: [],
   });
   const [usosExtraido, setUsosExtraido] = useState<Map<number, LoteUsoExtraido[]>>(new Map());
   const [usosMarcado, setUsosMarcado] = useState<Map<number, LoteUsoLm[]>>(new Map());
   const [usosMembrana, setUsosMembrana] = useState<Map<number, LoteUsoLm[]>>(new Map());
+  const [usosChip, setUsosChip] = useState<Map<number, LoteUsoChip[]>>(new Map());
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [newPn, setNewPn] = useState("");
@@ -82,24 +84,33 @@ function LotesPage({ embedded = false }: LotesPageProps) {
       extraidoRes,
       marcadoRes,
       membranaRes,
+      chipRes,
       muestrasRes,
       lmRes,
+      dChipsRes,
+      chipsAsigRes,
     ] = await Promise.all([
       supabase.from("Lotes_Extraido").select("*"),
       supabase.from("Lotes_Marcado").select("*"),
       supabase.from("Lotes_Membrana").select("*"),
+      supabase.from("Lotes_Chips").select("*"),
       supabase.from("Muestras").select("NumBN, Id_LtE, Estado_Muestra"),
       supabase
         .from("Lecturas_Marcado")
         .select("NumBN_LM, NumLectura_LM, NumLectMarc, Id_LtM, Id_LtMm, Media_LM, Izq_LM, Dcha_LM"),
+      supabase.from("DChips").select("NumChip_D, Nombre_Chip, Id_LtC"),
+      supabase.from("Chips").select("NumChip, FC, NumBN_C, Repetir_Chip"),
     ]);
 
     const errors = [
       extraidoRes.error,
       marcadoRes.error,
       membranaRes.error,
+      chipRes.error,
       muestrasRes.error,
       lmRes.error,
+      dChipsRes.error,
+      chipsAsigRes.error,
     ].filter(Boolean);
     if (errors.length) {
       console.error(errors[0]);
@@ -115,6 +126,7 @@ function LotesPage({ embedded = false }: LotesPageProps) {
       extraido: mapRows((extraidoRes.data || []) as Record<string, unknown>[], "extraido"),
       marcado: mapRows((marcadoRes.data || []) as Record<string, unknown>[], "marcado"),
       membrana: mapRows((membranaRes.data || []) as Record<string, unknown>[], "membrana"),
+      chip: mapRows((chipRes.data || []) as Record<string, unknown>[], "chip"),
     });
     setUsosExtraido(
       groupUsosExtraido(
@@ -152,6 +164,21 @@ function LotesPage({ embedded = false }: LotesPageProps) {
         }))
       )
     );
+    setUsosChip(
+      groupUsosChip(
+        (dChipsRes.data || []) as Array<{
+          Id_LtC?: unknown;
+          NumChip_D?: unknown;
+          Nombre_Chip?: unknown;
+        }>,
+        (chipsAsigRes.data || []) as Array<{
+          NumChip?: unknown;
+          FC?: unknown;
+          NumBN_C?: unknown;
+          Repetir_Chip?: unknown;
+        }>
+      )
+    );
     setLoading(false);
   }, [t]);
 
@@ -166,10 +193,10 @@ function LotesPage({ embedded = false }: LotesPageProps) {
   }, [searchParams]);
 
   const lots = lotsByTipo[tipo];
-  const usosLm = tipo === "marcado" ? usosMarcado : usosMembrana;
+  const usosLm = tipo === "marcado" ? usosMarcado : tipo === "membrana" ? usosMembrana : new Map();
   const filtered = useMemo(
-    () => filterLots(lots, usosExtraido, usosLm, searchQuery),
-    [lots, usosExtraido, usosLm, searchQuery]
+    () => filterLots(lots, usosExtraido, usosLm, searchQuery, usosChip),
+    [lots, usosExtraido, usosLm, searchQuery, usosChip]
   );
   const searchActive = searchQuery.trim().length > 0;
 
@@ -219,7 +246,7 @@ function LotesPage({ embedded = false }: LotesPageProps) {
     }
     setSaving(true);
     try {
-      const { error } = await supabase.from(TABLE_BY_TIPO[tipo]).insert({
+      const { error } = await supabase.from(LOTE_TABLE[tipo]).insert({
         PN: pn,
         LN: ln,
         Exp: exp,
@@ -265,7 +292,7 @@ function LotesPage({ embedded = false }: LotesPageProps) {
     setSavingEdit(true);
     try {
       const { error } = await supabase
-        .from(TABLE_BY_TIPO[tipo])
+        .from(LOTE_TABLE[tipo])
         .update({ PN: pn, LN: ln, Exp: exp })
         .eq(LOTE_ID_COL[tipo], lotId);
       if (error) throw error;
@@ -280,6 +307,10 @@ function LotesPage({ embedded = false }: LotesPageProps) {
     } finally {
       setSavingEdit(false);
     }
+  }
+
+  function handleOpenChip(numChip: number) {
+    navigate(`/chips?chip=${numChip}`);
   }
 
   function handleOpenMuestra(numBN: number, numLectura?: number, numLectMarc?: number) {
@@ -316,7 +347,7 @@ function LotesPage({ embedded = false }: LotesPageProps) {
     <>
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <div className="flex flex-wrap gap-2">
-          {(["extraido", "marcado", "membrana"] as LoteTipo[]).map((key) => (
+          {LOTE_TIPOS.map((key) => (
             <Button
               key={key}
               type="button"
@@ -340,7 +371,11 @@ function LotesPage({ embedded = false }: LotesPageProps) {
           aria-pressed={showEstados}
           onClick={() => setShowEstados((v) => !v)}
           title={
-            tipo === "extraido" ? t("lotes.statesHintExtraido") : t("lotes.statesHintMarcado")
+            tipo === "extraido"
+              ? t("lotes.statesHintExtraido")
+              : tipo === "chip"
+                ? t("lotes.statesHintChip")
+                : t("lotes.statesHintMarcado")
           }
         >
           <Eye className="h-4 w-4" />
@@ -349,7 +384,11 @@ function LotesPage({ embedded = false }: LotesPageProps) {
       </div>
       {showEstados ? (
         <p className="text-xs text-slate-500 -mt-2 mb-4">
-          {tipo === "extraido" ? t("lotes.statesHintExtraido") : t("lotes.statesHintMarcado")}
+          {tipo === "extraido"
+            ? t("lotes.statesHintExtraido")
+            : tipo === "chip"
+              ? t("lotes.statesHintChip")
+              : t("lotes.statesHintMarcado")}
         </p>
       ) : null}
 
@@ -413,9 +452,26 @@ function LotesPage({ embedded = false }: LotesPageProps) {
         <div className="bionapp-lote-grid">
           {filtered.map((lot) => {
             const extra = tipo === "extraido" ? usosExtraido.get(lot.id) || [] : [];
-            const lmUsos = tipo === "extraido" ? [] : usosLm.get(lot.id) || [];
+            const lmUsos = tipo === "marcado" || tipo === "membrana" ? usosLm.get(lot.id) || [] : [];
+            const chipUsosLot = tipo === "chip" ? usosChip.get(lot.id) || [] : [];
             const estadoCounts =
-              tipo === "extraido" ? countEstadosExtraido(extra) : countEstadosLm(lmUsos);
+              tipo === "extraido"
+                ? countEstadosExtraido(extra)
+                : tipo === "chip"
+                  ? countEstadosChip(chipUsosLot)
+                  : countEstadosLm(lmUsos);
+            const usosCount =
+              tipo === "extraido"
+                ? extra.length
+                : tipo === "chip"
+                  ? chipUsosLot.length
+                  : lmUsos.length;
+            const usosCountLabel =
+              tipo === "extraido"
+                ? t("lotes.samplesCount", { count: usosCount })
+                : tipo === "chip"
+                  ? t("lotes.chipsCount", { count: usosCount })
+                  : t("lotes.readingsCount", { count: usosCount });
             return (
               <article
                 key={lot.id}
@@ -471,27 +527,25 @@ function LotesPage({ embedded = false }: LotesPageProps) {
                     </div>
                   )}
                   <div className="bionapp-lote-card__actions">
-                    <Badge variant="secondary">
-                      {tipo === "extraido"
-                        ? t("lotes.samplesCount", { count: extra.length })
-                        : t("lotes.readingsCount", { count: lmUsos.length })}
-                    </Badge>
+                    <Badge variant="secondary">{usosCountLabel}</Badge>
                     {showEstados ? (
                       <span className="bionapp-lote-estado-counts" title={t("lotes.statesCountTitle")}>
                         <span className="is-green" title={t("lotes.countGreen", { count: estadoCounts.green })}>
                           {estadoCounts.green}
                         </span>
-                        {tipo === "extraido" ? (
+                        {tipo === "marcado" || tipo === "membrana" ? null : (
                           <span
                             className="is-yellow"
                             title={t("lotes.countYellow", { count: estadoCounts.yellow })}
                           >
                             {estadoCounts.yellow}
                           </span>
-                        ) : null}
+                        )}
+                        {tipo === "chip" ? null : (
                         <span className="is-red" title={t("lotes.countRed", { count: estadoCounts.red })}>
                           {estadoCounts.red}
                         </span>
+                        )}
                       </span>
                     ) : null}
                     {editingId === lot.id ? (
@@ -546,6 +600,27 @@ function LotesPage({ embedded = false }: LotesPageProps) {
                           onClick={() => handleOpenMuestra(uso.NumBN)}
                         >
                           BN {uso.NumBN}
+                        </button>
+                      ))}
+                    </div>
+                  )
+                ) : tipo === "chip" ? (
+                  chipUsosLot.length === 0 ? (
+                    <p className="text-xs text-slate-400">{t("lotes.noUsosChip")}</p>
+                  ) : (
+                    <div className="bionapp-lote-usos">
+                      {chipUsosLot.map((uso) => (
+                        <button
+                          key={uso.NumChip}
+                          type="button"
+                          className={cn(
+                            "bionapp-lote-uso-btn",
+                            usoEstadoClass(loteChipEstadoColor(uso.fcColors), showEstados)
+                          )}
+                          title={uso.Nombre_Chip || undefined}
+                          onClick={() => handleOpenChip(uso.NumChip)}
+                        >
+                          Chip {uso.NumChip}
                         </button>
                       ))}
                     </div>
