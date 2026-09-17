@@ -149,6 +149,53 @@ export function findLotId(
   return found?.id ?? null
 }
 
+/** LN visible: el del catálogo si la muestra ya no trae la columna denormalizada. */
+export function lotLnForDisplay(
+  lots: LoteRow[],
+  current: { id?: unknown; PN?: unknown; LN?: unknown; Exp?: unknown }
+): string {
+  const direct = String(current.LN ?? "").trim()
+  if (direct) return direct
+  const id = findLotId(lots, current)
+  if (id == null) return ""
+  return lots.find((l) => l.id === id)?.LN.trim() ?? ""
+}
+
+export function hydrateMuestrasFromLots(
+  muestras: Array<Record<string, unknown>>,
+  extraido: LoteRow[]
+): void {
+  const byId = new Map(extraido.map((l) => [l.id, l]))
+  for (const row of muestras) {
+    const id = Number(row.Id_LtE)
+    const lot = Number.isFinite(id) ? byId.get(id) : undefined
+    row.PN = lot?.PN ?? null
+    row.LN = lot?.LN ?? null
+    row.Exp = lot?.Exp ?? null
+  }
+}
+
+export function hydrateLecturasMarcadoFromLots(
+  rows: Array<Record<string, unknown>>,
+  marcado: LoteRow[],
+  membrana: LoteRow[]
+): void {
+  const mById = new Map(marcado.map((l) => [l.id, l]))
+  const mmById = new Map(membrana.map((l) => [l.id, l]))
+  for (const row of rows) {
+    const idM = Number(row.Id_LtM)
+    const lotM = Number.isFinite(idM) ? mById.get(idM) : undefined
+    row.PN_LM = lotM?.PN ?? null
+    row.LN_LM = lotM?.LN ?? null
+    row.Exp_LM = lotM?.Exp ?? null
+    const idMm = Number(row.Id_LtMm)
+    const lotMm = Number.isFinite(idMm) ? mmById.get(idMm) : undefined
+    row.PNM_LM = lotMm?.PN ?? null
+    row.LNM_LM = lotMm?.LN ?? null
+    row.ExpM_LM = lotMm?.Exp ?? null
+  }
+}
+
 export function parseLotesHighlight(params: URLSearchParams): LotesHighlight | null {
   const tipoRaw = params.get("tipo")
   const tipo = isLoteTipo(tipoRaw) ? tipoRaw : "extraido"

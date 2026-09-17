@@ -712,9 +712,7 @@ function App() {
         Proces: muestraUpdate.Proces,
         Coment_Muestra: muestraUpdate.Coment_Muestra,
         Fecha: muestraUpdate.Fecha,
-        PN: muestraUpdate.PN,
-        LN: muestraUpdate.LN,
-        Exp: muestraUpdate.Exp,
+        Id_LtE: muestraUpdate.Id_LtE ?? null,
         Coment_Extracc: muestraUpdate.Coment_Extracc,
         Visco_grado: muestraUpdate.Visco_grado,
         Pellet: muestraUpdate.Pellet,
@@ -741,12 +739,8 @@ function App() {
               Fecha_Lect_Marc: strOrNull(lm.Fecha_Lect_Marc),
               Izq_LM: lm.Izq_LM ? parseFloat(lm.Izq_LM) : null,
               Dcha_LM: lm.Dcha_LM ? parseFloat(lm.Dcha_LM) : null,
-              PN_LM: strOrNull(lm.PN_LM),
-              LN_LM: strOrNull(lm.LN_LM),
-              Exp_LM: strOrNull(lm.Exp_LM),
-              PNM_LM: strOrNull(lm.PNM_LM),
-              LNM_LM: strOrNull(lm.LNM_LM),
-              ExpM_LM: strOrNull(lm.ExpM_LM),
+              Id_LtM: lm.Id_LtM ?? null,
+              Id_LtMm: lm.Id_LtMm ?? null,
               Comentario_LMarcado:
                 lm.Comentario_LMarcado === "" ||
                 lm.Comentario_LMarcado === undefined ||
@@ -1393,13 +1387,7 @@ function App() {
           NumLectMarc: numNuevaLectMarc,
           Fecha_Lect_Marc: prevLm?.Fecha_Lect_Marc ?? null,
           Id_LtM: prevLm?.Id_LtM ?? null,
-          PN_LM: prevLm?.PN_LM ?? null,
-          LN_LM: prevLm?.LN_LM ?? null,
-          Exp_LM: prevLm?.Exp_LM ?? null,
           Id_LtMm: prevLm?.Id_LtMm ?? null,
-          PNM_LM: prevLm?.PNM_LM ?? null,
-          LNM_LM: prevLm?.LNM_LM ?? null,
-          ExpM_LM: prevLm?.ExpM_LM ?? null,
         },
       ]);
 

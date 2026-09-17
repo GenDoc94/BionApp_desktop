@@ -3,6 +3,9 @@ import {
   buildLotesHighlightPath,
   filterLots,
   findLotId,
+  hydrateLecturasMarcadoFromLots,
+  hydrateMuestrasFromLots,
+  lotLnForDisplay,
   groupUsosExtraido,
   groupUsosLm,
   lotExpFromInputValue,
@@ -34,6 +37,23 @@ describe("lotesPageData", () => {
     expect(findLotId(lots, { id: 3 })).toBe(3)
     expect(findLotId(lots, { PN: "80118", LN: "250428048", Exp: "26/08/2026" })).toBe(2)
     expect(findLotId(lots, { LN: "nope" })).toBe(null)
+  })
+
+  it("shows LN from catalog when the sample only has Id_LtE", () => {
+    expect(lotLnForDisplay(lots, { id: 3 })).toBe("240515028")
+    expect(lotLnForDisplay(lots, { LN: "direct" })).toBe("direct")
+    expect(lotLnForDisplay(lots, {})).toBe("")
+  })
+
+  it("hydrates PN/LN/Exp from lot ids", () => {
+    const muestras = [{ NumBN: 1, Id_LtE: 3 }, { NumBN: 2 }]
+    hydrateMuestrasFromLots(muestras, lots)
+    expect(muestras[0]).toMatchObject({ PN: "80060", LN: "240515028", Exp: "07/28/2025" })
+    expect(muestras[1].LN).toBeNull()
+
+    const lm = [{ Id_LtM: 1, Id_LtMm: 3 }]
+    hydrateLecturasMarcadoFromLots(lm, lots, lots)
+    expect(lm[0]).toMatchObject({ LN_LM: "250428048", LNM_LM: "240515028" })
   })
 
   it("parses highlight query", () => {

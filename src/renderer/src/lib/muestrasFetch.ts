@@ -1,5 +1,11 @@
-import i18n from "../i18n";
 import { supabase } from "./supabaseClient";
+import {
+  hydrateLecturasMarcadoFromLots,
+  hydrateMuestrasFromLots,
+  toLoteRow,
+  type LoteRow,
+  type LoteTipo,
+} from "./lotesPageData";
 
 type MuestraRow = Record<string, unknown> & { NumBN: number; lecturas?: unknown[] };
 
@@ -67,7 +73,7 @@ function assembleMuestra(
   return { ...muestra, NumBN: numBN, lecturas: lecturasConMarcado };
 }
 
-/** Carga todas las muestras con lecturas/marcado/chips en 5 consultas (no N×4). */
+/** Carga todas las muestras con lecturas/marcado/chips y catálogos de lote. */
 export async function fetchMuestrasCompletasFromSupabase(): Promise<MuestraRow[]> {
   const [
     { data: muestrasData, error: muestrasError },
@@ -75,6 +81,9 @@ export async function fetchMuestrasCompletasFromSupabase(): Promise<MuestraRow[]
     { data: allMarcados, error: marcadosError },
     { data: allLm, error: lmError },
     { data: allChips, error: chipsError },
+    { data: lotesEData, error: lotesEError },
+    { data: lotesMData, error: lotesMError },
+    { data: lotesMmData, error: lotesMmError },
   ] = await Promise.all([
     supabase
       .from("Muestras")
@@ -94,6 +103,9 @@ export async function fetchMuestrasCompletasFromSupabase(): Promise<MuestraRow[]
       .order("NumBN_LM", { ascending: true })
       .order("NumLectMarc", { ascending: true }),
     supabase.from("Chips").select("*").order("NumBN_C", { ascending: true }).order("NumChip", { ascending: true }),
+    supabase.from("Lotes_Extraido").select("*"),
+    supabase.from("Lotes_Marcado").select("*"),
+    supabase.from("Lotes_Membrana").select("*"),
   ]);
 
   if (muestrasError) throw muestrasError;
@@ -101,6 +113,24 @@ export async function fetchMuestrasCompletasFromSupabase(): Promise<MuestraRow[]
   if (marcadosError) throw marcadosError;
   if (lmError) throw lmError;
   if (chipsError) throw chipsError;
+  if (lotesEError) throw lotesEError;
+  if (lotesMError) throw lotesMError;
+  if (lotesMmError) throw lotesMmError;
+
+  const catalogRows = (data: unknown[] | null, tipo: LoteTipo): LoteRow[] =>
+    (data || [])
+      .map((row) => toLoteRow(row as Record<string, unknown>, tipo))
+      .filter((row): row is LoteRow => row != null);
+
+  hydrateMuestrasFromLots(
+    (muestrasData || []) as Array<Record<string, unknown>>,
+    catalogRows(lotesEData, "extraido")
+  );
+  hydrateLecturasMarcadoFromLots(
+    (allLm || []) as Array<Record<string, unknown>>,
+    catalogRows(lotesMData, "marcado"),
+    catalogRows(lotesMmData, "membrana")
+  );
 
   const lecturasByBn = groupBy(allLecturas || [], (r) => (r as { NumBN_L: number }).NumBN_L);
   const marcadosByBn = groupBy(allMarcados || [], (r) => (r as { NumBN_M: number }).NumBN_M);
@@ -125,10 +155,10 @@ export function formatMuestrasFetchError(err: unknown): string {
       (err as { details?: string })?.details ??
       (err as { hint?: string })?.hint ??
       err ??
-      i18n.t("errors.unknown")
+      "Error desconocido"
   );
   if (/failed to fetch|network|proxy|timeout|aborted/i.test(msg)) {
-    return i18n.t("samples.fetch.network");
+    return "No se pudieron cargar las muestras. Suele deberse a un fallo de red o del proxy (VPN, antivirus, empresa). Comprueba la conexión y pulsa Reintentar.";
   }
-  return i18n.t("samples.fetch.generic", { msg });
+  return `No se pudieron cargar las muestras: ${msg}`;
 }

@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Label } from "./ui/label";
-import { findLotId, lotOptionLabel, type LoteRow } from "../lib/lotesPageData";
+import { findLotId, lotLnForDisplay, lotOptionLabel, type LoteRow } from "../lib/lotesPageData";
 
 type LoteLnFieldProps = {
   editMode: boolean;
@@ -24,7 +24,7 @@ export default function LoteLnField({
 }: LoteLnFieldProps) {
   const { t } = useTranslation();
   const selectedId = findLotId(lots, current);
-  const lnText = String(current.LN ?? "").trim();
+  const lnText = lotLnForDisplay(lots, current);
   const Wrapper = layout === "inline" ? "div" : "div";
   const wrapClass =
     layout === "inline" ? "bionapp-marcado-field" : "bionapp-field bionapp-field--lote-ln";
