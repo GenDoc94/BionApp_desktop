@@ -1367,6 +1367,7 @@ export default function Options() {
               <div>
                 <p className="font-semibold mb-1">{t("manual.other.title")}</p>
                 <ul className="list-disc pl-5 space-y-1.5">
+                  <li>{mdStrong(t("manual.other.lotes"))}</li>
                   <li>{mdStrong(t("manual.other.chips"))}</li>
                   <li>{mdStrong(t("manual.other.calcs"))}</li>
                   <li>{mdStrong(t("manual.other.options"))}</li>

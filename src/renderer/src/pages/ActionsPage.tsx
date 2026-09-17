@@ -674,12 +674,6 @@ function labelDx(row: HacerMuestraRow, dxList: CatalogDx[]) {
   return dxList.find((d) => Number(d.Cod) === Number(cod))?.Dx ?? "—";
 }
 
-function parsePetic(value: unknown): number | null {
-  if (value === null || value === undefined || value === "") return null;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
-}
-
 function parseTextOrNull(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   const s = String(value).trim();
@@ -698,7 +692,7 @@ function buildHacerUpdatePayload(row: HacerMuestraRow) {
   }
 
   return {
-    Petic: parsePetic(pickRowField(row as Record<string, unknown>, "Petic")),
+    Petic: parseTextOrNull(pickRowField(row as Record<string, unknown>, "Petic")),
     Posic: parseTextOrNull(pickRowField(row as Record<string, unknown>, "Posic")),
     Proces: parseTextOrNull(pickRowField(row as Record<string, unknown>, "Proces")),
     Muestra: parseCod(pickRowField(row as Record<string, unknown>, "Muestra")),

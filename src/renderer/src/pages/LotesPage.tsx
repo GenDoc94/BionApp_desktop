@@ -1,0 +1,487 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Layers, Plus, Save, Search, SquarePen, X } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Badge } from "../components/ui/badge";
+import SubpageShell from "../components/SubpageShell";
+import { supabase } from "../lib/supabaseClient";
+import { buildMuestraAppPath, saveMuestraNavegacion } from "../lib/navegacionMuestra";
+import {
+  filterLots,
+  groupUsosExtraido,
+  groupUsosLm,
+  lotExpFromInputValue,
+  lotExpToInputValue,
+  loteCardDomId,
+  LOTE_ID_COL,
+  parseLotesHighlight,
+  resolveHighlightedLotId,
+  sortLots,
+  toLoteRow,
+  type LoteRow,
+  type LoteTipo,
+  type LoteUsoExtraido,
+  type LoteUsoLm,
+} from "../lib/lotesPageData";
+
+const TABLE_BY_TIPO: Record<LoteTipo, string> = {
+  extraido: "Lotes_Extraido",
+  marcado: "Lotes_Marcado",
+  membrana: "Lotes_Membrana",
+};
+
+function LotesPage() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [tipo, setTipo] = useState<LoteTipo>("extraido");
+  const [lotsByTipo, setLotsByTipo] = useState<Record<LoteTipo, LoteRow[]>>({
+    extraido: [],
+    marcado: [],
+    membrana: [],
+  });
+  const [usosExtraido, setUsosExtraido] = useState<Map<number, LoteUsoExtraido[]>>(new Map());
+  const [usosMarcado, setUsosMarcado] = useState<Map<number, LoteUsoLm[]>>(new Map());
+  const [usosMembrana, setUsosMembrana] = useState<Map<number, LoteUsoLm[]>>(new Map());
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [newPn, setNewPn] = useState("");
+  const [newLn, setNewLn] = useState("");
+  const [newExp, setNewExp] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editPn, setEditPn] = useState("");
+  const [editLn, setEditLn] = useState("");
+  const [editExp, setEditExp] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const pendingHighlight = useRef(parseLotesHighlight(searchParams));
+
+  const fetchLotes = useCallback(async () => {
+    setLoading(true);
+    const [
+      extraidoRes,
+      marcadoRes,
+      membranaRes,
+      muestrasRes,
+      lmRes,
+    ] = await Promise.all([
+      supabase.from("Lotes_Extraido").select("*"),
+      supabase.from("Lotes_Marcado").select("*"),
+      supabase.from("Lotes_Membrana").select("*"),
+      supabase.from("Muestras").select("NumBN, Id_LtE"),
+      supabase.from("Lecturas_Marcado").select("NumBN_LM, NumLectura_LM, NumLectMarc, Id_LtM, Id_LtMm"),
+    ]);
+
+    const errors = [
+      extraidoRes.error,
+      marcadoRes.error,
+      membranaRes.error,
+      muestrasRes.error,
+      lmRes.error,
+    ].filter(Boolean);
+    if (errors.length) {
+      console.error(errors[0]);
+      toast.error(t("lotes.toast.loadError"));
+      setLoading(false);
+      return;
+    }
+
+    const mapRows = (rows: Record<string, unknown>[] | null, kind: LoteTipo) =>
+      sortLots((rows || []).map((row) => toLoteRow(row, kind)).filter((r): r is LoteRow => r != null));
+
+    setLotsByTipo({
+      extraido: mapRows((extraidoRes.data || []) as Record<string, unknown>[], "extraido"),
+      marcado: mapRows((marcadoRes.data || []) as Record<string, unknown>[], "marcado"),
+      membrana: mapRows((membranaRes.data || []) as Record<string, unknown>[], "membrana"),
+    });
+    setUsosExtraido(groupUsosExtraido((muestrasRes.data || []) as Array<{ Id_LtE?: unknown; NumBN?: unknown }>));
+    const lmRows = (lmRes.data || []) as Array<Record<string, unknown>>;
+    setUsosMarcado(
+      groupUsosLm(
+        lmRows.map((r) => ({
+          lotId: r.Id_LtM,
+          NumBN: r.NumBN_LM,
+          NumLectura: r.NumLectura_LM,
+          NumLectMarc: r.NumLectMarc,
+        }))
+      )
+    );
+    setUsosMembrana(
+      groupUsosLm(
+        lmRows.map((r) => ({
+          lotId: r.Id_LtMm,
+          NumBN: r.NumBN_LM,
+          NumLectura: r.NumLectura_LM,
+          NumLectMarc: r.NumLectMarc,
+        }))
+      )
+    );
+    setLoading(false);
+  }, [t]);
+
+  useEffect(() => {
+    void fetchLotes();
+  }, [fetchLotes]);
+
+  useEffect(() => {
+    pendingHighlight.current = parseLotesHighlight(searchParams);
+    const parsed = pendingHighlight.current;
+    if (parsed?.tipo) setTipo(parsed.tipo);
+  }, [searchParams]);
+
+  const lots = lotsByTipo[tipo];
+  const usosLm = tipo === "marcado" ? usosMarcado : usosMembrana;
+  const filtered = useMemo(
+    () => filterLots(lots, usosExtraido, usosLm, searchQuery),
+    [lots, usosExtraido, usosLm, searchQuery]
+  );
+  const searchActive = searchQuery.trim().length > 0;
+
+  useEffect(() => {
+    if (loading) return;
+    const highlight = pendingHighlight.current;
+    if (!highlight || (highlight.id == null && !highlight.ln)) {
+      pendingHighlight.current = null;
+      return;
+    }
+    pendingHighlight.current = null;
+    const id = resolveHighlightedLotId(lotsByTipo[highlight.tipo], highlight);
+    setSearchParams({}, { replace: true });
+    if (id == null) {
+      toast.error(t("lotes.toast.notFound"));
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      const el = document.getElementById(loteCardDomId(highlight.tipo, id));
+      if (!el) {
+        toast.error(t("lotes.toast.notFound"));
+        return;
+      }
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("bionapp-lote-card--flash");
+      window.setTimeout(() => el.classList.remove("bionapp-lote-card--flash"), 1800);
+    });
+  }, [loading, lotsByTipo, setSearchParams, t]);
+
+  async function handleAddLote() {
+    const pn = newPn.trim();
+    const ln = newLn.trim();
+    const exp = lotExpFromInputValue(newExp);
+    if (!pn || !ln) {
+      toast.error(t("lotes.toast.needPnLn"));
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase.from(TABLE_BY_TIPO[tipo]).insert({
+        PN: pn,
+        LN: ln,
+        Exp: exp,
+      });
+      if (error) throw error;
+      toast.success(t("lotes.toast.added"));
+      setNewPn("");
+      setNewLn("");
+      setNewExp("");
+      await fetchLotes();
+    } catch (err) {
+      console.error(err);
+      const msg = String((err as { message?: string })?.message ?? err);
+      if (/UNIQUE/i.test(msg)) toast.error(t("lotes.toast.duplicate"));
+      else toast.error(t("lotes.toast.addError"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleStartEdit(lot: LoteRow) {
+    setEditingId(lot.id);
+    setEditPn(lot.PN);
+    setEditLn(lot.LN);
+    setEditExp(lotExpToInputValue(lot.Exp));
+  }
+
+  function handleCancelEdit() {
+    setEditingId(null);
+    setEditPn("");
+    setEditLn("");
+    setEditExp("");
+  }
+
+  async function handleSaveEdit(lotId: number) {
+    const pn = editPn.trim();
+    const ln = editLn.trim();
+    const exp = lotExpFromInputValue(editExp);
+    if (!pn || !ln) {
+      toast.error(t("lotes.toast.needPnLn"));
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const { error } = await supabase
+        .from(TABLE_BY_TIPO[tipo])
+        .update({ PN: pn, LN: ln, Exp: exp })
+        .eq(LOTE_ID_COL[tipo], lotId);
+      if (error) throw error;
+      toast.success(t("lotes.toast.updated"));
+      handleCancelEdit();
+      await fetchLotes();
+    } catch (err) {
+      console.error(err);
+      const msg = String((err as { message?: string })?.message ?? err);
+      if (/UNIQUE/i.test(msg)) toast.error(t("lotes.toast.duplicate"));
+      else toast.error(t("lotes.toast.updateError"));
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  function handleOpenMuestra(numBN: number, numLectura?: number, numLectMarc?: number) {
+    const target = { numBN, numLectura, numLectMarc };
+    saveMuestraNavegacion(target);
+    navigate(buildMuestraAppPath(target));
+  }
+
+  function switchTipo(next: LoteTipo) {
+    setTipo(next);
+    setSearchQuery("");
+    handleCancelEdit();
+  }
+
+  if (loading) {
+    return (
+      <div className="bionapp-subpage min-h-screen p-4 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+          <p className="text-muted-foreground">{t("lotes.loading")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <SubpageShell title={t("lotes.title")} icon={Layers} maxWidthClass="max-w-[1400px]">
+      <div className="flex flex-wrap gap-2 mb-4">
+        {(["extraido", "marcado", "membrana"] as LoteTipo[]).map((key) => (
+          <Button
+            key={key}
+            type="button"
+            size="sm"
+            variant={tipo === key ? "default" : "outline"}
+            className={tipo === key ? "bionapp-btn-green" : ""}
+            onClick={() => switchTipo(key)}
+          >
+            {t(`lotes.tipo.${key}`)}
+            <Badge variant="secondary" className="ml-2">
+              {lotsByTipo[key].length}
+            </Badge>
+          </Button>
+        ))}
+      </div>
+
+      <div className="bionapp-panel p-4 mb-4">
+        <p className="text-xs text-slate-500 mb-3">{t("lotes.createHint")}</p>
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
+          <div>
+            <p className="text-xs text-slate-500 mb-1">PN</p>
+            <Input value={newPn} onChange={(e) => setNewPn(e.target.value)} className="h-9 text-sm" />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 mb-1">LN</p>
+            <Input value={newLn} onChange={(e) => setNewLn(e.target.value)} className="h-9 text-sm" />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 mb-1">Exp</p>
+            <Input
+              type="date"
+              value={newExp}
+              onChange={(e) => setNewExp(e.target.value)}
+              className="h-9 text-sm"
+            />
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            className="h-9 gap-2 bionapp-btn-green"
+            onClick={() => void handleAddLote()}
+            disabled={saving}
+          >
+            <Plus className="h-4 w-4" />
+            {t("lotes.add")}
+          </Button>
+        </div>
+      </div>
+
+      {lots.length > 0 ? (
+        <div className="bionapp-panel p-4 mb-4">
+          <div className="relative min-w-0">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-9 pl-9 text-sm"
+              placeholder={t("lotes.searchPlaceholder")}
+            />
+          </div>
+          {searchActive ? (
+            <p className="text-xs text-slate-500 mt-2">
+              {t("lotes.searchCount", { filtered: filtered.length, total: lots.length })}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {filtered.length === 0 ? (
+        <p className="text-sm text-slate-500">
+          {lots.length === 0 ? t("lotes.empty") : t("lotes.noMatch")}
+        </p>
+      ) : (
+        <div className="bionapp-lote-grid">
+          {filtered.map((lot) => {
+            const extra = tipo === "extraido" ? usosExtraido.get(lot.id) || [] : [];
+            const lmUsos = tipo === "extraido" ? [] : usosLm.get(lot.id) || [];
+            return (
+              <article
+                key={lot.id}
+                id={loteCardDomId(tipo, lot.id)}
+                className="bionapp-lote-card"
+              >
+                <header className="bionapp-lote-card__header">
+                  {editingId === lot.id ? (
+                    <div
+                      className="bionapp-lote-card__edit"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void handleSaveEdit(lot.id);
+                        }
+                        if (e.key === "Escape") handleCancelEdit();
+                      }}
+                    >
+                      <label className="min-w-0">
+                        <span className="text-xs text-slate-500">LN</span>
+                        <Input
+                          value={editLn}
+                          onChange={(e) => setEditLn(e.target.value)}
+                          className="h-8 text-sm"
+                          autoFocus
+                        />
+                      </label>
+                      <label className="min-w-0">
+                        <span className="text-xs text-slate-500">PN</span>
+                        <Input
+                          value={editPn}
+                          onChange={(e) => setEditPn(e.target.value)}
+                          className="h-8 text-sm"
+                        />
+                      </label>
+                      <label className="min-w-0">
+                        <span className="text-xs text-slate-500">Exp</span>
+                        <Input
+                          type="date"
+                          value={editExp}
+                          onChange={(e) => setEditExp(e.target.value)}
+                          className="h-8 text-sm"
+                        />
+                      </label>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="bionapp-lote-card__ln">{lot.LN || t("common.empty")}</p>
+                      <p className="text-xs text-slate-500">
+                        PN {lot.PN || t("common.empty")}
+                        {lot.Exp ? ` · Exp ${lot.Exp}` : ""}
+                      </p>
+                    </div>
+                  )}
+                  <div className="bionapp-lote-card__actions">
+                    <Badge variant="secondary">
+                      {tipo === "extraido"
+                        ? t("lotes.samplesCount", { count: extra.length })
+                        : t("lotes.readingsCount", { count: lmUsos.length })}
+                    </Badge>
+                    {editingId === lot.id ? (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void handleSaveEdit(lot.id)}
+                          disabled={savingEdit}
+                          className="h-7 w-7 p-0"
+                          title={t("lotes.save")}
+                        >
+                          <Save className="h-3.5 w-3.5 bionapp-text-success" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleCancelEdit}
+                          disabled={savingEdit}
+                          className="h-7 w-7 p-0"
+                          title={t("lotes.cancel")}
+                        >
+                          <X className="h-3.5 w-3.5 text-slate-700" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleStartEdit(lot)}
+                        className="h-7 w-7 p-0"
+                        title={t("lotes.edit")}
+                      >
+                        <SquarePen className="h-3.5 w-3.5 text-slate-700" />
+                      </Button>
+                    )}
+                  </div>
+                </header>
+                {tipo === "extraido" ? (
+                  extra.length === 0 ? (
+                    <p className="text-xs text-slate-400">{t("lotes.noUsos")}</p>
+                  ) : (
+                    <div className="bionapp-lote-usos">
+                      {extra.map((uso) => (
+                        <button
+                          key={uso.NumBN}
+                          type="button"
+                          className="bionapp-lote-uso-btn"
+                          onClick={() => handleOpenMuestra(uso.NumBN)}
+                        >
+                          BN {uso.NumBN}
+                        </button>
+                      ))}
+                    </div>
+                  )
+                ) : lmUsos.length === 0 ? (
+                  <p className="text-xs text-slate-400">{t("lotes.noUsos")}</p>
+                ) : (
+                  <div className="bionapp-lote-usos">
+                    {lmUsos.map((uso) => (
+                      <button
+                        key={`${uso.NumBN}-${uso.NumLectura}-${uso.NumLectMarc}`}
+                        type="button"
+                        className="bionapp-lote-uso-btn"
+                        onClick={() =>
+                          handleOpenMuestra(uso.NumBN, uso.NumLectura, uso.NumLectMarc)
+                        }
+                      >
+                        BN {uso.NumBN} · L{uso.NumLectura} · LM{uso.NumLectMarc}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </SubpageShell>
+  );
+}
+
+export default LotesPage;

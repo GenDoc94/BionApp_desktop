@@ -23,8 +23,12 @@ import {
   labelDxPreselect,
   parsePeticInput,
   parsePreselectHighlightPetic,
+  sortPreselectRows,
+  samePetic,
   type CatalogDx,
   type PreselectRow,
+  type PreselectSortDir,
+  type PreselectSortKey,
 } from "../lib/preselectData";
 import { buildMuestraAppPath, saveMuestraNavegacion } from "../lib/navegacionMuestra";
 import {
@@ -45,7 +49,7 @@ function PreselectPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const pendingHighlightPetic = useRef<number | null>(null);
+  const pendingHighlightPetic = useRef<string | null>(null);
   const [rows, setRows] = useState<PreselectRow[]>([]);
   const [dxList, setDxList] = useState<CatalogDx[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,12 +57,14 @@ function PreselectPage() {
   const [newComent, setNewComent] = useState("");
   const [newDx, setNewDx] = useState("");
   const [adding, setAdding] = useState(false);
-  const [editingPetic, setEditingPetic] = useState<number | null>(null);
+  const [editingPetic, setEditingPetic] = useState<string | null>(null);
   const [editingComent, setEditingComent] = useState("");
   const [editingDx, setEditingDx] = useState("");
   const [savingRow, setSavingRow] = useState(false);
-  const [creatingMuestraPetic, setCreatingMuestraPetic] = useState<number | null>(null);
-  const [addedSortOrder, setAddedSortOrder] = useState<"desc" | "asc">("desc");
+  const [creatingMuestraPetic, setCreatingMuestraPetic] = useState<string | null>(null);
+  const [addedSortOrder, setAddedSortOrder] = useState<PreselectSortDir>("desc");
+  const [inSamplesSortKey, setInSamplesSortKey] = useState<PreselectSortKey>("added");
+  const [inSamplesSortDir, setInSamplesSortDir] = useState<PreselectSortDir>("desc");
   const [pendingPageSize, setPendingPageSize] = useState<10 | 15 | 20 | "all">(10);
   const [pendingPageIndex, setPendingPageIndex] = useState(0);
 
@@ -70,7 +76,7 @@ function PreselectPage() {
         .select(
           "Petic_Preselect, Coment_Preselect, NumBN_Preselect, Fecha_Preselect, Dx_Preselect, DDx ( Dx )"
         )
-        .order("Fecha_Preselect", { ascending: addedSortOrder === "asc" })
+        .order("Fecha_Preselect", { ascending: false })
         .order("Petic_Preselect", { ascending: true }),
       supabase.from("DDx").select("Cod, Dx").order("Dx", { ascending: true }),
     ]);
@@ -92,7 +98,7 @@ function PreselectPage() {
     }
 
     setLoading(false);
-  }, [addedSortOrder, t]);
+  }, [t]);
 
   useEffect(() => {
     void fetchRows();
@@ -126,18 +132,28 @@ function PreselectPage() {
   }, [loading, rows, setSearchParams]);
 
   const pendientes = useMemo(
-    () => rows.filter((row) => row.NumBN_Preselect == null),
-    [rows]
+    () =>
+      sortPreselectRows(
+        rows.filter((row) => row.NumBN_Preselect == null),
+        "added",
+        addedSortOrder
+      ),
+    [rows, addedSortOrder]
   );
   const enMuestras = useMemo(
-    () => rows.filter((row) => row.NumBN_Preselect != null),
-    [rows]
+    () =>
+      sortPreselectRows(
+        rows.filter((row) => row.NumBN_Preselect != null),
+        inSamplesSortKey,
+        inSamplesSortDir
+      ),
+    [rows, inSamplesSortKey, inSamplesSortDir]
   );
 
   const duplicatePeticInInput = useMemo(() => {
     const petic = parsePeticInput(newPetic);
     if (petic == null) return false;
-    return rows.some((row) => Number(row.Petic_Preselect) === petic);
+    return rows.some((row) => samePetic(row.Petic_Preselect, petic));
   }, [newPetic, rows]);
 
   const pendingPageSizeResolved = useMemo(() => {
@@ -166,7 +182,7 @@ function PreselectPage() {
       return;
     }
 
-    if (rows.some((row) => Number(row.Petic_Preselect) === petic)) {
+    if (rows.some((row) => samePetic(row.Petic_Preselect, petic))) {
       toast.error(t("preselect.toast.duplicate"));
       return;
     }
@@ -248,7 +264,7 @@ function PreselectPage() {
     setEditingDx("");
   }
 
-  async function handleSaveRow(petic: number) {
+  async function handleSaveRow(petic: string) {
     setSavingRow(true);
     try {
       const dxCod = editingDx ? Number(editingDx) : null;
@@ -344,6 +360,34 @@ function PreselectPage() {
     );
   }
 
+  function toggleInSamplesSort(key: PreselectSortKey) {
+    if (inSamplesSortKey === key) {
+      setInSamplesSortDir((dir) => (dir === "desc" ? "asc" : "desc"));
+      return;
+    }
+    setInSamplesSortKey(key);
+    setInSamplesSortDir("desc");
+  }
+
+  function sortHeaderButton(
+    label: string,
+    title: string,
+    active: boolean,
+    dir: PreselectSortDir,
+    onClick: () => void
+  ) {
+    return (
+      <button
+        type="button"
+        className="text-left text-sm font-medium bionapp-text-info hover:underline"
+        onClick={onClick}
+        title={title}
+      >
+        {active ? `${label} ${dir === "desc" ? "↓" : "↑"}` : label}
+      </button>
+    );
+  }
+
   function renderTable(sectionRows: PreselectRow[], variant: PreselectTableVariant) {
     const isPendiente = variant === "pendiente";
 
@@ -356,19 +400,32 @@ function PreselectPage() {
               <TableHead className="w-[72px]">Dx</TableHead>
               <TableHead className="min-w-[160px]">{t("preselect.comment")}</TableHead>
               <TableHead className="w-[150px]">
-                <button
-                  type="button"
-                  className="text-left text-sm font-medium bionapp-text-info hover:underline"
-                  onClick={() =>
-                    setAddedSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
-                  }
-                  title={t("preselect.sortByAdded")}
-                >
-                  {t("preselect.added", { dir: addedSortOrder === "desc" ? "↓" : "↑" })}
-                </button>
+                {isPendiente
+                  ? sortHeaderButton(
+                      t("preselect.addedLabel"),
+                      t("preselect.sortByAdded"),
+                      true,
+                      addedSortOrder,
+                      () => setAddedSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
+                    )
+                  : sortHeaderButton(
+                      t("preselect.addedLabel"),
+                      t("preselect.sortByAdded"),
+                      inSamplesSortKey === "added",
+                      inSamplesSortDir,
+                      () => toggleInSamplesSort("added")
+                    )}
               </TableHead>
               {!isPendiente ? (
-                <TableHead className="w-[100px]">{t("preselect.bnNo")}</TableHead>
+                <TableHead className="w-[120px]">
+                  {sortHeaderButton(
+                    t("preselect.bnNo"),
+                    t("preselect.sortByBn"),
+                    inSamplesSortKey === "numBN",
+                    inSamplesSortDir,
+                    () => toggleInSamplesSort("numBN")
+                  )}
+                </TableHead>
               ) : null}
               <TableHead className="w-[150px] text-right">{t("preselect.actions")}</TableHead>
             </TableRow>
@@ -627,12 +684,17 @@ function PreselectPage() {
       <Toaster position="bottom-right" />
       <p className="text-sm text-muted-foreground mb-4">{t("preselect.intro")}</p>
 
-      <div className="bionapp-panel bionapp-panel--muestra p-4 mb-6">
+      <div className="bionapp-panel bionapp-panel--muestra p-4 mb-6 overflow-visible">
         <div className="bionapp-preselect-add-row">
           <div className="bionapp-preselect-add-field bionapp-preselect-add-field--petic">
-            <p className="text-xs text-slate-500 mb-1">{t("preselect.requestNo")}</p>
+            <p className="text-xs text-slate-500 mb-1 bionapp-preselect-petic-label">
+              {t("preselect.requestNo")}
+              {duplicatePeticInInput ? (
+                <span className="bionapp-preselect-existe">{t("preselect.exists")}</span>
+              ) : null}
+            </p>
             <Input
-              type="number"
+              type="text"
               value={newPetic}
               onChange={(e) => setNewPetic(e.target.value)}
               onKeyDown={(e) => {
@@ -642,6 +704,8 @@ function PreselectPage() {
                 duplicatePeticInInput ? "border-destructive bg-destructive/10" : ""
               }`}
               placeholder={t("preselect.requestPlaceholder")}
+              autoComplete="off"
+              spellCheck={false}
             />
           </div>
           <div className="bionapp-preselect-add-field bionapp-preselect-add-field--dx">

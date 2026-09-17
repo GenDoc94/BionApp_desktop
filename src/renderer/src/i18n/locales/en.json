@@ -29,6 +29,7 @@
   "nav": {
     "backToApp": "Back to app",
     "preselect": "Preselection",
+    "lotes": "Lots",
     "chips": "Chips",
     "actions": "Actions",
     "calcs": "Calculations",
@@ -321,6 +322,7 @@
     "other": {
       "title": "Other screens",
       "chips": "**Chips**: manage chips and FC slots linked to labeled readings.",
+      "lotes": "**Lots**: catalog of extraction, labeling and membrane lots, with the linked samples and readings.",
       "calcs": "**Calculations**: lab utilities (e.g. dilutions) from already recorded data.",
       "options": "**Options**: profile, variables, tags, statistics, documents, export, appearance and manual."
     },
@@ -484,8 +486,8 @@
       "right": "R"
     },
     "copy": {
-      "extractionTitle": "Copy Date, PN, LN and Exp from the previous sample",
-      "labeledTitle": "Copy Date, PN, LN, Exp, PNm, LNm and Expm from the previous sample (same reading and LM no.)"
+      "extractionTitle": "Copy extraction date and lot from the previous sample",
+      "labeledTitle": "Copy date and labeling/membrane lots from the previous sample (same reading and LM no.)"
     },
     "extracted": {
       "title": "Extracted reading",
@@ -538,7 +540,7 @@
       "sampleNotFound": "Sample not found",
       "filterOn": "Active filter: {{etiqueta}} ({{count}} samples)",
       "filterOff": "Filter cleared — showing all samples",
-      "enterRequest": "Enter a request number",
+      "enterRequest": "Enter a request no.",
       "noSamplesForRequest": "No samples with request {{q}}",
       "noSamplesStatus": "No {{etiqueta}} samples",
       "selectTag": "Select at least one tag",
@@ -626,13 +628,46 @@
       "delete": "Delete chip {{num}} - {{name}}?"
     }
   },
+  "lotes": {
+    "title": "Lots",
+    "loading": "Loading lots...",
+    "goToLot": "View lot",
+    "createHint": "Add a lot to the current catalog. You can then assign it to samples or readings by LN. You can also edit PN, LN and expiry of an existing lot.",
+    "add": "Add lot",
+    "edit": "Edit lot",
+    "save": "Save lot",
+    "cancel": "Cancel",
+    "searchPlaceholder": "Search by LN, PN, expiry or sample no....",
+    "searchCount": "{{filtered}} of {{total}} lots",
+    "empty": "There are no lots in this catalog. Add the first one with the form above.",
+    "noMatch": "No lots match the search.",
+    "noUsos": "No samples or readings linked yet.",
+    "samplesCount": "{{count}} samples",
+    "readingsCount": "{{count}} readings",
+    "tipo": {
+      "extraido": "Extraction",
+      "marcado": "Labeling",
+      "membrana": "Membrane"
+    },
+    "toast": {
+      "loadError": "Error loading lots",
+      "needPnLn": "Enter the lot PN and LN",
+      "added": "Lot added",
+      "addError": "Error adding the lot",
+      "duplicate": "That lot (PN, LN and expiry) already exists",
+      "notFound": "Lot not found",
+      "updated": "Lot updated",
+      "updateError": "Error updating the lot"
+    }
+  },
   "preselect": {
     "title": "Preselection",
     "loading": "Loading preselection...",
     "intro": "Add interesting sample requests queued for OGM here. You can set a diagnosis. When the Bionano number is created it is inserted into the database with the same request and diagnosis.",
     "requestNo": "Request no.",
     "comment": "Comment",
-    "requestPlaceholder": "E.g. 12345",
+    "requestPlaceholder": "E.g. 12345 or ABC12",
+    "exists": "Already exists",
     "commentPlaceholder": "Optional: reason, notes...",
     "add": "Add",
     "empty": "No requests in preselection. Add the first one with the form above.",
@@ -643,7 +678,9 @@
     "bnNo": "Bionano no.",
     "actions": "Actions",
     "added": "Added {{dir}}",
+    "addedLabel": "Added",
     "sortByAdded": "Sort by date added",
+    "sortByBn": "Sort by Bionano number",
     "goSample": "Go to sample",
     "save": "Save changes",
     "cancel": "Cancel",
@@ -664,7 +701,7 @@
       "loadError": "Error loading preselection",
       "dxLoadError": "Error loading diagnoses",
       "peticNotFound": "Request {{petic}} was not found in preselection",
-      "invalidPetic": "Enter a valid request number",
+      "invalidPetic": "Enter a request no.",
       "duplicate": "Request already in the preselection list",
       "added": "Request added to preselection",
       "addError": "Error adding to preselection",

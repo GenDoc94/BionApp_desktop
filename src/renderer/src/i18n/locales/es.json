@@ -29,6 +29,7 @@
   "nav": {
     "backToApp": "Volver a la app",
     "preselect": "Preselección",
+    "lotes": "Lotes",
     "chips": "Chips",
     "actions": "Acciones",
     "calcs": "Cálculos",
@@ -321,6 +322,7 @@
     "other": {
       "title": "Otras pantallas",
       "chips": "**Chips**: gestión de chips y huecos FC asociados a las lecturas marcadas.",
+      "lotes": "**Lotes**: catálogo de lotes de extracción, marcado y membrana, con las muestras y lecturas asociadas.",
       "calcs": "**Cálculos**: utilidades de laboratorio (p. ej. diluciones) a partir de los datos ya registrados.",
       "options": "**Opciones**: perfil, variables, etiquetas, estadísticas, documentos, exportación, apariencia y manual."
     },
@@ -484,8 +486,8 @@
       "right": "D"
     },
     "copy": {
-      "extractionTitle": "Copiar Fecha, PN, LN y Exp de la muestra anterior",
-      "labeledTitle": "Copiar Fecha, PN, LN, Exp, PNm, LNm y Expm de la muestra anterior (misma lectura y Nº LM)"
+      "extractionTitle": "Copiar fecha y lote de extracción de la muestra anterior",
+      "labeledTitle": "Copiar fecha y lotes de marcado/membrana de la muestra anterior (misma lectura y Nº LM)"
     },
     "extracted": {
       "title": "Lectura de lo extraído",
@@ -538,7 +540,7 @@
       "sampleNotFound": "No se encontró la muestra",
       "filterOn": "Filtro activo: {{etiqueta}} ({{count}} muestras)",
       "filterOff": "Filtro quitado — mostrando todas las muestras",
-      "enterRequest": "Introduce un número de petición",
+      "enterRequest": "Introduce un nº de petición",
       "noSamplesForRequest": "No hay muestras con petición {{q}}",
       "noSamplesStatus": "No hay muestras {{etiqueta}}",
       "selectTag": "Selecciona al menos una etiqueta",
@@ -626,13 +628,46 @@
       "delete": "¿Eliminar chip {{num}} - {{name}}?"
     }
   },
+  "lotes": {
+    "title": "Lotes",
+    "loading": "Cargando lotes...",
+    "goToLot": "Ver lote",
+    "createHint": "Alta de un lote en el catálogo actual. Luego podrás asignarlo a muestras o lecturas por su LN. También puedes editar PN, LN y caducidad de un lote existente.",
+    "add": "Añadir lote",
+    "edit": "Editar lote",
+    "save": "Guardar lote",
+    "cancel": "Cancelar",
+    "searchPlaceholder": "Buscar por LN, PN, caducidad o Nº BN...",
+    "searchCount": "{{filtered}} de {{total}} lotes",
+    "empty": "No hay lotes en este catálogo. Añade el primero con el formulario de arriba.",
+    "noMatch": "Ningún lote coincide con la búsqueda.",
+    "noUsos": "Todavía no hay muestras ni lecturas asociadas.",
+    "samplesCount": "{{count}} muestras",
+    "readingsCount": "{{count}} lecturas",
+    "tipo": {
+      "extraido": "Extracción",
+      "marcado": "Marcado",
+      "membrana": "Membrana"
+    },
+    "toast": {
+      "loadError": "Error al cargar lotes",
+      "needPnLn": "Indica PN y LN del lote",
+      "added": "Lote añadido",
+      "addError": "Error al añadir el lote",
+      "duplicate": "Ese lote (PN, LN y caducidad) ya existe",
+      "notFound": "No se encontró el lote",
+      "updated": "Lote actualizado",
+      "updateError": "Error al actualizar el lote"
+    }
+  },
   "preselect": {
     "title": "Preselección",
     "loading": "Cargando preselección...",
     "intro": "Añade aquí las peticiones de muestras interesantes en cola para realizar OGM. Puedes indicar diagnóstico. Al crear el NºBionano se meterá a la base con la misma petición y diagnóstico.",
     "requestNo": "Nº petición",
     "comment": "Comentario",
-    "requestPlaceholder": "Ej. 12345",
+    "requestPlaceholder": "Ej. 12345 o ABC12",
+    "exists": "Ya existe",
     "commentPlaceholder": "Opcional: motivo, notas...",
     "add": "Añadir",
     "empty": "No hay peticiones en preselección. Añade la primera con el formulario de arriba.",
@@ -643,7 +678,9 @@
     "bnNo": "Nº Bionano",
     "actions": "Acciones",
     "added": "Añadida {{dir}}",
+    "addedLabel": "Añadida",
     "sortByAdded": "Ordenar por fecha de Añadida",
+    "sortByBn": "Ordenar por Nº Bionano",
     "goSample": "Ir a la muestra",
     "save": "Guardar cambios",
     "cancel": "Cancelar",
@@ -664,7 +701,7 @@
       "loadError": "Error al cargar preselección",
       "dxLoadError": "Error al cargar diagnósticos",
       "peticNotFound": "No se encontró la petición {{petic}} en preselección",
-      "invalidPetic": "Introduce un Nº de petición válido",
+      "invalidPetic": "Introduce un nº de petición",
       "duplicate": "Petición ya incluida en lista de preselección",
       "added": "Petición añadida a preselección",
       "addError": "Error al añadir preselección",

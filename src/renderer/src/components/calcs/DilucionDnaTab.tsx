@@ -56,7 +56,6 @@ const LECTURA_DILUCION_SELECT = `
     NumBN_M,
     NumLectura_M,
     Fecha_Marcado,
-    PN_Membrana,
     Fecha_Lect_Marc,
     Lecturas_Marcado(NumLectMarc)
   )

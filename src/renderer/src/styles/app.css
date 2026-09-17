@@ -352,12 +352,13 @@
   container-name: shell;
 }
 
-/* --- Cabecera: 3 filas (estrecho) → 2 filas → 1 fila (ancho) --- */
+/* --- Cabecera: apilada en estrecho; una fila en ancho, alineada a las cajas --- */
 .bionapp-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.5rem;
+  width: 100%;
   min-width: 0;
 }
 
@@ -390,87 +391,77 @@
 .bionapp-header-user-meta {
   flex-wrap: nowrap;
   white-space: nowrap;
-  gap: 0.5rem 1.25rem;
-  padding-inline: 0.25rem;
+  gap: 0.375rem;
+  padding-inline: 0;
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
 
-.bionapp-header-user-meta > span {
+.bionapp-header-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
   max-width: 100%;
-  overflow-wrap: anywhere;
 }
 
-/* Tablet / escritorio estrecho: nav arriba; usuario + acciones abajo */
+.bionapp-header-role {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+  cursor: default;
+}
+
+.bionapp-header-role-icon {
+  color: var(--muted-foreground);
+}
+
+.bionapp-header-username {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 14rem;
+}
+
+/* Una sola fila: nav | usuario | acciones, del mismo ancho que las cajas */
 @container shell (min-width: 640px) {
   .bionapp-header {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto;
     align-items: center;
-    gap: 0.5rem 0.75rem;
+    gap: 0.375rem 0.5rem;
     width: 100%;
   }
 
   .bionapp-header-row--nav {
-    grid-column: 1 / -1;
+    grid-column: 1;
     grid-row: 1;
-    width: 100%;
-    justify-content: center;
+    width: auto;
+    justify-content: flex-start;
   }
 
   .bionapp-header-user-meta {
-    grid-column: 1;
-    grid-row: 2;
+    grid-column: 2;
+    grid-row: 1;
     width: auto;
-    justify-self: start;
+    max-width: 100%;
+    justify-content: center;
+    justify-self: center;
     margin: 0;
   }
 
   .bionapp-header-actions {
-    grid-column: 2;
-    grid-row: 2;
+    grid-column: 3;
+    grid-row: 1;
     width: auto;
+    justify-content: flex-end;
     justify-self: end;
     margin: 0;
-  }
-}
-
-/* Ancho: una sola fila (nav | usuario | acciones) */
-@container shell (min-width: 1120px) {
-  .bionapp-header {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.5rem 0.75rem;
-  }
-
-  .bionapp-header-row--nav {
-    flex: 0 0 auto;
-    width: auto;
-    min-width: 0;
-    justify-content: flex-start;
-  }
-
-  .bionapp-header-user-meta {
-    flex: 0 0 auto;
-    width: auto;
-    flex-wrap: nowrap;
-    justify-content: center;
-    gap: 1.5rem 2rem;
-    padding-inline: 0.75rem;
-    margin-inline: auto;
-  }
-
-  .bionapp-header-actions {
-    flex: 0 0 auto;
-    width: auto;
-    min-width: 0;
-    flex-wrap: nowrap;
-    margin-left: 0;
-    justify-content: flex-end;
+    gap: 0.375rem;
   }
 }
 
@@ -497,71 +488,38 @@
   @media (min-width: 640px) {
     .bionapp-header {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      grid-template-rows: auto auto;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-rows: auto;
       align-items: center;
-      gap: 0.5rem 0.75rem;
+      gap: 0.375rem 0.5rem;
       width: 100%;
     }
 
     .bionapp-header-row--nav {
-      grid-column: 1 / -1;
+      grid-column: 1;
       grid-row: 1;
-      width: 100%;
-      justify-content: center;
+      width: auto;
+      justify-content: flex-start;
     }
 
     .bionapp-header-user-meta {
-      grid-column: 1;
-      grid-row: 2;
+      grid-column: 2;
+      grid-row: 1;
       width: auto;
-      justify-self: start;
+      max-width: 100%;
+      justify-content: center;
+      justify-self: center;
       margin: 0;
     }
 
     .bionapp-header-actions {
-      grid-column: 2;
-      grid-row: 2;
+      grid-column: 3;
+      grid-row: 1;
       width: auto;
+      justify-content: flex-end;
       justify-self: end;
       margin: 0;
-    }
-  }
-
-  @media (min-width: 1120px) {
-    .bionapp-header {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 0.5rem 0.75rem;
-    }
-
-    .bionapp-header-row--nav {
-      flex: 0 0 auto;
-      width: auto;
-      min-width: 0;
-      justify-content: flex-start;
-    }
-
-    .bionapp-header-user-meta {
-      flex: 0 0 auto;
-      width: auto;
-      flex-wrap: nowrap;
-      justify-content: center;
-      gap: 1.5rem 2rem;
-      padding-inline: 0.75rem;
-      margin-inline: auto;
-    }
-
-    .bionapp-header-actions {
-      flex: 0 0 auto;
-      width: auto;
-      min-width: 0;
-      flex-wrap: nowrap;
-      margin-left: 0;
-      justify-content: flex-end;
+      gap: 0.375rem;
     }
   }
 }
@@ -717,6 +675,11 @@
   min-width: 0;
   flex: 1 1 5rem;
   max-width: 100%;
+}
+
+.bionapp-field--lote-ln > :not(label):not(.bionapp-field-label) {
+  flex: 0 0 auto;
+  width: auto;
 }
 
 .bionapp-field-label,
@@ -1287,14 +1250,14 @@
 }
 
 
-/* Campos de cuantificación DNA (solo media x̄ en extraído y marcado) */
+/* Cajetín de media x̄ (extraído y marcado): neutro si no hay número */
 .bionapp-campo-media-valor {
   display: inline-block;
   padding: 0.125rem 0.5rem;
   border-radius: calc(var(--radius) - 4px);
-  background-color: var(--bion-success-surface-muted);
-  border: 1px solid var(--bion-success-border);
-  color: var(--bion-success-field-text);
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--foreground);
 }
 
 /* Legacy: inputs DNA en Acciones (Leer extraído / marcado) */
@@ -1381,6 +1344,9 @@ input.bionapp-campo-dna {
 .bionapp-marcado-lote {
   width: 100%;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
 }
 
 @container marcado (min-width: 400px) {
@@ -1392,16 +1358,13 @@ input.bionapp-campo-dna {
     align-items: center;
   }
 
-  .bionapp-marcado-block--pn {
-    display: contents;
-  }
-
-  .bionapp-marcado-block--pn > .bionapp-marcado-field {
+  .bionapp-marcado-lote > .bionapp-marcado-field {
     display: contents;
   }
 
   .bionapp-marcado-lote .bionapp-marcado-field input,
-  .bionapp-marcado-lote .bionapp-marcado-field > span {
+  .bionapp-marcado-lote .bionapp-marcado-field select,
+  .bionapp-marcado-lote .bionapp-marcado-field > span:not(.bionapp-lote-ln-chip) {
     width: 100%;
     min-width: 0;
   }
@@ -1789,21 +1752,24 @@ input[type="number"] {
   background: var(--bion-danger-card-bg);
 }
 
-/* Semáforo cuantificación (Leer Extraído: Izq/Cen/Dcha; Leer Marcado: Izq_LM/Dcha_LM) */
+/* Semáforo cuantificación (Acciones Izq/Cen/Dcha y cajetines de media x̄) */
 @layer components {
-  input.lectura-cuant-ok {
+  input.lectura-cuant-ok,
+  .bionapp-campo-media-valor.lectura-cuant-ok {
     background-color: var(--bion-success-surface) !important;
     border-color: var(--bion-success-border) !important;
     color: var(--bion-success-field-text);
   }
 
-  input.lectura-cuant-alto {
+  input.lectura-cuant-alto,
+  .bionapp-campo-media-valor.lectura-cuant-alto {
     background-color: var(--bion-warn-surface-muted) !important;
     border-color: var(--bion-warn-border) !important;
     color: var(--bion-warn-field-text);
   }
 
-  input.lectura-cuant-bajo {
+  input.lectura-cuant-bajo,
+  .bionapp-campo-media-valor.lectura-cuant-bajo {
     background-color: var(--bion-danger-surface) !important;
     border-color: var(--bion-danger-border) !important;
     color: var(--bion-danger-field-text);
@@ -1981,8 +1947,27 @@ input[type="number"] {
 }
 
 .bionapp-preselect-add-field--petic {
-  flex: 0 0 7.5rem;
-  width: 7.5rem;
+  flex: 0 0 9rem;
+  width: 9rem;
+}
+
+.bionapp-preselect-petic-label {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.bionapp-preselect-existe {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.05rem);
+  margin: 0;
+  color: var(--destructive, #d4183d);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .bionapp-preselect-add-field--dx {
@@ -2051,4 +2036,139 @@ input[type="number"] {
     box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--bion-info-solid) 45%, transparent);
     background-color: var(--bion-info-panel-bg);
   }
+}
+
+.bionapp-lote-ln-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.0625rem 0.375rem;
+  border-radius: calc(var(--radius) - 4px);
+  background-color: transparent;
+  border: 1px solid var(--bion-success-border);
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  cursor: pointer;
+}
+
+.bionapp-lote-ln-chip:hover {
+  background-color: color-mix(in oklab, var(--card) 45%, transparent);
+  border-color: color-mix(in oklab, var(--bion-success-border) 70%, var(--bion-success-text));
+}
+
+.bionapp-lote-ln-chip:active {
+  transform: scale(0.98);
+}
+
+.bionapp-lote-ln-chip--plain {
+  padding: 0.0625rem 0.375rem;
+  background-color: var(--card, #fff);
+  border-color: var(--bion-border-subtle, #e2e8f0);
+  color: inherit;
+  font-weight: 500;
+}
+
+.bionapp-lote-ln-chip--plain:hover {
+  background-color: var(--bion-surface-muted, #f8fafc);
+  border-color: color-mix(in oklab, var(--bion-border-subtle, #cbd5e1) 70%, #64748b);
+}
+
+.bionapp-lote-ln-chip--static {
+  cursor: default;
+}
+
+.bionapp-lote-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 800px) {
+  .bionapp-lote-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.bionapp-lote-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid var(--bion-border-subtle, #e2e8f0);
+  border-radius: 0.5rem;
+  background: var(--bion-panel-bg, #fff);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.bionapp-lote-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.bionapp-lote-card__header:has(.bionapp-lote-card__edit) {
+  align-items: flex-end;
+}
+
+.bionapp-lote-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  flex-shrink: 0;
+}
+
+.bionapp-lote-card__edit {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 1.15fr) minmax(4rem, 0.7fr) minmax(9.25rem, 1fr);
+  gap: 0.25rem 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.bionapp-lote-card__edit > label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.bionapp-lote-card__ln {
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.bionapp-lote-usos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.bionapp-lote-uso-btn {
+  margin: 0;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--bion-border-subtle, #cbd5e1);
+  border-radius: 0.375rem;
+  background: var(--bion-surface-muted, #f8fafc);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.bionapp-lote-uso-btn:hover {
+  border-color: color-mix(in oklab, var(--bion-info-solid) 40%, var(--bion-border-subtle, #cbd5e1));
+  background: var(--bion-info-panel-bg, #eff6ff);
+}
+
+.bionapp-lote-card--flash {
+  animation: bionapp-preselect-flash 1.8s ease;
 }

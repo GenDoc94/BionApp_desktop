@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.12
+
+- Catálogo de lotes de extracción, marcado y membrana (PN, LN y caducidad), con página de Lotes y edición de lotes existentes.
+- Nº de petición alfanumérico en muestras y preselección.
+- Semáforo de la media de extraído (45–90) y de marcado (4–16), con los mismos colores que Acciones.
+- Ajustes de interfaz: cabecera con usuario e icono de rol, chips de lote, aviso «Ya existe» en preselección y ordenación de «En muestras» por Nº Bionano.
+
 ## 3.0.11
 
 - Añadiendo la opción de idioma (español e inglés) en la interfaz.

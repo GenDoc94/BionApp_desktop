@@ -16,6 +16,7 @@ const App = lazy(() => import("./pages/App"));
 const Login = lazy(() => import("./pages/Login"));
 const CreateUser = lazy(() => import("./pages/CreateUser"));
 const ChipPage = lazy(() => import("./pages/ChipPage"));
+const LotesPage = lazy(() => import("./pages/LotesPage"));
 const PreselectPage = lazy(() => import("./pages/PreselectPage"));
 const ActionsPage = lazy(() => import("./pages/ActionsPage"));
 const Calcs = lazy(() => import("./pages/Calcs"));
@@ -45,6 +46,7 @@ function PrivateRoutes() {
     <Routes>
       <Route path="/" element={<App />} />
       <Route path="/preselect" element={<PreselectPage />} />
+      <Route path="/lotes" element={<LotesPage />} />
       <Route path="/chips" element={<ChipPage />} />
       <Route path="/actions" element={<ActionsPage />} />
       <Route path="/calcs" element={<Calcs />} />

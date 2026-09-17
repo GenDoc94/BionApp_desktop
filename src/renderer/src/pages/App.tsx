@@ -11,7 +11,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
-import { Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, Save, X, Plus, Minus, Cpu, ClipboardList, LogOut, CircleDot, Loader2, ArrowDownToLine, Calculator, CircleEllipsis, TriangleAlert, RefreshCw, MessageSquare, Pickaxe, Tag, ChevronDown } from "lucide-react";
+import { Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, Save, X, Plus, Minus, Cpu, ClipboardList, LogOut, CircleDot, Loader2, ArrowDownToLine, Calculator, CircleEllipsis, TriangleAlert, RefreshCw, MessageSquare, Pickaxe, Tag, ChevronDown, Layers, User, ShieldCheck } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -28,7 +28,13 @@ import {
   fetchMuestrasCompletasFromSupabase,
   formatMuestrasFetchError,
 } from "../lib/muestrasFetch";
-import { calcStatsLectura, calcStatsMarcado, formatCalcStat } from "../lib/calculations/lecturaCalculos";
+import {
+  calcStatsLectura,
+  calcStatsMarcado,
+  formatCalcStat,
+  mediaExtraidoSemaforoClass,
+  mediaMarcadoSemaforoClass,
+} from "../lib/calculations/lecturaCalculos";
 import { withNetworkRetry } from "../lib/fetchWithRetry";
 import {
   applyMuestraNavegacion,
@@ -36,6 +42,13 @@ import {
   readAndClearMuestraNavegacion,
 } from "../lib/navegacionMuestra";
 import { fetchPreselectLinksByNumBN, buildPreselectHighlightPath } from "../lib/preselectData";
+import {
+  buildLotesHighlightPath,
+  sortLots,
+  toLoteRow,
+  type LoteRow,
+} from "../lib/lotesPageData";
+import LoteLnField from "../components/LoteLnField";
 import AppFooter from "../components/AppFooter";
 
 /** Repetir_Chip = 1 en fila Chips: ese chip cargado para esa FC/LM ha fallado */
@@ -129,6 +142,9 @@ function App() {
   const [tiposMuestra, setTiposMuestra] = useState([]);
   const [dxs, setDxs] = useState([]);
   const [dChips, setDChips] = useState([]);
+  const [lotesExtraido, setLotesExtraido] = useState<LoteRow[]>([]);
+  const [lotesMarcado, setLotesMarcado] = useState<LoteRow[]>([]);
+  const [lotesMembrana, setLotesMembrana] = useState<LoteRow[]>([]);
   const [preselectByNumBN, setPreselectByNumBN] = useState({});
   const [tagsCatalog, setTagsCatalog] = useState<
     Array<{ Tag_Number: number; Tag_Name: string; Tag_Color: string }>
@@ -294,6 +310,9 @@ function App() {
         { data: chipsData, error: chipsError },
         { data: tiposData, error: tiposError },
         { data: dxData, error: dxError },
+        { data: lotesEData, error: lotesEError },
+        { data: lotesMData, error: lotesMError },
+        { data: lotesMmData, error: lotesMmError },
       ] = await Promise.all([
         supabase
           .from("DChips")
@@ -304,15 +323,42 @@ function App() {
           .select("Cod, TipoMuestra")
           .order("TipoMuestra", { ascending: true }),
         supabase.from("DDx").select("Cod, Dx").order("Dx", { ascending: true }),
+        supabase.from("Lotes_Extraido").select("*"),
+        supabase.from("Lotes_Marcado").select("*"),
+        supabase.from("Lotes_Membrana").select("*"),
       ]);
 
       if (chipsError) throw chipsError;
       if (tiposError) throw tiposError;
       if (dxError) throw dxError;
+      if (lotesEError) throw lotesEError;
+      if (lotesMError) throw lotesMError;
+      if (lotesMmError) throw lotesMmError;
 
       setDChips(chipsData ?? []);
       setTiposMuestra(tiposData ?? []);
       setDxs(dxData ?? []);
+      setLotesExtraido(
+        sortLots(
+          (lotesEData || [])
+            .map((row) => toLoteRow(row as Record<string, unknown>, "extraido"))
+            .filter((r): r is LoteRow => r != null)
+        )
+      );
+      setLotesMarcado(
+        sortLots(
+          (lotesMData || [])
+            .map((row) => toLoteRow(row as Record<string, unknown>, "marcado"))
+            .filter((r): r is LoteRow => r != null)
+        )
+      );
+      setLotesMembrana(
+        sortLots(
+          (lotesMmData || [])
+            .map((row) => toLoteRow(row as Record<string, unknown>, "membrana"))
+            .filter((r): r is LoteRow => r != null)
+        )
+      );
     } catch (err) {
       console.error("Error al cargar catálogos:", err);
       toast.error(t("app.toast.catalogsLoadError"));
@@ -563,6 +609,47 @@ function App() {
     navigate(path);
   };
 
+  const applyExtractionLot = (lot: LoteRow | null) => {
+    setEditedData((prev) => ({
+      ...prev,
+      Id_LtE: lot?.id ?? null,
+      PN: lot?.PN ?? null,
+      LN: lot?.LN ?? null,
+      Exp: lot?.Exp ?? null,
+    }));
+  };
+
+  const applyLmLotFields = (
+    lectIdx: number,
+    lmIdx: number,
+    patch: Record<string, unknown>
+  ) => {
+    setEditedData((prev) => {
+      const lecturas = prev?.lecturas ? [...prev.lecturas] : [];
+      const lect = lecturas[lectIdx];
+      if (!lect?.marcado?.lecturasMarcado?.[lmIdx]) return prev;
+      const lms = [...lect.marcado.lecturasMarcado];
+      lms[lmIdx] = { ...lms[lmIdx], ...patch };
+      lecturas[lectIdx] = {
+        ...lect,
+        marcado: { ...lect.marcado, lecturasMarcado: lms },
+      };
+      return { ...prev, lecturas };
+    });
+  };
+
+  const goToLot = (tipo: "extraido" | "marcado" | "membrana", id: unknown, ln: unknown) => {
+    const numId = Number(id);
+    const lnText = String(ln ?? "").trim();
+    navigateFromBase(
+      buildLotesHighlightPath({
+        tipo,
+        id: Number.isFinite(numId) ? numId : undefined,
+        ln: Number.isFinite(numId) ? undefined : lnText || undefined,
+      })
+    );
+  };
+
   // ----------------- Edit Mode -----------------
   const toggleEditMode = () => {
     if (!editMode) setEditedData(JSON.parse(JSON.stringify(muestras[currentMuestraIndex])));
@@ -615,7 +702,10 @@ function App() {
 
       // Actualizar muestra principal
       await supabase.from("Muestras").update({
-        Petic: muestraUpdate.Petic,
+        Petic:
+          muestraUpdate.Petic == null || String(muestraUpdate.Petic).trim() === ""
+            ? null
+            : String(muestraUpdate.Petic).trim(),
         Muestra: muestraUpdate.Muestra,
         Posic: muestraUpdate.Posic,
         Dx: muestraUpdate.Dx,
@@ -1112,6 +1202,7 @@ function App() {
     setEditedData((prev) => ({
       ...prev,
       Fecha: previousMuestra.Fecha,
+      Id_LtE: previousMuestra.Id_LtE ?? null,
       PN: previousMuestra.PN,
       LN: previousMuestra.LN,
       Exp: previousMuestra.Exp,
@@ -1149,9 +1240,11 @@ function App() {
       lms[lmIdx] = {
         ...lms[lmIdx],
         Fecha_Lect_Marc: prevLm.Fecha_Lect_Marc ?? null,
+        Id_LtM: prevLm.Id_LtM ?? null,
         PN_LM: prevLm.PN_LM ?? null,
         LN_LM: prevLm.LN_LM ?? null,
         Exp_LM: prevLm.Exp_LM ?? null,
+        Id_LtMm: prevLm.Id_LtMm ?? null,
         PNM_LM: prevLm.PNM_LM ?? null,
         LNM_LM: prevLm.LNM_LM ?? null,
         ExpM_LM: prevLm.ExpM_LM ?? null,
@@ -1299,9 +1392,11 @@ function App() {
           NumLectura_LM: lecturaActual.NumLectura,
           NumLectMarc: numNuevaLectMarc,
           Fecha_Lect_Marc: prevLm?.Fecha_Lect_Marc ?? null,
+          Id_LtM: prevLm?.Id_LtM ?? null,
           PN_LM: prevLm?.PN_LM ?? null,
           LN_LM: prevLm?.LN_LM ?? null,
           Exp_LM: prevLm?.Exp_LM ?? null,
+          Id_LtMm: prevLm?.Id_LtMm ?? null,
           PNM_LM: prevLm?.PNM_LM ?? null,
           LNM_LM: prevLm?.LNM_LM ?? null,
           ExpM_LM: prevLm?.ExpM_LM ?? null,
@@ -1713,6 +1808,7 @@ function App() {
                 disabled={editMode || posicionNavegacion === 0}
                 variant="outline"
                 size="sm"
+                className="bionapp-nav-mini-btn bionapp-nav-mini-btn--icon"
               >
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
@@ -1721,6 +1817,7 @@ function App() {
                 disabled={editMode || posicionNavegacion === 0}
                 variant="outline"
                 size="sm"
+                className="bionapp-nav-mini-btn bionapp-nav-mini-btn--icon"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -1733,6 +1830,7 @@ function App() {
                 disabled={editMode || posicionNavegacion >= navegacionIndices.length - 1}
                 variant="outline"
                 size="sm"
+                className="bionapp-nav-mini-btn bionapp-nav-mini-btn--icon"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -1742,6 +1840,7 @@ function App() {
                 disabled={editMode || posicionNavegacion >= navegacionIndices.length - 1}
                 variant="outline"
                 size="sm"
+                className="bionapp-nav-mini-btn bionapp-nav-mini-btn--icon"
               >
                 <ChevronsRight className="h-4 w-4" />
               </Button>
@@ -1825,7 +1924,6 @@ function App() {
                           <div className="flex items-center gap-2">
                             <Input
                               type="text"
-                              inputMode="numeric"
                               placeholder={t("app.filters.requestPlaceholder")}
                               value={filtroPetic}
                               onChange={(e) => setFiltroPetic(e.target.value)}
@@ -1951,16 +2049,36 @@ function App() {
 
 
             <div className="bionapp-header-user-meta">
-              <span className="shrink-0">
-                <strong>{t("app.user.label")}</strong> {user?.email?.split("@")?.[0] || t("app.user.unknown")}
-              </span>
-              <span className="shrink-0">
-                <strong>{t("app.role.label")}</strong>{" "}
-                {userRole === "admin"
-                  ? t("role.admin")
-                  : userRole === "user"
-                    ? t("role.user")
-                    : t("role.unassigned")}
+              <span className="bionapp-header-user">
+                <span
+                  className="bionapp-header-role"
+                  title={
+                    userRole === "admin"
+                      ? t("role.admin")
+                      : userRole === "user"
+                        ? t("role.user")
+                        : t("role.unassigned")
+                  }
+                  aria-label={
+                    userRole === "admin"
+                      ? t("role.admin")
+                      : userRole === "user"
+                        ? t("role.user")
+                        : t("role.unassigned")
+                  }
+                >
+                  {userRole === "admin" ? (
+                    <ShieldCheck className="bionapp-header-role-icon" size={16} strokeWidth={2.25} />
+                  ) : (
+                    <User className="bionapp-header-role-icon" size={16} strokeWidth={2.25} />
+                  )}
+                </span>
+                <span
+                  className="bionapp-header-username"
+                  title={user?.email?.split("@")?.[0] || t("app.user.unknown")}
+                >
+                  {user?.email?.split("@")?.[0] || t("app.user.unknown")}
+                </span>
               </span>
             </div>
 
@@ -1986,6 +2104,14 @@ function App() {
                     title={t("nav.preselect")}
                   >
                     <ClipboardList className="h-5 w-5 text-white" />
+                  </Button>
+                  <Button
+                    onClick={() => navigateFromBase("/lotes")}
+                    size="sm"
+                    className="bionapp-btn-green bionapp-nav-mini-btn bionapp-nav-mini-btn--icon shrink-0"
+                    title={t("nav.lotes")}
+                  >
+                    <Layers className="h-5 w-5 text-white" />
                   </Button>
                   <Button
                     onClick={() => navigateFromBase("/chips")}
@@ -2053,7 +2179,7 @@ function App() {
                 onClick={handleLogout}
                 size="sm"
                 variant="destructive"
-                className="gap-2 shrink-0"
+                className="gap-2 shrink-0 bionapp-nav-mini-btn"
                 title={t("app.logout")}
               >
                 <LogOut className="h-5 w-5 shrink-0" />
@@ -2173,7 +2299,7 @@ function App() {
                       <button
                         type="button"
                         className="bionapp-preselect-coment-btn shrink-0"
-                        title={t("app.preselect.viewReason")}
+                        title={preselectComentActual}
                         onClick={handleGoToPreselectComent}
                       >
                         <MessageSquare className="h-3.5 w-3.5" />
@@ -2315,42 +2441,19 @@ function App() {
                   <span className="text-xs">{muestraActual.Pellet || t("common.empty")}</span>
                 )}
               </div>
-              <div className="bionapp-field">
-                <Label className="text-xs bionapp-field-label">PN:</Label>
-                {editMode ? (
-                  <Input
-                    value={muestraActual.PN || ""}
-                    onChange={(e) => handleChange("PN", e.target.value)}
-                    className="h-7 text-xs min-w-0"
-                  />
-                ) : (
-                  <span className="text-xs">{muestraActual.PN || t("common.empty")}</span>
-                )}
-              </div>
-              <div className="bionapp-field">
-                <Label className="text-xs bionapp-field-label">LN:</Label>
-                {editMode ? (
-                  <Input
-                    value={muestraActual.LN || ""}
-                    onChange={(e) => handleChange("LN", e.target.value)}
-                    className="h-7 text-xs"
-                  />
-                ) : (
-                  <span className="text-xs">{muestraActual.LN || t("common.empty")}</span>
-                )}
-              </div>
-              <div className="bionapp-field">
-                <Label className="text-xs bionapp-field-label">Exp:</Label>
-                {editMode ? (
-                  <Input
-                    value={muestraActual.Exp || ""}
-                    onChange={(e) => handleChange("Exp", e.target.value)}
-                    className="h-7 text-xs"
-                  />
-                ) : (
-                  <span className="text-xs">{muestraActual.Exp || t("common.empty")}</span>
-                )}
-              </div>
+              <LoteLnField
+                editMode={editMode}
+                lots={lotesExtraido}
+                current={{
+                  id: muestraActual.Id_LtE,
+                  PN: muestraActual.PN,
+                  LN: muestraActual.LN,
+                  Exp: muestraActual.Exp,
+                }}
+                label="LN:"
+                onSelect={applyExtractionLot}
+                onOpen={() => goToLot("extraido", muestraActual.Id_LtE, muestraActual.LN)}
+              />
               <div className="bionapp-field bionapp-field--with-action">
                 <Label className="text-xs bionapp-field-label">Medusa:</Label>
                 {editMode ? (
@@ -2533,7 +2636,11 @@ function App() {
                     <div className="bionapp-lectura-stats-grupo bionapp-lectura-stats-grupo--resumen">
                     <div className="bionapp-lectura-item">
                       <Label className="text-xs shrink-0">x̄:</Label>
-                      <span className="bionapp-campo-media-valor text-xs">
+                      <span
+                        className={`bionapp-campo-media-valor text-xs ${mediaExtraidoSemaforoClass(
+                          lecturaStats?.media != null ? lecturaStats.media : lectura.Media_Lectura
+                        )}`}
+                      >
                         {displayValue(
                           lecturaStats?.media != null
                             ? formatCalcStat(lecturaStats.media)
@@ -2676,110 +2783,48 @@ function App() {
                           </div>
 
                           <div className="bionapp-marcado-lote">
-                          <div className="bionapp-marcado-block bionapp-marcado-block--pn">
-                            <div className="bionapp-marcado-field">
-                              <Label className="text-xs whitespace-nowrap">PN:</Label>
-                              {editMode ? (
-                                <Input
-                                  value={lm.PN_LM ?? ""}
-                                  onChange={(e) =>
-                                    handleChange(
-                                      `lecturas.${lectIdx}.marcado.lecturasMarcado.${lmIdx}.PN_LM`,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="h-7 text-xs"
-                                />
-                              ) : (
-                                <span className="text-xs">{lm.PN_LM || t("common.empty")}</span>
-                              )}
-                            </div>
-                            <div className="bionapp-marcado-field">
-                              <Label className="text-xs whitespace-nowrap">LN:</Label>
-                              {editMode ? (
-                                <Input
-                                  value={lm.LN_LM ?? ""}
-                                  onChange={(e) =>
-                                    handleChange(
-                                      `lecturas.${lectIdx}.marcado.lecturasMarcado.${lmIdx}.LN_LM`,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="h-7 text-xs"
-                                />
-                              ) : (
-                                <span className="text-xs">{lm.LN_LM || t("common.empty")}</span>
-                              )}
-                            </div>
-                            <div className="bionapp-marcado-field">
-                              <Label className="text-xs whitespace-nowrap">Exp:</Label>
-                              {editMode ? (
-                                <Input
-                                  value={lm.Exp_LM ?? ""}
-                                  onChange={(e) =>
-                                    handleChange(
-                                      `lecturas.${lectIdx}.marcado.lecturasMarcado.${lmIdx}.Exp_LM`,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="h-7 text-xs"
-                                />
-                              ) : (
-                                <span className="text-xs">{lm.Exp_LM || t("common.empty")}</span>
-                              )}
-                            </div>
-                            <div className="bionapp-marcado-field">
-                              <Label className="text-xs whitespace-nowrap">PNm:</Label>
-                              {editMode ? (
-                                <Input
-                                  value={lm.PNM_LM ?? ""}
-                                  onChange={(e) =>
-                                    handleChange(
-                                      `lecturas.${lectIdx}.marcado.lecturasMarcado.${lmIdx}.PNM_LM`,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="h-7 text-xs"
-                                />
-                              ) : (
-                                <span className="text-xs">{lm.PNM_LM || t("common.empty")}</span>
-                              )}
-                            </div>
-                            <div className="bionapp-marcado-field">
-                              <Label className="text-xs whitespace-nowrap">LNm:</Label>
-                              {editMode ? (
-                                <Input
-                                  value={lm.LNM_LM ?? ""}
-                                  onChange={(e) =>
-                                    handleChange(
-                                      `lecturas.${lectIdx}.marcado.lecturasMarcado.${lmIdx}.LNM_LM`,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="h-7 text-xs"
-                                />
-                              ) : (
-                                <span className="text-xs">{lm.LNM_LM || t("common.empty")}</span>
-                              )}
-                            </div>
-                            <div className="bionapp-marcado-field">
-                              <Label className="text-xs whitespace-nowrap">Expm:</Label>
-                              {editMode ? (
-                                <Input
-                                  value={lm.ExpM_LM ?? ""}
-                                  onChange={(e) =>
-                                    handleChange(
-                                      `lecturas.${lectIdx}.marcado.lecturasMarcado.${lmIdx}.ExpM_LM`,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="h-7 text-xs"
-                                />
-                              ) : (
-                                <span className="text-xs">{lm.ExpM_LM || t("common.empty")}</span>
-                              )}
-                            </div>
-                          </div>
+                          <LoteLnField
+                            layout="inline"
+                            editMode={editMode}
+                            lots={lotesMarcado}
+                            current={{
+                              id: lm.Id_LtM,
+                              PN: lm.PN_LM,
+                              LN: lm.LN_LM,
+                              Exp: lm.Exp_LM,
+                            }}
+                            label="LN:"
+                            onSelect={(lot) =>
+                              applyLmLotFields(lectIdx, lmIdx, {
+                                Id_LtM: lot?.id ?? null,
+                                PN_LM: lot?.PN ?? null,
+                                LN_LM: lot?.LN ?? null,
+                                Exp_LM: lot?.Exp ?? null,
+                              })
+                            }
+                            onOpen={() => goToLot("marcado", lm.Id_LtM, lm.LN_LM)}
+                          />
+                          <LoteLnField
+                            layout="inline"
+                            editMode={editMode}
+                            lots={lotesMembrana}
+                            current={{
+                              id: lm.Id_LtMm,
+                              PN: lm.PNM_LM,
+                              LN: lm.LNM_LM,
+                              Exp: lm.ExpM_LM,
+                            }}
+                            label="LNm:"
+                            onSelect={(lot) =>
+                              applyLmLotFields(lectIdx, lmIdx, {
+                                Id_LtMm: lot?.id ?? null,
+                                PNM_LM: lot?.PN ?? null,
+                                LNM_LM: lot?.LN ?? null,
+                                ExpM_LM: lot?.Exp ?? null,
+                              })
+                            }
+                            onOpen={() => goToLot("membrana", lm.Id_LtMm, lm.LNM_LM)}
+                          />
 
                           <div className="bionapp-marcado-block bionapp-marcado-block--comment">
                             <Label className="text-xs whitespace-nowrap">{t("app.field.comment")}</Label>
@@ -2832,7 +2877,11 @@ function App() {
                             </div>
                             <div className="bionapp-marcado-field bionapp-marcado-field--stat">
                               <Label className="text-xs shrink-0">x̄:</Label>
-                              <span className="bionapp-campo-media-valor text-xs">
+                              <span
+                                className={`bionapp-campo-media-valor text-xs ${mediaMarcadoSemaforoClass(
+                                  lmStats?.media != null ? lmStats.media : lm.Media_LM
+                                )}`}
+                              >
                                 {displayValue(
                                   lmStats?.media != null
                                     ? formatCalcStat(lmStats.media)

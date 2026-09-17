@@ -120,17 +120,11 @@ export function effectiveCvFromLectura(row: {
 
 const CAMPOS_MARCADO_CON_DATOS = [
   "Fecha_Marcado",
-  "PN_Membrana",
-  "LN_Membrana",
-  "Exp_Membrana",
   "Comentario_Membrana",
   "Fecha_Lect_Marc",
   "Cargado_M",
   "Izq_M",
   "Dcha_M",
-  "PN_M",
-  "LN_M",
-  "Exp_M",
 ] as const;
 
 function filaMarcadoConDatos(row: Record<string, unknown>): boolean {

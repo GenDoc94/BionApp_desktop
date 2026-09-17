@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import type { DbFilter, DbOrder, DbRequest, DbResponse } from '../shared/types'
+import { applyLotWrite, attachLotFields } from './lotes'
 
 const ALLOWED_TABLES = new Set([
   'Muestras',
@@ -13,6 +14,9 @@ const ALLOWED_TABLES = new Set([
   'Tags',
   'Muestra_Tags',
   'Preselect',
+  'Lotes_Extraido',
+  'Lotes_Marcado',
+  'Lotes_Membrana',
   'profiles',
   'users'
 ])
@@ -298,6 +302,7 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
         )
         .all(...whereParams) as Record<string, unknown>[]
       attachEmbeds(db, req.table, rows, parsed.embeds)
+      attachLotFields(db, req.table, rows)
       if (!parsed.star && parsed.columns.length) {
         const keep = new Set([...parsed.columns, ...parsed.embeds])
         for (let i = 0; i < rows.length; i++) {
@@ -318,7 +323,7 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
       const inserted: Record<string, unknown>[] = []
       const tx = db.transaction(() => {
         for (const raw of rowsIn) {
-          const row = enrichRow(req.table, raw)
+          const row = applyLotWrite(db, req.table, enrichRow(req.table, raw))
           const keys = Object.keys(row).filter((k) => cols.includes(k) && row[k] !== undefined)
           if (!keys.length) throw new Error('Fila vacía')
           const sql = `INSERT INTO ${quoteId(req.table)} (${keys.map(quoteId).join(',')})
@@ -335,13 +340,14 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
         }
       })
       tx()
+      attachLotFields(db, req.table, inserted)
       return ok(Array.isArray(req.data) ? inserted : inserted[0])
     }
 
     if (req.action === 'update') {
       if (!req.data || Array.isArray(req.data)) return fail('update requiere un objeto')
       if (!req.filters?.length) return fail('update sin filtro rechazado')
-      const row = enrichRow(req.table, req.data)
+      const row = applyLotWrite(db, req.table, enrichRow(req.table, req.data))
       const cols = tableColumns(db, req.table)
       const keys = Object.keys(row).filter((k) => cols.includes(k) && row[k] !== undefined)
       if (!keys.length) return fail('update sin columnas')
@@ -353,6 +359,7 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
       const updated = db
         .prepare(`SELECT * FROM ${quoteId(req.table)} WHERE ${whereSqlBare}`)
         .all(...whereParams) as Record<string, unknown>[]
+      attachLotFields(db, req.table, updated)
       return ok(updated)
     }
 
@@ -376,7 +383,7 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
       const upserted: Record<string, unknown>[] = []
       const tx = db.transaction(() => {
         for (const raw of rowsIn) {
-          const row = enrichRow(req.table, raw)
+          const row = applyLotWrite(db, req.table, enrichRow(req.table, raw))
           const keys = Object.keys(row).filter((k) => cols.includes(k) && row[k] !== undefined)
           const updateKeys = keys.filter((k) => !conflict.includes(k))
           const sql = `INSERT INTO ${quoteId(req.table)} (${keys.map(quoteId).join(',')})
@@ -392,6 +399,7 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
         }
       })
       tx()
+      attachLotFields(db, req.table, upserted)
       return ok(Array.isArray(req.data) ? upserted : upserted[0])
     }
 

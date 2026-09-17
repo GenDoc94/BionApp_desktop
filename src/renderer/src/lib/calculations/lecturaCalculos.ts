@@ -49,3 +49,30 @@ export function formatCalcStat(value: number | null | undefined, decimals = 2): 
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";
   return value.toFixed(decimals);
 }
+
+/** Rangos inclusivos del cajetín de media (muestra): extraído 45–90, marcado 4–16. */
+export const MEDIA_EXTRAIDO_OK_MIN = 45;
+export const MEDIA_EXTRAIDO_OK_MAX = 90;
+export const MEDIA_MARCADO_OK_MIN = 4;
+export const MEDIA_MARCADO_OK_MAX = 16;
+
+/** Verde / rojo / amarillo reutilizan `lectura-cuant-ok|bajo|alto` de Acciones. */
+export function cuantificacionSemaforoClass(
+  value: unknown,
+  minOk: number,
+  maxOk: number
+): string {
+  const n = parseNumForCalc(value);
+  if (n === null) return "";
+  if (n < minOk) return "lectura-cuant-bajo";
+  if (n > maxOk) return "lectura-cuant-alto";
+  return "lectura-cuant-ok";
+}
+
+export function mediaExtraidoSemaforoClass(value: unknown): string {
+  return cuantificacionSemaforoClass(value, MEDIA_EXTRAIDO_OK_MIN, MEDIA_EXTRAIDO_OK_MAX);
+}
+
+export function mediaMarcadoSemaforoClass(value: unknown): string {
+  return cuantificacionSemaforoClass(value, MEDIA_MARCADO_OK_MIN, MEDIA_MARCADO_OK_MAX);
+}

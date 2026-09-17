@@ -8,7 +8,7 @@ export type CatalogDx = {
 };
 
 export type PreselectRow = {
-  Petic_Preselect: number;
+  Petic_Preselect: string;
   Coment_Preselect: string | null;
   NumBN_Preselect: number | null;
   Fecha_Preselect: string | null;
@@ -17,7 +17,7 @@ export type PreselectRow = {
 };
 
 export type PreselectMuestraLink = {
-  Petic_Preselect: number;
+  Petic_Preselect: string;
   Coment_Preselect: string | null;
   NumBN_Preselect: number;
 };
@@ -48,12 +48,26 @@ export async function fetchPreselectLinksByNumBN(
 
 export const PRESELECT_DUPLICATE_MESSAGE = "Petición ya incluida en lista de preselección";
 
-export function parsePeticInput(value: string): number | null {
-  const trimmed = value.trim();
+const PETIC_MAX_LEN = 64;
+
+export function normalizePetic(value: unknown): string | null {
+  if (value == null) return null;
+  const s = String(value).trim();
+  return s === "" ? null : s;
+}
+
+export function parsePeticInput(value: string): string | null {
+  const trimmed = normalizePetic(value);
   if (!trimmed) return null;
-  const num = Number(trimmed);
-  if (!Number.isFinite(num) || !Number.isInteger(num) || num <= 0) return null;
-  return num;
+  if (trimmed.length > PETIC_MAX_LEN) return null;
+  if (/[\r\n\t]/.test(trimmed)) return null;
+  return trimmed;
+}
+
+export function samePetic(a: unknown, b: unknown): boolean {
+  const na = normalizePetic(a);
+  const nb = normalizePetic(b);
+  return na != null && na === nb;
 }
 
 export function formatPreselectFecha(value: string | null | undefined): string {
@@ -74,15 +88,56 @@ export function buildFechaPreselectNow(): string {
   return new Date().toISOString();
 }
 
-export function buildPreselectHighlightPath(petic: number): string {
-  return `/preselect?petic=${petic}`;
+export function buildPreselectHighlightPath(petic: string | number): string {
+  return `/preselect?petic=${encodeURIComponent(String(petic))}`;
 }
 
-export function parsePreselectHighlightPetic(params: URLSearchParams): number | null {
-  const raw = params.get("petic");
-  if (!raw) return null;
-  const petic = Number(raw);
-  return Number.isFinite(petic) && petic > 0 ? petic : null;
+export function parsePreselectHighlightPetic(params: URLSearchParams): string | null {
+  return parsePeticInput(params.get("petic") ?? "");
+}
+
+export type PreselectSortDir = "asc" | "desc";
+export type PreselectSortKey = "added" | "numBN";
+
+function peticTiebreak(a: PreselectRow, b: PreselectRow): number {
+  return String(a.Petic_Preselect).localeCompare(String(b.Petic_Preselect), undefined, {
+    numeric: true,
+  });
+}
+
+function applyDir(cmp: number, dir: PreselectSortDir): number {
+  if (cmp === 0) return 0;
+  return dir === "asc" ? cmp : -cmp;
+}
+
+export function sortPreselectRows(
+  rows: PreselectRow[],
+  key: PreselectSortKey,
+  dir: PreselectSortDir
+): PreselectRow[] {
+  return [...rows].sort((a, b) => {
+    if (key === "numBN") {
+      const na = Number(a.NumBN_Preselect);
+      const nb = Number(b.NumBN_Preselect);
+      const aOk = Number.isFinite(na);
+      const bOk = Number.isFinite(nb);
+      if (!aOk && !bOk) return peticTiebreak(a, b);
+      if (!aOk) return 1;
+      if (!bOk) return -1;
+      const cmp = na - nb;
+      return cmp !== 0 ? applyDir(cmp, dir) : peticTiebreak(a, b);
+    }
+
+    const ta = a.Fecha_Preselect ? Date.parse(a.Fecha_Preselect) : NaN;
+    const tb = b.Fecha_Preselect ? Date.parse(b.Fecha_Preselect) : NaN;
+    const aOk = Number.isFinite(ta);
+    const bOk = Number.isFinite(tb);
+    if (!aOk && !bOk) return peticTiebreak(a, b);
+    if (!aOk) return 1;
+    if (!bOk) return -1;
+    const cmp = ta - tb;
+    return cmp !== 0 ? applyDir(cmp, dir) : peticTiebreak(a, b);
+  });
 }
 
 export async function fetchNextNumBN(supabase: SupabaseClient): Promise<number> {
@@ -99,12 +154,15 @@ export async function fetchNextNumBN(supabase: SupabaseClient): Promise<number> 
 
 export async function crearMuestraDesdePreselect(
   supabase: SupabaseClient,
-  petic: number
+  petic: string
 ): Promise<number> {
+  const peticN = parsePeticInput(petic);
+  if (!peticN) throw new Error("Nº de petición vacío");
+
   const { data: preselectRow, error: preselectError } = await supabase
     .from("Preselect")
     .select("Petic_Preselect, NumBN_Preselect, Dx_Preselect")
-    .eq("Petic_Preselect", petic)
+    .eq("Petic_Preselect", peticN)
     .maybeSingle();
 
   if (preselectError) throw preselectError;
@@ -116,13 +174,13 @@ export async function crearMuestraDesdePreselect(
   const { data: muestraConPetic, error: peticCheckError } = await supabase
     .from("Muestras")
     .select("NumBN, Petic")
-    .eq("Petic", petic)
+    .eq("Petic", peticN)
     .maybeSingle();
 
   if (peticCheckError) throw peticCheckError;
   if (muestraConPetic?.NumBN != null) {
     throw new Error(
-      `La petición ${petic} ya existe en Muestras (Nº ${muestraConPetic.NumBN})`
+      `La petición ${peticN} ya existe en Muestras (Nº ${muestraConPetic.NumBN})`
     );
   }
 
@@ -130,12 +188,12 @@ export async function crearMuestraDesdePreselect(
 
   const muestraInsert: {
     NumBN: number;
-    Petic: number;
+    Petic: string;
     Estado_Muestra: null;
     Dx?: number;
   } = {
     NumBN: numBN,
-    Petic: petic,
+    Petic: peticN,
     Estado_Muestra: null,
   };
 
@@ -150,7 +208,7 @@ export async function crearMuestraDesdePreselect(
   const { error: linkError } = await supabase
     .from("Preselect")
     .update({ NumBN_Preselect: numBN })
-    .eq("Petic_Preselect", petic);
+    .eq("Petic_Preselect", peticN);
 
   if (linkError) {
     await supabase.from("Muestras").delete().eq("NumBN", numBN);
