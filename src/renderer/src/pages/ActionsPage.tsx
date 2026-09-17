@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import SubpageShell from "../components/SubpageShell";
-import { CircleDot, ClipboardList, Cpu, Edit, Eye, Highlighter, Loader2, Pickaxe, Printer, Save, Trash, TriangleAlert, X } from "lucide-react";
+import { Badge } from "../components/ui/badge";
+import { CircleDot, ClipboardList, Cpu, Edit, Eye, Highlighter, Loader2, Pickaxe, Printer, Save, Send, Trash, TriangleAlert, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../authContext";
@@ -21,6 +23,23 @@ import {
   mediaDeMarcadoLM,
   mediaLecturaExtraidaEfectiva,
 } from "../lib/marcarCriterios";
+import {
+  CHIP_FC_SLOTS,
+  fcLibresParaChip,
+  formatFcLibresLabel,
+  type ChipAsignacionRow,
+} from "../lib/chipDisponibilidad";
+import { buildChipPanels, type ChipCatalogo } from "../lib/chipPageData";
+import {
+  findLotId,
+  lotLnForDisplay,
+  lotOptionLabel,
+  sortLots,
+  toLoteRow,
+  type LoteRow,
+  type LoteTipo,
+} from "../lib/lotesPageData";
+import { todayIsoDate } from "../lib/filtrosPageData";
 
 type CatalogTipo = { Cod: number; TipoMuestra: string };
 type CatalogDx = { Cod: number; Dx: string };
@@ -36,7 +55,8 @@ type HacerMuestraRow = {
   DDx?: { Dx?: string } | null;
   Pellet?: string | null;
   Medusa?: string | null;
-  Visco_grado?: number | string | null;
+  Id_LtE?: number | null;
+  LN?: string | null;
 };
 
 type LeerExtraidoRow = {
@@ -65,10 +85,92 @@ type LeerMarcadoRow = {
   CV_LM?: number | null;
 };
 
+type PteChipItem = {
+  NumBN: number;
+  NumLectura: number;
+  NumLectMarc: number;
+  Media_LM: number | null;
+  Fecha_Lect_Marc: string | null;
+  sinChipPte: boolean;
+  repetirDetalle: Array<{ NumChip: number; FC: number | null; Chip_Nombre: string | null }>;
+};
+
 const HACER_SELECT_CLASS =
   "h-8 text-xs border border-input rounded-md px-2 bg-background min-w-[140px] max-w-[220px]";
 
 const MIN_MEDIA_LM_PTE_CHIP = MARCAR_MAX_MEDIA_LM;
+
+function nextNumLecturaForBn(
+  existing: Array<{ NumBN_L?: unknown; NumLectura?: unknown }>,
+  numBN: number
+): number {
+  let max = 0;
+  for (const row of existing) {
+    if (Number(row.NumBN_L) !== numBN) continue;
+    const n = Number(row.NumLectura);
+    if (Number.isFinite(n) && n > max) max = n;
+  }
+  return max + 1;
+}
+
+function marcarRowKey(numBN: unknown, numLectura: unknown): string {
+  return `${Number(numBN)}_${Number(numLectura)}`;
+}
+
+function pteChipRowKey(numBN: unknown): string {
+  return String(Number(numBN));
+}
+
+function pteChipLmKey(numBN: unknown, numLectura: unknown, numLectMarc: unknown): string {
+  return `${Number(numBN)}_${Number(numLectura)}_${Number(numLectMarc)}`;
+}
+
+function flattenSelectedPteChipItems(
+  rows: Array<{ NumBN?: number; pteChipItems?: Omit<PteChipItem, "NumBN">[] }>,
+  selected: Set<string>
+): PteChipItem[] {
+  const items: PteChipItem[] = [];
+  for (const row of rows) {
+    const numBN = Number(row.NumBN);
+    if (!selected.has(pteChipRowKey(numBN))) continue;
+    for (const it of row.pteChipItems ?? []) {
+      items.push({
+        NumBN: numBN,
+        NumLectura: Number(it.NumLectura),
+        NumLectMarc: Number(it.NumLectMarc),
+        Media_LM: it.Media_LM ?? null,
+        Fecha_Lect_Marc: it.Fecha_Lect_Marc ?? null,
+        sinChipPte: Boolean(it.sinChipPte),
+        repetirDetalle: it.repetirDetalle ?? [],
+      });
+    }
+  }
+  return items;
+}
+
+function autoFillFcAssignments(items: PteChipItem[], libres: number[]): Record<string, number> {
+  const next: Record<string, number> = {};
+  items.forEach((item, i) => {
+    const fc = libres[i];
+    if (fc == null) return;
+    next[pteChipLmKey(item.NumBN, item.NumLectura, item.NumLectMarc)] = fc;
+  });
+  return next;
+}
+
+function nextNumLectMarcFor(
+  existing: Array<{ NumBN_LM?: unknown; NumLectura_LM?: unknown; NumLectMarc?: unknown }>,
+  numBN: number,
+  numLectura: number
+): number {
+  let max = 0;
+  for (const row of existing) {
+    if (Number(row.NumBN_LM) !== numBN || Number(row.NumLectura_LM) !== numLectura) continue;
+    const n = Number(row.NumLectMarc);
+    if (Number.isFinite(n) && n > max) max = n;
+  }
+  return max + 1;
+}
 
 function lecturaKey(numBN: number, numLectura: number) {
   return `${numBN}_${numLectura}`;
@@ -144,12 +246,16 @@ function marcadoCuantificacionBgClass(value: unknown): string {
   return "lectura-cuant-ok";
 }
 
-function HeadingStatusDot({ children, ...props }: React.ComponentProps<"span">) {
+function HeadingStatusDot({
+  color = "var(--bion-warn-fill)",
+  children,
+  ...props
+}: React.ComponentProps<"span"> & { color?: string }) {
   return (
     <span className="inline-flex" {...props}>
       <CircleDot
         className="h-4 w-4 shrink-0"
-        color="var(--bion-warn-fill)"
+        color={color}
         strokeWidth={2}
         aria-hidden
       />
@@ -211,6 +317,45 @@ function HeadingRepeatChipIcon({ children, ...props }: React.ComponentProps<"spa
         aria-hidden
       />
       {children}
+    </span>
+  );
+}
+
+function AccionPreparacionHeading() {
+  const { t } = useTranslation();
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <Trans
+        i18nKey="actions.hacerHeading"
+        components={{
+          status: (
+            <HeadingStatusDot
+              color="var(--bion-neutral-muted)"
+              title={t("app.state.undefined")}
+              aria-label={t("app.state.undefined")}
+            />
+          ),
+        }}
+      />
+    </span>
+  );
+}
+
+function AccionLeerMarcadoHeading() {
+  const { t } = useTranslation();
+  return (
+    <span className="inline-flex items-center gap-1.5 flex-wrap">
+      <Trans
+        i18nKey="actions.leerMarcadoHeading"
+        components={{
+          status: (
+            <HeadingStatusDot
+              title={t("app.state.yellow")}
+              aria-label={t("app.state.yellow")}
+            />
+          ),
+        }}
+      />
     </span>
   );
 }
@@ -447,7 +592,9 @@ function formatThreshold(n: number) {
 function printHacerMuestrasTable(
   rows: HacerMuestraRow[],
   tipos: CatalogTipo[],
-  dxList: CatalogDx[]
+  dxList: CatalogDx[],
+  lots: LoteRow[],
+  includeLn: boolean
 ) {
   if (!rows.length) {
     toast.error(i18n.t("actions.print.empty"));
@@ -463,7 +610,7 @@ function printHacerMuestrasTable(
     i18n.t("actions.col.diagnosis"),
     "Pellet",
     "Medusa",
-    i18n.t("actions.col.viscosityGrade"),
+    ...(includeLn ? [i18n.t("actions.col.lnExtracted")] : []),
   ];
 
   const headHtml = headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("");
@@ -478,7 +625,9 @@ function printHacerMuestrasTable(
         printLabelDx(row, dxList),
         printCell(row.Pellet),
         printCell(row.Medusa),
-        printCell(row.Visco_grado),
+        ...(includeLn
+          ? [printCell(lotLnForDisplay(lots, { id: row.Id_LtE, LN: row.LN }))]
+          : []),
       ];
       return `<tr>${cells.map((c) => `<td>${escapeHtml(c)}</td>`).join("")}</tr>`;
     })
@@ -656,7 +805,8 @@ function normalizeHacerRow(raw: Record<string, unknown>): HacerMuestraRow {
     DDx: dx ?? null,
     Pellet: (pickRowField(raw, "Pellet") as string | null | undefined) ?? null,
     Medusa: (pickRowField(raw, "Medusa") as string | null | undefined) ?? null,
-    Visco_grado: (pickRowField(raw, "Visco_grado") as HacerMuestraRow["Visco_grado"]) ?? null,
+    Id_LtE: parseCod(pickRowField(raw, "Id_LtE")),
+    LN: (pickRowField(raw, "LN") as string | null | undefined) ?? null,
   };
 }
 
@@ -680,16 +830,10 @@ function parseTextOrNull(value: unknown): string | null {
   return s === "" ? null : s;
 }
 
-/** Misma lógica que App.tsx al guardar Muestras (texto y smallint). */
+/** Misma lógica que App.tsx al guardar Muestras (texto, catálogos y lote extraído). */
 function buildHacerUpdatePayload(row: HacerMuestraRow) {
   const medusaRaw = pickRowField(row as Record<string, unknown>, "Medusa");
-  const viscoRaw = pickRowField(row as Record<string, unknown>, "Visco_grado");
-
-  let visco_grado: number | null = null;
-  if (viscoRaw !== null && viscoRaw !== undefined && String(viscoRaw).trim() !== "") {
-    const n = Number(viscoRaw);
-    if (Number.isFinite(n)) visco_grado = Math.trunc(n);
-  }
+  const lotId = parseCod(pickRowField(row as Record<string, unknown>, "Id_LtE"));
 
   return {
     Petic: parseTextOrNull(pickRowField(row as Record<string, unknown>, "Petic")),
@@ -704,7 +848,7 @@ function buildHacerUpdatePayload(row: HacerMuestraRow) {
         : String(medusaRaw).trim() === ""
           ? null
           : String(medusaRaw),
-    Visco_grado: visco_grado,
+    Id_LtE: lotId,
   };
 }
 
@@ -757,12 +901,24 @@ async function fetchHacerCatalogs() {
   };
 }
 
+async function fetchLotesCatalog(tipo: LoteTipo): Promise<LoteRow[]> {
+  const table =
+    tipo === "extraido" ? "Lotes_Extraido" : tipo === "marcado" ? "Lotes_Marcado" : "Lotes_Membrana";
+  const { data, error } = await supabase.from(table).select("*");
+  if (error) throw error;
+  return sortLots(
+    (data || [])
+      .map((row) => toLoteRow(row as Record<string, unknown>, tipo))
+      .filter((row): row is LoteRow => row != null)
+  );
+}
+
 async function fetchHacerMuestras() {
   const { data, error } = await supabase
     .from("Muestras")
     .select(
       `
-      NumBN, Petic, Posic, Proces, Muestra, Dx, Pellet, Medusa, Visco_grado,
+      NumBN, Petic, Posic, Proces, Muestra, Dx, Pellet, Medusa, Id_LtE,
       DMuestra ( TipoMuestra ),
       DDx ( Dx )
     `
@@ -775,6 +931,7 @@ async function fetchHacerMuestras() {
 
 function ActionsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [muestras, setMuestras] = useState<any[]>([]);
   const [mode, setMode] = useState<
@@ -785,6 +942,7 @@ function ActionsPage() {
   const [hacerEditMode, setHacerEditMode] = useState(false);
   const [editedMuestras, setEditedMuestras] = useState<HacerMuestraRow[]>([]);
   const [savingHacer, setSavingHacer] = useState(false);
+  const [mandarConfirmOpen, setMandarConfirmOpen] = useState(false);
   const [leerEditMode, setLeerEditMode] = useState(false);
   const [editedLeerMuestras, setEditedLeerMuestras] = useState<LeerExtraidoRow[]>([]);
   const [savingLeer, setSavingLeer] = useState(false);
@@ -793,6 +951,23 @@ function ActionsPage() {
   const [savingLeerMarcado, setSavingLeerMarcado] = useState(false);
   const [tiposMuestra, setTiposMuestra] = useState<CatalogTipo[]>([]);
   const [dxs, setDxs] = useState<CatalogDx[]>([]);
+  const [lotesExtraido, setLotesExtraido] = useState<LoteRow[]>([]);
+  const [bulkLotId, setBulkLotId] = useState("");
+  const [bulkFechaLectura, setBulkFechaLectura] = useState("");
+  const [lotesMarcado, setLotesMarcado] = useState<LoteRow[]>([]);
+  const [lotesMembrana, setLotesMembrana] = useState<LoteRow[]>([]);
+  const [marcarSelected, setMarcarSelected] = useState<Set<string>>(() => new Set());
+  const [marcarConfirmOpen, setMarcarConfirmOpen] = useState(false);
+  const [marcarLotMId, setMarcarLotMId] = useState("");
+  const [marcarLotMmId, setMarcarLotMmId] = useState("");
+  const [savingMarcar, setSavingMarcar] = useState(false);
+  const [pteChipSelected, setPteChipSelected] = useState<Set<string>>(() => new Set());
+  const [pteChipConfirmOpen, setPteChipConfirmOpen] = useState(false);
+  const [pteChipCatalog, setPteChipCatalog] = useState<ChipCatalogo[]>([]);
+  const [pteChipAsignaciones, setPteChipAsignaciones] = useState<ChipAsignacionRow[]>([]);
+  const [pteChipNumChip, setPteChipNumChip] = useState("");
+  const [pteChipFcByItem, setPteChipFcByItem] = useState<Record<string, number>>({});
+  const [savingPteChip, setSavingPteChip] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -843,6 +1018,7 @@ function ActionsPage() {
     setEditedLeerMuestras(
       muestras.map((row) => normalizeLeerExtraidoRow(row as Record<string, unknown>))
     );
+    setBulkFechaLectura(todayIsoDate());
     setLeerEditMode(true);
   };
 
@@ -871,6 +1047,27 @@ function ActionsPage() {
         return { ...row, [field]: value };
       })
     );
+  };
+
+  const applyFechaLecturaToEdited = (iso: string) => {
+    setEditedLeerMuestras((prev) => prev.map((row) => ({ ...row, Fecha_lectura: iso })));
+  };
+
+  const handleApplyFechaLecturaAll = () => {
+    const iso = bulkFechaLectura.trim();
+    if (!iso) {
+      toast.error(t("actions.toast.applyDateNeed"));
+      return;
+    }
+    applyFechaLecturaToEdited(iso);
+    toast.success(t("actions.toast.applyDate", { count: editedLeerMuestras.length }));
+  };
+
+  const handleFechaLecturaHoyAll = () => {
+    const iso = todayIsoDate();
+    setBulkFechaLectura(iso);
+    applyFechaLecturaToEdited(iso);
+    toast.success(t("actions.toast.applyDateToday", { count: editedLeerMuestras.length }));
   };
 
   const handleLeerSave = async () => {
@@ -1043,22 +1240,26 @@ function ActionsPage() {
     }
   };
 
-  const handleHacerEditStart = async () => {
-    try {
-      if (tiposMuestra.length === 0 || dxs.length === 0) {
-        const catalogs = await fetchHacerCatalogs();
-        setTiposMuestra(catalogs.tipos);
-        setDxs(catalogs.dx);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(t("actions.toast.catalogsError"));
-      return;
-    }
+  const handleHacerEditStart = () => {
     setEditedMuestras(
       muestras.map((row) => normalizeHacerRow(row as Record<string, unknown>))
     );
     setHacerEditMode(true);
+    if (tiposMuestra.length > 0 && dxs.length > 0 && lotesExtraido.length > 0) return;
+    void (async () => {
+      try {
+        const [catalogs, lots] = await Promise.all([
+          fetchHacerCatalogs(),
+          fetchLotesCatalog("extraido"),
+        ]);
+        setTiposMuestra(catalogs.tipos);
+        setDxs(catalogs.dx);
+        setLotesExtraido(lots);
+      } catch (err) {
+        console.error(err);
+        toast.error(t("actions.toast.catalogsError"));
+      }
+    })();
   };
 
   const handleHacerEditCancel = () => {
@@ -1069,18 +1270,23 @@ function ActionsPage() {
     const rows = (hacerEditMode ? editedMuestras : muestras).map((row) =>
       normalizeHacerRow(row as Record<string, unknown>)
     );
-    printHacerMuestrasTable(rows, tiposMuestra, dxs);
+    printHacerMuestrasTable(rows, tiposMuestra, dxs, lotesExtraido, hacerEditMode);
   };
 
+  const applyLotToHacerRow = (row: HacerMuestraRow, lot: LoteRow | null): HacerMuestraRow => ({
+    ...row,
+    Id_LtE: lot?.id ?? null,
+    LN: lot?.LN ?? null,
+  });
+
   const handleHacerFieldChange = (
-    numBN: number,
+    rowIndex: number,
     field: keyof Omit<HacerMuestraRow, "NumBN" | "DMuestra" | "DDx">,
     value: string | number | null
   ) => {
-    const targetBn = Number(numBN);
     setEditedMuestras((prev) =>
-      prev.map((row) => {
-        if (Number(row.NumBN) !== targetBn) return row;
+      prev.map((row, i) => {
+        if (i !== rowIndex) return row;
         const next = { ...row, [field]: value } as HacerMuestraRow;
         if (field === "Muestra") {
           const cod = parseCod(value);
@@ -1094,9 +1300,405 @@ function ActionsPage() {
           next.Dx = cod;
           next.DDx = dx ? { Dx: dx.Dx } : null;
         }
+        if (field === "Id_LtE") {
+          const lotId = parseCod(value);
+          const lot = lotId == null ? null : lotesExtraido.find((l) => l.id === lotId) ?? null;
+          return applyLotToHacerRow(next, lot);
+        }
         return next;
       })
     );
+  };
+
+  const handleApplyLnAll = async () => {
+    const lot = lotesExtraido.find((l) => l.id === Number(bulkLotId)) ?? null;
+    if (!lot) {
+      toast.error(t("actions.toast.applyLnNeed"));
+      return;
+    }
+    if (hacerEditMode) {
+      setEditedMuestras((prev) => prev.map((row) => applyLotToHacerRow(row, lot)));
+      toast.success(t("actions.toast.applyLn", { count: editedMuestras.length }));
+      return;
+    }
+    if (!muestras.length) return;
+    setSavingHacer(true);
+    try {
+      const results = await Promise.all(
+        muestras.map(async (row) => {
+          const numBN = Number(row.NumBN);
+          const { error } = await supabase
+            .from("Muestras")
+            .update({ Id_LtE: lot.id })
+            .eq("NumBN", numBN);
+          return { numBN, error };
+        })
+      );
+      const failed = results.filter((r) => r.error);
+      const refreshed = await fetchHacerMuestras();
+      setMuestras(refreshed);
+      if (failed.length > 0) {
+        console.error("Errores al aplicar LN:", failed);
+        toast.error(
+          t("actions.toast.hacerPartial", {
+            failed: failed.length,
+            total: muestras.length,
+          })
+        );
+      } else {
+        toast.success(t("actions.toast.applyLn", { count: muestras.length }));
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(t("actions.toast.applyLnError"));
+    } finally {
+      setSavingHacer(false);
+    }
+  };
+
+  const handleMandarALeer = async () => {
+    if (!muestras.length || hacerEditMode) return;
+    setMandarConfirmOpen(false);
+    setSavingHacer(true);
+    try {
+      const numBNs = muestras
+        .map((row) => Number(row.NumBN))
+        .filter((n) => Number.isFinite(n));
+      const { data: lecturasData, error: lecturasError } = await supabase
+        .from("Lectura")
+        .select("NumBN_L, NumLectura")
+        .in("NumBN_L", numBNs as number[]);
+      if (lecturasError) throw lecturasError;
+
+      const results = await Promise.all(
+        numBNs.map(async (numBN) => {
+          const nextLectura = nextNumLecturaForBn(lecturasData || [], numBN);
+          const { error: lecturaError } = await supabase.from("Lectura").insert([
+            {
+              NumBN_L: numBN,
+              NumLectura: nextLectura,
+            },
+          ]);
+          if (lecturaError) return { numBN, error: lecturaError };
+
+          const { error: estadoError } = await supabase
+            .from("Muestras")
+            .update({ Estado_Muestra: 2 })
+            .eq("NumBN", numBN)
+            .is("Estado_Muestra", null);
+          return { numBN, error: estadoError };
+        })
+      );
+      const failed = results.filter((r) => r.error);
+      if (failed.length > 0) {
+        console.error("Errores al mandar a leer:", failed);
+        toast.error(
+          t("actions.toast.hacerPartial", {
+            failed: failed.length,
+            total: muestras.length,
+          })
+        );
+      } else {
+        toast.success(t("actions.toast.sendToRead", { count: muestras.length }));
+      }
+      const refreshed = await fetchHacerMuestras();
+      setMuestras(refreshed);
+    } catch (err) {
+      console.error(err);
+      toast.error(t("actions.toast.sendToReadError"));
+    } finally {
+      setSavingHacer(false);
+    }
+  };
+
+  const toggleMarcarRow = (key: string, checked: boolean) => {
+    setMarcarSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  };
+
+  const marcarRowKeys = mode === "marcar" ? muestras.map((row) => marcarRowKey(row.NumBN, row.NumLectura)) : [];
+  const allMarcarSelected =
+    marcarRowKeys.length > 0 && marcarRowKeys.every((key) => marcarSelected.has(key));
+
+  const toggleMarcarAll = (checked: boolean) => {
+    setMarcarSelected(checked ? new Set(marcarRowKeys) : new Set());
+  };
+
+  const pteChipRowKeys =
+    mode === "pte-chip" ? muestras.map((row) => pteChipRowKey(row.NumBN)) : [];
+  const allPteChipSelected =
+    pteChipRowKeys.length > 0 && pteChipRowKeys.every((key) => pteChipSelected.has(key));
+  const selectedPteChipItems = flattenSelectedPteChipItems(muestras, pteChipSelected);
+
+  const pteChipPanels = useMemo(
+    () =>
+      buildChipPanels(
+        pteChipCatalog,
+        pteChipAsignaciones.flatMap((row) => {
+          const fc = Number(row.FC);
+          const numChip = Number(row.NumChip);
+          if (row.FC == null || row.FC === "" || !Number.isFinite(fc) || !Number.isFinite(numChip)) {
+            return [];
+          }
+          return [
+            {
+              NumChip: numChip,
+              NumBN_C: Number(row.NumBN_C),
+              NumLectura_C: Number(row.NumLectura_C),
+              NumLectMarc_C: Number(row.NumLectMarc_C),
+              FC: fc,
+              Repetir_Chip: row.Repetir_Chip ?? null,
+            },
+          ];
+        })
+      ),
+    [pteChipCatalog, pteChipAsignaciones]
+  );
+
+  const pteChipPanelsWithFree = pteChipPanels.filter(
+    (panel) => fcLibresParaChip(Number(panel.chip.NumChip_D), pteChipAsignaciones).length > 0
+  );
+
+  const togglePteChipRow = (key: string, checked: boolean) => {
+    setPteChipSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  };
+
+  const togglePteChipAll = (checked: boolean) => {
+    setPteChipSelected(checked ? new Set(pteChipRowKeys) : new Set());
+  };
+
+  const applyPteChipChoice = (numChip: number, items = selectedPteChipItems) => {
+    const libres = fcLibresParaChip(numChip, pteChipAsignaciones);
+    if (libres.length < items.length) {
+      toast.error(
+        t("actions.toast.pteChipNotEnough", { free: libres.length, count: items.length })
+      );
+    }
+    setPteChipNumChip(String(numChip));
+    setPteChipFcByItem(autoFillFcAssignments(items, libres));
+  };
+
+  const handleOpenPteChipLoad = () => {
+    const items = flattenSelectedPteChipItems(muestras, pteChipSelected);
+    if (!items.length) {
+      toast.error(t("actions.toast.marcarNeedSelection"));
+      return;
+    }
+    if (pteChipCatalog.length === 0) {
+      toast.error(t("actions.toast.pteChipNoChips"));
+      return;
+    }
+    setPteChipConfirmOpen(true);
+    const enough = pteChipCatalog.filter(
+      (chip) =>
+        fcLibresParaChip(Number(chip.NumChip_D), pteChipAsignaciones).length >= items.length
+    );
+    if (enough.length === 1) {
+      applyPteChipChoice(Number(enough[0].NumChip_D), items);
+    } else {
+      setPteChipNumChip("");
+      setPteChipFcByItem({});
+    }
+  };
+
+  const handleCreatePteChip = async () => {
+    const items = flattenSelectedPteChipItems(muestras, pteChipSelected);
+    if (!items.length) {
+      toast.error(t("actions.toast.marcarNeedSelection"));
+      return;
+    }
+    const numChip = Number(pteChipNumChip);
+    const chip = pteChipCatalog.find((c) => Number(c.NumChip_D) === numChip) ?? null;
+    if (!chip) {
+      toast.error(t("actions.toast.pteChipNeedChip"));
+      return;
+    }
+    const libres = fcLibresParaChip(numChip, pteChipAsignaciones);
+    const usedInBatch = new Set<number>();
+    for (const item of items) {
+      const key = pteChipLmKey(item.NumBN, item.NumLectura, item.NumLectMarc);
+      const fc = pteChipFcByItem[key];
+      if (fc == null) {
+        toast.error(t("actions.toast.pteChipNeedFc"));
+        return;
+      }
+      if (!libres.includes(fc) || usedInBatch.has(fc)) {
+        toast.error(t("actions.toast.pteChipFcTaken", { fc }));
+        return;
+      }
+      usedInBatch.add(fc);
+      const yaAsignado = pteChipAsignaciones.some(
+        (row) =>
+          Number(row.NumBN_C) === item.NumBN &&
+          Number(row.NumLectura_C) === item.NumLectura &&
+          Number(row.NumLectMarc_C) === item.NumLectMarc &&
+          Number(row.NumChip) === numChip
+      );
+      if (yaAsignado) {
+        toast.error(
+          t("actions.toast.pteChipAlready", {
+            numBN: item.NumBN,
+            numLectura: item.NumLectura,
+            numLectMarc: item.NumLectMarc,
+            numChip,
+          })
+        );
+        return;
+      }
+    }
+
+    setSavingPteChip(true);
+    try {
+      const results: Array<{ numBN: number; error: unknown }> = [];
+      for (const item of items) {
+        const key = pteChipLmKey(item.NumBN, item.NumLectura, item.NumLectMarc);
+        const fc = pteChipFcByItem[key];
+        const { error } = await supabase.from("Chips").insert([
+          {
+            NumBN_C: item.NumBN,
+            NumLectura_C: item.NumLectura,
+            NumLectMarc_C: item.NumLectMarc,
+            NumChip: chip.NumChip_D,
+            Chip_Nombre: chip.Nombre_Chip ?? null,
+            FC: fc,
+            Coment_Chip: null,
+            Repetir_Chip: null,
+          },
+        ]);
+        results.push({ numBN: item.NumBN, error });
+      }
+      const failed = results.filter((r) => r.error);
+      if (failed.length > 0) {
+        console.error("Errores al cargar a chip:", failed);
+        toast.error(
+          t("actions.toast.hacerPartial", {
+            failed: failed.length,
+            total: items.length,
+          })
+        );
+      } else {
+        toast.success(
+          t("actions.toast.pteChipLoaded", {
+            count: items.length,
+            numChip: chip.NumChip_D,
+          })
+        );
+      }
+      setPteChipConfirmOpen(false);
+      setPteChipSelected(new Set());
+      setPteChipNumChip("");
+      setPteChipFcByItem({});
+      setSavingPteChip(false);
+      await handleActionClick("pte-chip");
+    } catch (err) {
+      console.error(err);
+      toast.error(t("actions.toast.pteChipLoadError"));
+      setSavingPteChip(false);
+    }
+  };
+
+  const handleOpenMarcarCreate = () => {
+    if (marcarSelected.size === 0) {
+      toast.error(t("actions.toast.marcarNeedSelection"));
+      return;
+    }
+    setMarcarConfirmOpen(true);
+  };
+
+  const handleCreateMarcarLm = async () => {
+    const selectedRows = muestras.filter((row) =>
+      marcarSelected.has(marcarRowKey(row.NumBN, row.NumLectura))
+    );
+    if (!selectedRows.length) {
+      toast.error(t("actions.toast.marcarNeedSelection"));
+      return;
+    }
+    const lotM = lotesMarcado.find((l) => l.id === Number(marcarLotMId)) ?? null;
+    const lotMm = lotesMembrana.find((l) => l.id === Number(marcarLotMmId)) ?? null;
+    if (!lotM || !lotMm) {
+      toast.error(t("actions.toast.marcarNeedLots"));
+      return;
+    }
+    setSavingMarcar(true);
+    try {
+      const { data: existingLm, error: existingError } = await supabase
+        .from("Lecturas_Marcado")
+        .select("NumBN_LM, NumLectura_LM, NumLectMarc")
+        .in(
+          "NumBN_LM",
+          selectedRows.map((row) => Number(row.NumBN))
+        );
+      if (existingError) throw existingError;
+
+      const knownLm = [...(existingLm || [])];
+      const results: Array<{ numBN: number; numLectura: number; error: unknown }> = [];
+
+      for (const row of selectedRows) {
+        const numBN = Number(row.NumBN);
+        const numLectura = Number(row.NumLectura);
+        const { error: marcadoError } = await supabase.from("Marcado").upsert([
+          {
+            NumBN_M: numBN,
+            NumLectura_M: numLectura,
+          },
+        ]);
+        if (marcadoError) {
+          results.push({ numBN, numLectura, error: marcadoError });
+          continue;
+        }
+
+        const nextLm = nextNumLectMarcFor(knownLm, numBN, numLectura);
+        const { error: lmError } = await supabase.from("Lecturas_Marcado").insert([
+          {
+            NumBN_LM: numBN,
+            NumLectura_LM: numLectura,
+            NumLectMarc: nextLm,
+            Id_LtM: lotM.id,
+            Id_LtMm: lotMm.id,
+          },
+        ]);
+        if (!lmError) {
+          knownLm.push({
+            NumBN_LM: numBN,
+            NumLectura_LM: numLectura,
+            NumLectMarc: nextLm,
+          });
+        }
+        results.push({ numBN, numLectura, error: lmError });
+      }
+
+      const failed = results.filter((r) => r.error);
+      if (failed.length > 0) {
+        console.error("Errores al crear lecturas marcadas:", failed);
+        toast.error(
+          t("actions.toast.hacerPartial", {
+            failed: failed.length,
+            total: selectedRows.length,
+          })
+        );
+      } else {
+        toast.success(t("actions.toast.marcarCreated", { count: selectedRows.length }));
+      }
+      setMarcarConfirmOpen(false);
+      setMarcarSelected(new Set());
+      setMarcarLotMId("");
+      setMarcarLotMmId("");
+      await handleActionClick("marcar");
+    } catch (err) {
+      console.error(err);
+      toast.error(t("actions.toast.marcarCreateError"));
+    } finally {
+      setSavingMarcar(false);
+    }
   };
 
   const handleHacerSave = async () => {
@@ -1111,7 +1713,7 @@ function ActionsPage() {
             .from("Muestras")
             .update(payload)
             .eq("NumBN", numBN)
-            .select("NumBN, Muestra, Dx, Medusa, Visco_grado")
+            .select("NumBN, Muestra, Dx, Medusa, Id_LtE")
             .maybeSingle();
 
           if (error) return { numBN, error };
@@ -1151,7 +1753,7 @@ function ActionsPage() {
   };
 
   const acciones: Array<{ label: string; key: string; icon: LucideIcon }> = [
-    { label: t("actions.hacer"), key: "hacer", icon: Pickaxe },
+    { label: t("actions.hacer"), key: "hacer", icon: ClipboardList },
     { label: t("actions.leerExtraido"), key: "leer-extraido", icon: Eye },
     { label: t("actions.tirar"), key: "tirar", icon: Trash },
     { label: t("actions.marcar"), key: "marcar", icon: Highlighter },
@@ -1161,7 +1763,15 @@ function ActionsPage() {
 
   const handleActionClick = async (key: string) => {
     setLoading(true);
-    setMuestras([]);
+    setMarcarSelected(new Set());
+    setMarcarConfirmOpen(false);
+    setMarcarLotMId("");
+    setMarcarLotMmId("");
+    setPteChipSelected(new Set());
+    setPteChipConfirmOpen(false);
+    setPteChipNumChip("");
+    setPteChipFcByItem({});
+    setMandarConfirmOpen(false);
     exitHacerEditMode();
     exitLeerEditMode();
     exitLeerMarcadoEditMode();
@@ -1169,10 +1779,16 @@ function ActionsPage() {
       if (key === "hacer") {
         let rows: HacerMuestraRow[];
         try {
-          const catalogs = await fetchHacerCatalogs();
+          const [catalogs, lots, fetchedRows] = await Promise.all([
+            fetchHacerCatalogs(),
+            fetchLotesCatalog("extraido"),
+            fetchHacerMuestras(),
+          ]);
           setTiposMuestra(catalogs.tipos);
           setDxs(catalogs.dx);
-          rows = await fetchHacerMuestras();
+          setLotesExtraido(lots);
+          setBulkLotId("");
+          rows = fetchedRows;
         } catch (error) {
           console.error("Error fetching muestras:", error);
           toast.error(t("actions.toast.loadSamples"));
@@ -1181,9 +1797,6 @@ function ActionsPage() {
 
         setMode("hacer");
         setMuestras(rows);
-        if (!(rows.length > 0)) {
-          toast.success(t("actions.toast.noHacer"));
-        }
         return;
       }
 
@@ -1199,9 +1812,6 @@ function ActionsPage() {
 
         setMode("leer-extraido");
         setMuestras(rows);
-        if (rows.length === 0) {
-          toast.success(t("actions.toast.noLeerExtraido"));
-        }
         return;
       }
 
@@ -1222,8 +1832,8 @@ function ActionsPage() {
 
         const numBNs = (muestrasData || []).map((m) => m.NumBN).filter((n) => n != null);
         if (numBNs.length === 0) {
+          setMode("tirar");
           setMuestras([]);
-          toast.success(t("actions.toast.noEstado2"));
           return;
         }
 
@@ -1263,9 +1873,6 @@ function ActionsPage() {
 
         setMode("tirar");
         setMuestras(rows);
-        if (rows.length === 0) {
-          toast.success(t("actions.toast.noTirar", { cutoff: formatThreshold(cutoff) }));
-        }
         return;
       }
 
@@ -1284,8 +1891,8 @@ function ActionsPage() {
 
         const numBNs = (muestrasData || []).map((m) => m.NumBN).filter((n) => n != null);
         if (numBNs.length === 0) {
+          setMode("marcar");
           setMuestras([]);
-          toast.success(t("actions.toast.noEstado2"));
           return;
         }
 
@@ -1293,6 +1900,8 @@ function ActionsPage() {
           { data: lecturasData, error: lecturasError },
           { data: lmData, error: lmError },
           { data: chipsData, error: chipsError },
+          lotsM,
+          lotsMm,
         ] = await Promise.all([
           supabase
             .from("Lectura")
@@ -1307,6 +1916,8 @@ function ActionsPage() {
             .from("Chips")
             .select("NumBN_C, NumLectura_C, NumLectMarc_C, NumChip, Repetir_Chip")
             .in("NumBN_C", numBNs as any),
+          fetchLotesCatalog("marcado"),
+          fetchLotesCatalog("membrana"),
         ]);
 
         if (lecturasError) {
@@ -1393,11 +2004,10 @@ function ActionsPage() {
           });
         }
 
+        setLotesMarcado(lotsM);
+        setLotesMembrana(lotsMm);
         setMode("marcar");
         setMuestras(rows);
-        if (rows.length === 0) {
-          toast.success(t("actions.toast.noMarcar"));
-        }
         return;
       }
 
@@ -1413,9 +2023,6 @@ function ActionsPage() {
 
         setMode("leer-marcado");
         setMuestras(rows);
-        if (rows.length === 0) {
-          toast.success(t("actions.toast.noLeerMarcado"));
-        }
         return;
       }
 
@@ -1438,7 +2045,6 @@ function ActionsPage() {
         if (numBNs.length === 0) {
           setMode("pte-chip");
           setMuestras([]);
-          toast.success(t("actions.toast.noEstado2"));
           return;
         }
 
@@ -1447,27 +2053,44 @@ function ActionsPage() {
           if (m?.NumBN != null) muestraByNumBN.set(m.NumBN, m);
         }
 
-        const { data: lmData, error: lmError } = await supabase
-          .from("Lecturas_Marcado")
-          .select("*")
-          .in("NumBN_LM", numBNs as any);
+        const [
+          { data: lmData, error: lmError },
+          { data: chipsData, error: chipsError },
+          { data: catalogData, error: catalogError },
+        ] = await Promise.all([
+          supabase
+            .from("Lecturas_Marcado")
+            .select(
+              "NumBN_LM, NumLectura_LM, NumLectMarc, Izq_LM, Dcha_LM, Media_LM, Fecha_Lect_Marc"
+            )
+            .in("NumBN_LM", numBNs as any),
+          supabase
+            .from("Chips")
+            .select("NumBN_C, NumLectura_C, NumLectMarc_C, NumChip, FC, Chip_Nombre, Repetir_Chip"),
+          supabase
+            .from("DChips")
+            .select("NumChip_D, Nombre_Chip")
+            .order("NumChip_D", { ascending: true }),
+        ]);
 
         if (lmError) {
           console.error("Error fetching lecturas marcado:", lmError);
           toast.error(t("actions.toast.loadLm"));
           return;
         }
-
-        const { data: chipsData, error: chipsError } = await supabase
-          .from("Chips")
-          .select("NumBN_C, NumLectura_C, NumLectMarc_C, NumChip, FC, Chip_Nombre, Repetir_Chip")
-          .in("NumBN_C", numBNs as any);
-
         if (chipsError) {
           console.error("Error fetching chips:", chipsError);
           toast.error(t("actions.toast.loadChips"));
           return;
         }
+        if (catalogError) {
+          console.error("Error fetching catálogo de chips:", catalogError);
+          toast.error(t("actions.toast.loadChips"));
+          return;
+        }
+
+        setPteChipCatalog((catalogData || []) as ChipCatalogo[]);
+        setPteChipAsignaciones((chipsData || []) as ChipAsignacionRow[]);
 
         const chipsByLm = new Map<string, any[]>();
         for (const ch of chipsData || []) {
@@ -1490,9 +2113,6 @@ function ActionsPage() {
         if (pendientesLM.length === 0) {
           setMode("pte-chip");
           setMuestras([]);
-          toast.success(
-            t("actions.toast.noPteChip", { min: formatThreshold(minMedia) })
-          );
           return;
         }
 
@@ -1583,7 +2203,7 @@ function ActionsPage() {
   };
 
   return (
-    <SubpageShell title={t("actions.title")} icon={ClipboardList} maxWidthClass="max-w-[1200px]">
+    <SubpageShell title={t("actions.title")} icon={Pickaxe} maxWidthClass="max-w-[1200px]">
         <div className="bionapp-panel p-4">
           <div className="flex flex-wrap gap-2">
             {acciones.map((accion) => {
@@ -1599,6 +2219,8 @@ function ActionsPage() {
                   savingHacer ||
                   savingLeer ||
                   savingLeerMarcado ||
+                  savingMarcar ||
+                  savingPteChip ||
                   hacerEditMode ||
                   leerEditMode ||
                   leerMarcadoEditMode
@@ -1612,37 +2234,44 @@ function ActionsPage() {
           </div>
         </div>
 
-        {muestras.length > 0 && (
+        {loading ? (
+          <div className="mt-6 bionapp-panel p-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            {t("common.loading")}
+          </div>
+        ) : mode ? (
           <div className="mt-6 bionapp-panel p-4">
             <h2 className="text-base font-semibold mb-2 text-foreground">
-              {mode === "leer-extraido"
-                ? t("actions.leerExtraidoHeading")
-                : mode === "leer-marcado"
-                  ? t("actions.leerMarcadoHeading")
-                : mode === "tirar"
-                ? (
-                  <AccionEstadoMediaHeading
-                    i18nKey="actions.tirarHeading"
-                    cmp="<"
-                    threshold={formatThreshold(MARCAR_THRESHOLD_MEDIA)}
-                  />
-                )
-                : mode === "marcar"
-                  ? (
-                    <AccionEstadoMediaHeading
-                      i18nKey="actions.marcarHeading"
-                      cmp=">"
-                      threshold={formatThreshold(MARCAR_THRESHOLD_MEDIA)}
-                    />
-                  )
-                  : mode === "pte-chip"
-                    ? (
-                      <AccionPteChipHeading
-                        minMedia={formatThreshold(MIN_MEDIA_LM_PTE_CHIP)}
-                      />
-                    )
-                    : t("actions.hacerHeading")}
+              {mode === "leer-extraido" ? (
+                t("actions.leerExtraidoHeading")
+              ) : mode === "leer-marcado" ? (
+                <AccionLeerMarcadoHeading />
+              ) : mode === "tirar" ? (
+                <AccionEstadoMediaHeading
+                  i18nKey="actions.tirarHeading"
+                  cmp="<"
+                  threshold={formatThreshold(MARCAR_THRESHOLD_MEDIA)}
+                />
+              ) : mode === "marcar" ? (
+                <AccionEstadoMediaHeading
+                  i18nKey="actions.marcarHeading"
+                  cmp=">"
+                  threshold={formatThreshold(MARCAR_THRESHOLD_MEDIA)}
+                />
+              ) : mode === "pte-chip" ? (
+                <AccionPteChipHeading
+                  minMedia={formatThreshold(MIN_MEDIA_LM_PTE_CHIP)}
+                />
+              ) : (
+                <AccionPreparacionHeading />
+              )}
             </h2>
+            {muestras.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">
+                {t("actions.emptyResults")}
+              </p>
+            ) : (
+              <>
             {mode === "marcar" && (
               <div className="text-xs text-muted-foreground mb-4 space-y-1">
                 <p>
@@ -1656,13 +2285,323 @@ function ActionsPage() {
                 </p>
               </div>
             )}
+            {mode === "marcar" && (
+              <div className="flex flex-col gap-3 mb-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="gap-2 bionapp-btn-green"
+                    onClick={handleOpenMarcarCreate}
+                    disabled={loading || savingMarcar || marcarSelected.size === 0}
+                  >
+                    <Highlighter className="h-4 w-4" />
+                    {t("actions.marcarCreate")}
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {t("actions.marcarSelected", { count: marcarSelected.size })}
+                  </span>
+                </div>
+                {marcarConfirmOpen ? (
+                  <div className="bionapp-panel p-4 border border-slate-200 dark:border-slate-800">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {t("actions.marcarCreateHint", { count: marcarSelected.size })}
+                    </p>
+                    <div className="flex flex-wrap items-end gap-2">
+                      <label className="min-w-[180px]">
+                        <span className="block text-xs text-muted-foreground mb-1">
+                          {t("actions.col.lnMarcado")}
+                        </span>
+                        <select
+                          value={marcarLotMId}
+                          onChange={(e) => setMarcarLotMId(e.target.value)}
+                          className={HACER_SELECT_CLASS}
+                          disabled={savingMarcar}
+                        >
+                          <option value="">{t("common.selectPlaceholder")}</option>
+                          {lotesMarcado.map((lot) => (
+                            <option key={lot.id} value={lot.id}>
+                              {lotOptionLabel(lot, lotesMarcado)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="min-w-[180px]">
+                        <span className="block text-xs text-muted-foreground mb-1">
+                          {t("actions.col.lnMembrana")}
+                        </span>
+                        <select
+                          value={marcarLotMmId}
+                          onChange={(e) => setMarcarLotMmId(e.target.value)}
+                          className={HACER_SELECT_CLASS}
+                          disabled={savingMarcar}
+                        >
+                          <option value="">{t("common.selectPlaceholder")}</option>
+                          {lotesMembrana.map((lot) => (
+                            <option key={lot.id} value={lot.id}>
+                              {lotOptionLabel(lot, lotesMembrana)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <Button
+                        size="sm"
+                        className="h-8 gap-2 bionapp-btn-green"
+                        onClick={() => void handleCreateMarcarLm()}
+                        disabled={savingMarcar || !marcarLotMId || !marcarLotMmId}
+                      >
+                        {savingMarcar ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Highlighter className="h-4 w-4" />
+                        )}
+                        {t("actions.marcarCreateConfirm")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-2"
+                        onClick={() => setMarcarConfirmOpen(false)}
+                        disabled={savingMarcar}
+                      >
+                        <X className="h-4 w-4" />
+                        {t("actions.cancel")}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
             {mode === "pte-chip" && (
-              <p className="text-xs text-muted-foreground mb-4 space-y-1">
-                {t("actions.pteChipHelp")}
-              </p>
+              <div className="flex flex-col gap-3 mb-4">
+                <p className="text-xs text-muted-foreground">
+                  {t("actions.pteChipHelp")}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="gap-2 bionapp-btn-green"
+                    onClick={handleOpenPteChipLoad}
+                    disabled={loading || savingPteChip || pteChipSelected.size === 0}
+                  >
+                    <Cpu className="h-4 w-4" />
+                    {t("actions.pteChipLoad")}
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {t("actions.marcarSelected", { count: pteChipSelected.size })}
+                  </span>
+                </div>
+                {pteChipConfirmOpen ? (
+                  <div className="bionapp-panel p-4 border border-slate-200 dark:border-slate-800">
+                    {pteChipPanelsWithFree.length > 0 ? (
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {t("actions.pteChipLoadHint", { count: selectedPteChipItems.length })}
+                      </p>
+                    ) : null}
+                    {selectedPteChipItems.length > 0 && pteChipPanelsWithFree.length > 0 ? (
+                      <ul className="mb-3 space-y-1.5">
+                        {selectedPteChipItems.map((item) => {
+                          const itemKey = pteChipLmKey(item.NumBN, item.NumLectura, item.NumLectMarc);
+                          const numChip = Number(pteChipNumChip);
+                          const libres =
+                            Number.isFinite(numChip) && numChip > 0
+                              ? fcLibresParaChip(numChip, pteChipAsignaciones)
+                              : [];
+                          const taken = new Set(
+                            Object.entries(pteChipFcByItem)
+                              .filter(([k]) => k !== itemKey)
+                              .map(([, fc]) => fc)
+                          );
+                          const current = pteChipFcByItem[itemKey];
+                          const options = CHIP_FC_SLOTS.filter(
+                            (fc) => libres.includes(fc) && (!taken.has(fc) || fc === current)
+                          );
+                          return (
+                            <li
+                              key={itemKey}
+                              className="flex flex-wrap items-center gap-2 text-xs"
+                            >
+                              <span className="min-w-[220px]">
+                                {t("actions.pteChipQueueItem", {
+                                  numBN: item.NumBN,
+                                  numLectura: item.NumLectura,
+                                  numLectMarc: item.NumLectMarc,
+                                })}
+                              </span>
+                              <label className="inline-flex items-center gap-1">
+                                <span className="text-muted-foreground">{t("actions.col.fc")}</span>
+                                <select
+                                  value={current ?? ""}
+                                  onChange={(e) => {
+                                    const raw = e.target.value;
+                                    setPteChipFcByItem((prev) => {
+                                      const next = { ...prev };
+                                      if (raw === "") delete next[itemKey];
+                                      else next[itemKey] = Number(raw);
+                                      return next;
+                                    });
+                                  }}
+                                  className={HACER_SELECT_CLASS}
+                                  disabled={savingPteChip || !pteChipNumChip}
+                                >
+                                  <option value="">{t("common.selectPlaceholder")}</option>
+                                  {options.map((fc) => (
+                                    <option key={fc} value={fc}>
+                                      {t("chips.fc.slot", { n: fc })}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : null}
+                    {pteChipPanelsWithFree.length === 0 ? (
+                      <div className="mb-3 space-y-2">
+                        <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                          {pteChipCatalog.length === 0
+                            ? t("actions.toast.pteChipNoChips")
+                            : t("actions.toast.pteChipNoFree")}
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-8 gap-2"
+                          onClick={() => navigate("/chips")}
+                        >
+                          <Cpu className="h-4 w-4" />
+                          {t("actions.pteChipGoCreate")}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="bionapp-chip-grid max-h-[380px] overflow-y-auto mb-3">
+                        {pteChipPanelsWithFree.map(({ chip, flowcells }) => {
+                          const numChip = Number(chip.NumChip_D);
+                          const selected = String(numChip) === pteChipNumChip;
+                          const libres = fcLibresParaChip(numChip, pteChipAsignaciones);
+                          return (
+                            <button
+                              type="button"
+                              key={numChip}
+                              className={cn(
+                                "bionapp-chip-card bionapp-chip-card--pick",
+                                selected && "bionapp-chip-card--selected"
+                              )}
+                              onClick={() => applyPteChipChoice(numChip)}
+                              disabled={savingPteChip}
+                            >
+                              <header className="bionapp-chip-card__header">
+                                <div className="bionapp-chip-card__title min-w-0">
+                                  <Badge variant="outline" className="shrink-0">
+                                    #{chip.NumChip_D}
+                                  </Badge>
+                                  <span
+                                    className="text-sm font-medium truncate"
+                                    title={chip.Nombre_Chip || ""}
+                                  >
+                                    {chip.Nombre_Chip || t("common.empty")}
+                                  </span>
+                                </div>
+                                <span className="text-xs text-muted-foreground shrink-0">
+                                  {formatFcLibresLabel(libres)}
+                                </span>
+                              </header>
+                              <div className="bionapp-chip-fc-grid">
+                                {flowcells.map((row, idx) => {
+                                  const fcNumber = idx + 1;
+                                  const previewBn = selected
+                                    ? selectedPteChipItems.find(
+                                        (it) =>
+                                          pteChipFcByItem[
+                                            pteChipLmKey(it.NumBN, it.NumLectura, it.NumLectMarc)
+                                          ] === fcNumber
+                                      )?.NumBN
+                                    : undefined;
+                                  if (row != null && row.NumBN_C != null) {
+                                    return (
+                                      <div
+                                        key={fcNumber}
+                                        className="bionapp-chip-fc bionapp-chip-fc--ocupada"
+                                      >
+                                        <span className="bionapp-chip-fc__label">
+                                          {t("chips.fc.slot", { n: fcNumber })}
+                                        </span>
+                                        <span className="bionapp-chip-fc__muestra">{row.NumBN_C}</span>
+                                      </div>
+                                    );
+                                  }
+                                  if (previewBn != null) {
+                                    return (
+                                      <div
+                                        key={fcNumber}
+                                        className="bionapp-chip-fc bionapp-chip-fc--preview"
+                                      >
+                                        <span className="bionapp-chip-fc__label">
+                                          {t("chips.fc.slot", { n: fcNumber })}
+                                        </span>
+                                        <span className="bionapp-chip-fc__muestra">{previewBn}</span>
+                                      </div>
+                                    );
+                                  }
+                                  return (
+                                    <div key={fcNumber} className="bionapp-chip-fc">
+                                      <span className="bionapp-chip-fc__label">
+                                        {t("chips.fc.slot", { n: fcNumber })}
+                                      </span>
+                                      <span className="bionapp-chip-fc__vacio">{t("common.empty")}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {pteChipPanelsWithFree.length > 0 ? (
+                      <Button
+                        size="sm"
+                        className="h-8 gap-2 bionapp-btn-green"
+                        onClick={() => void handleCreatePteChip()}
+                        disabled={
+                          savingPteChip ||
+                          !pteChipNumChip ||
+                          selectedPteChipItems.some(
+                            (item) =>
+                              pteChipFcByItem[
+                                pteChipLmKey(item.NumBN, item.NumLectura, item.NumLectMarc)
+                              ] == null
+                          )
+                        }
+                      >
+                        {savingPteChip ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Cpu className="h-4 w-4" />
+                        )}
+                        {t("actions.pteChipLoadConfirm")}
+                      </Button>
+                      ) : null}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-2"
+                        onClick={() => setPteChipConfirmOpen(false)}
+                        disabled={savingPteChip}
+                      >
+                        <X className="h-4 w-4" />
+                        {t("actions.cancel")}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             )}
             {mode === "hacer" && (
-              <div className="flex flex-wrap items-center gap-2 mb-4">
+              <div className="flex flex-col gap-3 mb-4">
+                <div className="flex flex-wrap items-center gap-2">
                 <Button
                   size="sm"
                   variant="outline"
@@ -1676,8 +2615,9 @@ function ActionsPage() {
                 {isAdmin &&
                   (!hacerEditMode ? (
                     <Button
+                      type="button"
                       size="sm"
-                      className="gap-2 bionapp-btn-green"
+                      className="gap-2"
                       onClick={handleHacerEditStart}
                       disabled={loading || savingHacer}
                     >
@@ -1711,10 +2651,90 @@ function ActionsPage() {
                       </Button>
                     </>
                   ))}
+                {isAdmin && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="gap-2 bionapp-btn-green"
+                    onClick={() => setMandarConfirmOpen(true)}
+                    disabled={loading || savingHacer || hacerEditMode || muestras.length === 0}
+                  >
+                    {savingHacer && !hacerEditMode ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    {t("actions.sendToRead")}
+                  </Button>
+                )}
                 {hacerEditMode && (
                   <span className="text-xs text-muted-foreground">
                     {t("actions.hacerEditing", { count: editedMuestras.length })}
                   </span>
+                )}
+                </div>
+                {isAdmin && mandarConfirmOpen && !hacerEditMode ? (
+                  <div className="bionapp-panel p-4 border border-slate-200 dark:border-slate-800">
+                    <p className="text-sm mb-3">{t("actions.sendToReadConfirm", { count: muestras.length })}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="h-8 gap-2 bionapp-btn-green"
+                        onClick={() => void handleMandarALeer()}
+                        disabled={savingHacer || muestras.length === 0}
+                      >
+                        {savingHacer ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                        {t("actions.sendToReadYes")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-2"
+                        onClick={() => setMandarConfirmOpen(false)}
+                        disabled={savingHacer}
+                      >
+                        <X className="h-4 w-4" />
+                        {t("actions.sendToReadNo")}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+                {isAdmin && hacerEditMode && (
+                  <div className="flex flex-wrap items-end gap-2">
+                    <label className="min-w-[180px]">
+                      <span className="block text-xs text-muted-foreground mb-1">
+                        {t("actions.col.lnExtracted")}
+                      </span>
+                      <select
+                        value={bulkLotId}
+                        onChange={(e) => setBulkLotId(e.target.value)}
+                        className={HACER_SELECT_CLASS}
+                        disabled={loading || savingHacer}
+                      >
+                        <option value="">{t("common.selectPlaceholder")}</option>
+                        {lotesExtraido.map((lot) => (
+                          <option key={lot.id} value={lot.id}>
+                            {lotOptionLabel(lot, lotesExtraido)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      onClick={() => void handleApplyLnAll()}
+                      disabled={loading || savingHacer || !bulkLotId}
+                    >
+                      {t("actions.applyLnAll")}
+                    </Button>
+                  </div>
                 )}
               </div>
             )}
@@ -1766,7 +2786,8 @@ function ActionsPage() {
               </div>
             )}
             {mode === "leer-extraido" && (
-              <div className="flex flex-wrap items-center gap-2 mb-4">
+              <div className="flex flex-col gap-3 mb-4">
+                <div className="flex flex-wrap items-center gap-2">
                 {isAdmin &&
                   (!leerEditMode ? (
                     <Button
@@ -1810,6 +2831,41 @@ function ActionsPage() {
                     {t("actions.leerExtraidoEditing", { count: editedLeerMuestras.length })}
                   </span>
                 )}
+                </div>
+                {isAdmin && leerEditMode && (
+                  <div className="flex flex-wrap items-end gap-2">
+                    <label className="min-w-[180px]">
+                      <span className="block text-xs text-muted-foreground mb-1">
+                        {t("actions.col.readingDate")}
+                      </span>
+                      <Input
+                        type="date"
+                        value={bulkFechaLectura}
+                        onChange={(e) => setBulkFechaLectura(e.target.value)}
+                        className="h-8 text-sm min-w-[160px]"
+                        disabled={savingLeer}
+                      />
+                    </label>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      onClick={handleFechaLecturaHoyAll}
+                      disabled={savingLeer}
+                    >
+                      {t("actions.today")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      onClick={handleApplyFechaLecturaAll}
+                      disabled={savingLeer || !bulkFechaLectura}
+                    >
+                      {t("actions.applyLnAll")}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
             <Table>
@@ -1843,6 +2899,27 @@ function ActionsPage() {
                     </>
                   ) : (
                     <>
+                      {mode === "marcar" ? (
+                        <TableHead className="w-10">
+                          <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5 shrink-0 accent-slate-900 dark:accent-slate-100"
+                            checked={allMarcarSelected}
+                            onChange={(e) => toggleMarcarAll(e.target.checked)}
+                            aria-label={t("actions.col.select")}
+                          />
+                        </TableHead>
+                      ) : mode === "pte-chip" ? (
+                        <TableHead className="w-10">
+                          <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5 shrink-0 accent-slate-900 dark:accent-slate-100"
+                            checked={allPteChipSelected}
+                            onChange={(e) => togglePteChipAll(e.target.checked)}
+                            aria-label={t("actions.col.select")}
+                          />
+                        </TableHead>
+                      ) : null}
                       <TableHead>NumBN</TableHead>
                       <TableHead>Petic</TableHead>
                       <TableHead>Posic</TableHead>
@@ -1857,7 +2934,9 @@ function ActionsPage() {
                       {mode === "hacer" && (
                         <>
                           <TableHead>Medusa</TableHead>
-                          <TableHead>{t("actions.col.viscosityGrade")}</TableHead>
+                          {hacerEditMode ? (
+                            <TableHead>{t("actions.col.lnExtracted")}</TableHead>
+                          ) : null}
                         </>
                       )}
                       {(mode === "tirar" || mode === "marcar") && (
@@ -1886,7 +2965,7 @@ function ActionsPage() {
                       : mode === "hacer" && hacerEditMode
                         ? editedMuestras
                         : muestras
-                ).map((muestra) => {
+                ).map((muestra, rowIndex) => {
                   if (mode === "leer-marcado") {
                     const row = muestra as LeerMarcadoRow;
                     const marcadoPreview = leerMarcadoEditMode
@@ -2176,32 +3255,61 @@ function ActionsPage() {
                       pteChipRowClass
                     )}
                   >
+                    {mode === "marcar" ? (
+                      <TableCell className={pteChipCellClass}>
+                        <input
+                          type="checkbox"
+                          className="h-3.5 w-3.5 shrink-0 accent-slate-900 dark:accent-slate-100"
+                          checked={marcarSelected.has(marcarRowKey(muestra.NumBN, muestra.NumLectura))}
+                          onChange={(e) =>
+                            toggleMarcarRow(
+                              marcarRowKey(muestra.NumBN, muestra.NumLectura),
+                              e.target.checked
+                            )
+                          }
+                          aria-label={t("actions.col.select")}
+                        />
+                      </TableCell>
+                    ) : mode === "pte-chip" ? (
+                      <TableCell className={pteChipCellClass}>
+                        <input
+                          type="checkbox"
+                          className="h-3.5 w-3.5 shrink-0 accent-slate-900 dark:accent-slate-100"
+                          checked={pteChipSelected.has(pteChipRowKey(muestra.NumBN))}
+                          onChange={(e) =>
+                            togglePteChipRow(pteChipRowKey(muestra.NumBN), e.target.checked)
+                          }
+                          aria-label={t("actions.col.select")}
+                        />
+                      </TableCell>
+                    ) : null}
                     <TableCell className={pteChipCellClass}>{muestra.NumBN ?? "—"}</TableCell>
                     {mode === "hacer" && hacerEditMode ? (
                       <>
                         <TableCell>
                           <Input
-                            value={muestra.Petic ?? ""}
+                            value={muestra.Petic == null ? "" : String(muestra.Petic)}
                             onChange={(e) =>
-                              handleHacerFieldChange(Number(muestra.NumBN), "Petic", e.target.value)
+                              handleHacerFieldChange(rowIndex, "Petic", e.target.value)
+                            }
+                            className="h-8 text-xs min-w-[80px]"
+                            autoFocus={rowIndex === 0}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={muestra.Posic == null ? "" : String(muestra.Posic)}
+                            onChange={(e) =>
+                              handleHacerFieldChange(rowIndex, "Posic", e.target.value)
                             }
                             className="h-8 text-xs min-w-[80px]"
                           />
                         </TableCell>
                         <TableCell>
                           <Input
-                            value={muestra.Posic ?? ""}
+                            value={muestra.Proces == null ? "" : String(muestra.Proces)}
                             onChange={(e) =>
-                              handleHacerFieldChange(Number(muestra.NumBN), "Posic", e.target.value)
-                            }
-                            className="h-8 text-xs min-w-[80px]"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={muestra.Proces ?? ""}
-                            onChange={(e) =>
-                              handleHacerFieldChange(Number(muestra.NumBN), "Proces", e.target.value)
+                              handleHacerFieldChange(rowIndex, "Proces", e.target.value)
                             }
                             className="h-8 text-xs min-w-[80px]"
                           />
@@ -2211,7 +3319,7 @@ function ActionsPage() {
                             value={muestra.Muestra ?? ""}
                             onChange={(e) =>
                               handleHacerFieldChange(
-                                Number(muestra.NumBN),
+                                rowIndex,
                                 "Muestra",
                                 e.target.value === "" ? null : parseInt(e.target.value, 10)
                               )
@@ -2231,7 +3339,7 @@ function ActionsPage() {
                             value={muestra.Dx ?? ""}
                             onChange={(e) =>
                               handleHacerFieldChange(
-                                Number(muestra.NumBN),
+                                rowIndex,
                                 "Dx",
                                 e.target.value === "" ? null : parseInt(e.target.value, 10)
                               )
@@ -2248,31 +3356,41 @@ function ActionsPage() {
                         </TableCell>
                         <TableCell>
                           <Input
-                            value={muestra.Pellet ?? ""}
+                            value={muestra.Pellet == null ? "" : String(muestra.Pellet)}
                             onChange={(e) =>
-                              handleHacerFieldChange(Number(muestra.NumBN), "Pellet", e.target.value)
+                              handleHacerFieldChange(rowIndex, "Pellet", e.target.value)
                             }
                             className="h-8 text-xs min-w-[80px]"
                           />
                         </TableCell>
                         <TableCell>
                           <Input
-                            value={muestra.Medusa ?? ""}
+                            value={muestra.Medusa == null ? "" : String(muestra.Medusa)}
                             onChange={(e) =>
-                              handleHacerFieldChange(Number(muestra.NumBN), "Medusa", e.target.value)
+                              handleHacerFieldChange(rowIndex, "Medusa", e.target.value)
                             }
                             className="h-8 text-xs min-w-[100px]"
                           />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            value={muestra.Visco_grado ?? ""}
+                          <select
+                            value={findLotId(lotesExtraido, { id: muestra.Id_LtE, LN: muestra.LN }) ?? ""}
                             onChange={(e) =>
-                              handleHacerFieldChange(Number(muestra.NumBN), "Visco_grado", e.target.value)
+                              handleHacerFieldChange(
+                                rowIndex,
+                                "Id_LtE",
+                                e.target.value === "" ? null : Number(e.target.value)
+                              )
                             }
-                            className="h-8 text-xs min-w-[72px]"
-                            inputMode="numeric"
-                          />
+                            className={HACER_SELECT_CLASS}
+                          >
+                            <option value="">{t("common.selectPlaceholder")}</option>
+                            {lotesExtraido.map((lot) => (
+                              <option key={lot.id} value={lot.id}>
+                                {lotOptionLabel(lot, lotesExtraido)}
+                              </option>
+                            ))}
+                          </select>
                         </TableCell>
                       </>
                     ) : (
@@ -2300,12 +3418,7 @@ function ActionsPage() {
                           {mode === "hacer" ? displayCell(muestra.Pellet) : muestra.Pellet ?? "—"}
                         </TableCell>
                         {mode === "hacer" && (
-                          <>
-                            <TableCell className={pteChipCellClass}>{displayCell(muestra.Medusa)}</TableCell>
-                            <TableCell className={pteChipCellClass}>
-                              {displayCell(muestra.Visco_grado)}
-                            </TableCell>
-                          </>
+                          <TableCell className={pteChipCellClass}>{displayCell(muestra.Medusa)}</TableCell>
                         )}
                       </>
                     )}
@@ -2397,8 +3510,10 @@ function ActionsPage() {
                 })}
               </TableBody>
             </Table>
+              </>
+            )}
           </div>
-        )}
+        ) : null}
     </SubpageShell>
   );
 }

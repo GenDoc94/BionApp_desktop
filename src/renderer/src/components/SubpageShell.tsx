@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowLeft, type LucideIcon } from "lucide-react";
 
 import AppFooter from "./AppFooter";
+import { buildBackToAppPath } from "../lib/navegacionMuestra";
 import { Button } from "./ui/button";
 import { cn } from "./ui/utils";
 
@@ -48,7 +49,7 @@ export default function SubpageShell({
                 variant="outline"
                 size="sm"
                 className="gap-2"
-                onClick={() => (onBack ? onBack() : navigate("/"))}
+                onClick={() => (onBack ? onBack() : navigate(buildBackToAppPath()))}
               >
                 <ArrowLeft className="h-4 w-4" />
                 {t("nav.backToApp")}

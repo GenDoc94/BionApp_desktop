@@ -14,6 +14,10 @@ import {
   parseLotesHighlight,
   resolveHighlightedLotId,
   sortLots,
+  countEstadosExtraido,
+  countEstadosLm,
+  estadoMuestraColor,
+  loteLmMediaColor,
   type LoteRow,
 } from "./lotesPageData"
 
@@ -65,7 +69,9 @@ describe("lotesPageData", () => {
       tipo: "extraido",
       ln: "240515028",
     })
-    expect(buildLotesHighlightPath({ tipo: "membrana", id: 4 })).toBe("/lotes?tipo=membrana&id=4")
+    expect(buildLotesHighlightPath({ tipo: "membrana", id: 4 })).toBe(
+      "/calidad?tipo=membrana&id=4&tab=lotes"
+    )
   })
 
   it("resolves highlight by ln fallback", () => {
@@ -90,5 +96,42 @@ describe("lotesPageData", () => {
       { lotId: 1, NumBN: 72, NumLectura: 2, NumLectMarc: 1 },
     ])
     expect(filterLots(lots, extra, lm, "99").map((l) => l.id)).toEqual([3])
+  })
+
+  it("colors extraido samples by Estado_Muestra and counts them", () => {
+    expect(estadoMuestraColor(1)).toBe("red")
+    expect(estadoMuestraColor(2)).toBe("yellow")
+    expect(estadoMuestraColor(3)).toBe("green")
+    expect(estadoMuestraColor(null)).toBe("none")
+    const extra = groupUsosExtraido([
+      { Id_LtE: 1, NumBN: 10, Estado_Muestra: 3 },
+      { Id_LtE: 1, NumBN: 11, Estado_Muestra: 1 },
+      { Id_LtE: 1, NumBN: 12, Estado_Muestra: 2 },
+      { Id_LtE: 1, NumBN: 13, Estado_Muestra: null },
+    ])
+    expect(countEstadosExtraido(extra.get(1) ?? [])).toEqual({
+      green: 1,
+      yellow: 1,
+      red: 1,
+      none: 1,
+    })
+  })
+
+  it("colors marcado/membrana readings by Media_LM vs 3", () => {
+    expect(loteLmMediaColor(3.1)).toBe("green")
+    expect(loteLmMediaColor(3)).toBe("green")
+    expect(loteLmMediaColor(2.9)).toBe("red")
+    expect(loteLmMediaColor(null)).toBe("none")
+    const lm = groupUsosLm([
+      { lotId: 1, NumBN: 1, NumLectura: 1, NumLectMarc: 1, Media_LM: 4 },
+      { lotId: 1, NumBN: 2, NumLectura: 1, NumLectMarc: 1, Media_LM: 1.5 },
+      { lotId: 1, NumBN: 3, NumLectura: 1, NumLectMarc: 1, Izq_LM: 2, Dcha_LM: 2 },
+    ])
+    expect(countEstadosLm(lm.get(1) ?? [])).toEqual({
+      green: 1,
+      yellow: 0,
+      red: 2,
+      none: 0,
+    })
   })
 })

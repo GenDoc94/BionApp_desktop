@@ -29,6 +29,7 @@
   "nav": {
     "backToApp": "Back to app",
     "preselect": "Preselection",
+    "calidad": "Quality",
     "lotes": "Lots",
     "chips": "Chips",
     "actions": "Actions",
@@ -247,7 +248,7 @@
     "pctCompleted": "% Completed",
     "note": {
       "noDate": "{{count}} sample(s) with status 1–3 and no extraction date are omitted from the chart.",
-      "noStatus": "{{count}} sample(s) with no status (“Process” queue) are not included."
+      "noStatus": "{{count}} sample(s) with no status (“Prepare” queue) are not included."
     },
     "period": {
       "samples": "{{count}} samples",
@@ -312,7 +313,7 @@
     },
     "actions": {
       "title": "Actions",
-      "hacer": "**Process**: process samples you have entered that are not yet extracted.",
+      "hacer": "**Prepare**: process samples you have entered that are not yet extracted.",
       "leerExtraido": "**Read extracted**: once extracted, used to enter extracted concentrations.",
       "tirar": "**Discard**: for those with little extracted material.",
       "marcar": "**Label**: for extracted samples pending labeling.",
@@ -322,6 +323,7 @@
     "other": {
       "title": "Other screens",
       "chips": "**Chips**: manage chips and FC slots linked to labeled readings.",
+      "calidad": "**Quality**: lot catalog (extraction, labeling and membrane) and air-filter change log.",
       "lotes": "**Lots**: catalog of extraction, labeling and membrane lots, with the linked samples and readings.",
       "calcs": "**Calculations**: lab utilities (e.g. dilutions) from already recorded data.",
       "options": "**Options**: profile, variables, tags, statistics, documents, export, appearance and manual."
@@ -628,6 +630,46 @@
       "delete": "Delete chip {{num}} - {{name}}?"
     }
   },
+  "calidad": {
+    "title": "Quality",
+    "tab": {
+      "lotes": "Lots",
+      "filtros": "Filters"
+    }
+  },
+  "filtros": {
+    "loading": "Loading filters...",
+    "hint": "Record each air-filter placement. If one is already in use, this date closes it and opens the next. Pick today or the day the change was made.",
+    "date": "Placement date",
+    "today": "Today",
+    "register": "Record change",
+    "registerFirst": "Record placement",
+    "registerHint": "Retire filter no. {{current}} and place no. {{next}} on {{date}}.",
+    "current": "Current filter",
+    "currentNone": "No filter in use. Record the first placement.",
+    "currentNum": "Filter no. {{num}}",
+    "placedOn": "Placed on {{date}}",
+    "daysInUse": "{{count}} days in use",
+    "avg": "How often it is changed",
+    "daysAvg": "{{count}} days on average",
+    "changesCount": "{{count}} completed changes",
+    "total": "Filters recorded",
+    "totalCount": "{{count}} filters",
+    "num": "Filter no.",
+    "coloc": "Placement date",
+    "retir": "Removal date",
+    "days": "Days",
+    "daysCount": "{{count}} days",
+    "open": "In use",
+    "empty": "No filter changes yet. Record the first placement above.",
+    "toast": {
+      "loadError": "Error loading filters",
+      "invalidDate": "Enter a valid date",
+      "beforeCurrent": "The date cannot be before the current filter was placed",
+      "saved": "Filter change recorded",
+      "saveError": "Error saving the filter change"
+    }
+  },
   "lotes": {
     "title": "Lots",
     "loading": "Loading lots...",
@@ -644,6 +686,13 @@
     "noUsos": "No samples or readings linked yet.",
     "samplesCount": "{{count}} samples",
     "readingsCount": "{{count}} readings",
+    "viewStates": "View statuses",
+    "statesHintExtraido": "Color by Estado_Muestra: green (3), yellow (2), red (1). The numbers next to the LN are the counts for each color.",
+    "statesHintMarcado": "Color by labeled-reading mean: green if ≥ 3, red if < 3. The numbers next to the LN are the counts for each color.",
+    "statesCountTitle": "Status counts for this LN",
+    "countGreen": "{{count}} green",
+    "countYellow": "{{count}} yellow",
+    "countRed": "{{count}} red",
     "tipo": {
       "extraido": "Extraction",
       "marcado": "Labeling",
@@ -674,6 +723,7 @@
     "pending": "Pending",
     "inSamples": "In Samples",
     "emptyPending": "No requests pending a Bionano number.",
+    "emptyPendingDx": "No pending requests with that diagnosis.",
     "emptyInSamples": "No requests have been moved to Samples yet.",
     "bnNo": "Bionano no.",
     "actions": "Actions",
@@ -695,6 +745,7 @@
     "nextPage": "Next page",
     "pageSize": "Page size",
     "all": "All",
+    "filterDx": "Filter pending by diagnosis",
     "inSamplesHint": "To remove a request from this list, delete its sample in the main app first.",
     "dxSuffix": "· Dx: {{dx}}",
     "toast": {
@@ -725,7 +776,7 @@
   },
   "actions": {
     "title": "Actions",
-    "hacer": "Process",
+    "hacer": "Prepare",
     "leerExtraido": "Read extracted",
     "tirar": "Discard?",
     "marcar": "Label",
@@ -735,9 +786,9 @@
     "saveAll": "Save all",
     "print": {
       "empty": "There are no samples to print",
-      "docTitle": "Process — Samples",
-      "iframeTitle": "Process print",
-      "heading": "Process — Samples with Estado_Muestra = NULL",
+      "docTitle": "Prepare — Samples",
+      "iframeTitle": "Prepare print",
+      "heading": "Prepare — Samples",
       "meta": "{{fecha}} · {{count}} sample(s)",
       "wbAria": "WB wash log",
       "prepareError": "Could not prepare printing",
@@ -745,15 +796,31 @@
     },
     "edit": "Edit",
     "cancel": "Cancel",
-    "hacerHeading": "Samples with Estado_Muestra = NULL",
+    "hacerHeading": "Samples <status></status>",
+    "emptyResults": "No samples meet the criteria",
     "leerExtraidoHeading": "Read extracted — Estado_Muestra = 2 and unquantified readings (left, center and right empty)",
-    "leerMarcadoHeading": "Read labeled — Estado_Muestra = 2, labeled reading created and unquantified (Izq_LM and Dcha_LM empty)",
+    "leerMarcadoHeading": "Read labeled — <status></status> labeled reading created and unquantified (Izq_LM and Dcha_LM empty)",
     "tirarHeading": "Discard? — <status></status> and <mean></mean> {{cmp}} {{threshold}}",
     "extractedMeanLabel": "Extracted reading mean",
     "labeledMeanLabel": "Labeled reading mean",
     "marcarHeading": "Label — <status></status> and <mean></mean> {{cmp}} {{threshold}}",
     "pteChipHeading": "Pending chip — <status></status> no chip (<mean></mean> ≥ {{minMedia}}) or chip with <repeat></repeat>",
     "hacerEditing": "Editing {{count}} sample(s). NumBN cannot be changed.",
+    "sendToRead": "Send to read",
+    "sendToReadConfirm": "Send {{count}} sample(s) to read? A reading will be created and they will move to pending (yellow).",
+    "sendToReadYes": "Yes, send",
+    "sendToReadNo": "No",
+    "applyLnAll": "Apply to all",
+    "today": "Today",
+    "marcarCreate": "Create labeled readings",
+    "marcarCreateConfirm": "Create",
+    "marcarCreateHint": "The matching labeled reading will be created for {{count}} row(s). Choose the labeling and membrane LN for all of them.",
+    "marcarSelected": "{{count}} selected",
+    "pteChipLoad": "Load onto chip",
+    "pteChipLoadConfirm": "Load",
+    "pteChipLoadHint": "Pick a chip with free FC slots. Each chip has 3 FCs; they are assigned in order to {{count}} labeled reading(s).",
+    "pteChipQueueItem": "BN {{numBN}} · Reading {{numLectura}} · LM {{numLectMarc}}",
+    "pteChipGoCreate": "Create chip",
     "leerExtraidoEditing": "Editing {{count}} reading(s). Mean and CV are previewed when left, center and right are filled; they are confirmed on save.",
     "preview": {
       "lm": "Preview while typing Izq_LM and Dcha_LM (confirmed on save)",
@@ -763,6 +830,10 @@
       "sampleType": "Sample type",
       "diagnosis": "Diagnosis",
       "viscosityGrade": "Viscosity grade",
+      "lnExtracted": "Extracted LN",
+      "lnMarcado": "Labeling LN",
+      "lnMembrana": "Membrane LN",
+      "select": "Select",
       "readingNo": "Reading no.",
       "readingDate": "Reading date",
       "extractedMean": "Extracted mean",
@@ -770,7 +841,8 @@
       "lmNo": "LM no.",
       "mean": "Mean",
       "type": "Type",
-      "pendingChip": "Pending chip (by labeled reading)"
+      "pendingChip": "Pending chip (by labeled reading)",
+      "fc": "FC"
     },
     "marcarHelp": {
       "amber": "Amber — relabel: 1 labeled reading (LM) on that extracted reading and ≥2 chips with !. With 2 LMs on the same extracted reading it does not appear (no DNA for another attempt).",
@@ -798,7 +870,28 @@
       "hacerPartial": "Could not save {{failed}} of {{total}} sample(s). Check the console.",
       "hacerSaved": "{{count}} sample(s) updated successfully",
       "loadSamples": "Error loading samples",
-      "noHacer": "No samples with Estado_Muestra = NULL",
+      "noHacer": "No samples without status",
+      "applyLnNeed": "Select an extraction LN",
+      "applyLn": "LN applied to {{count}} sample(s)",
+      "applyLnError": "Error applying the LN",
+      "applyDateNeed": "Select a reading date",
+      "applyDate": "Reading date applied to {{count}} reading(s)",
+      "applyDateToday": "Today’s date applied to {{count}} reading(s)",
+      "marcarNeedSelection": "Select at least one row",
+      "marcarNeedLots": "Select a labeling LN and a membrane LN",
+      "marcarCreated": "{{count}} labeled reading(s) created",
+      "marcarCreateError": "Error creating labeled readings",
+      "pteChipNoChips": "There are no chips in the catalog. Create them in Chips.",
+      "pteChipNoFree": "No chip has free FC slots",
+      "pteChipNeedChip": "Select a chip",
+      "pteChipNeedFc": "Assign an FC to each labeled reading",
+      "pteChipFcTaken": "FC {{fc}} is already used in this load",
+      "pteChipNotEnough": "This chip only has {{free}} free slot(s) and {{count}} labeled reading(s) are selected",
+      "pteChipAlready": "BN {{numBN}} R{{numLectura}} LM{{numLectMarc}} is already on chip #{{numChip}}",
+      "pteChipLoaded": "{{count}} labeled reading(s) loaded onto chip #{{numChip}}",
+      "pteChipLoadError": "Error loading onto chip",
+      "sendToRead": "{{count}} sample(s) sent to read",
+      "sendToReadError": "Error sending samples to read",
       "loadReadings": "Error loading readings",
       "noLeerExtraido": "No readings pending quantification (left, center and right empty) in status-2 samples",
       "noEstado2": "No samples with Estado_Muestra = 2",
@@ -819,7 +912,8 @@
     "tab": {
       "extraction": "DNA extraction",
       "labeling": "DNA labeling",
-      "dilution": "DNA dilution"
+      "dilution": "DNA dilution",
+      "tubes": "Prepare tubes"
     },
     "nSamplesMax6": "No. of samples (max. 6)",
     "nSamplesMax12": "No. of samples (max. 12)",
@@ -913,6 +1007,45 @@
     },
     "err": {
       "invalidMean": "Invalid DNA mean"
+    }
+  },
+  "tubos": {
+    "title": "Prepare tubes",
+    "help": "Target: {{cellsM}} × 10⁶ cells (1.5 M) per tube. Transfer volume = 1500 / cell count (10⁹/L). CSB (Cold Stabilizing Buffer) makes up the final volume: {{volCryo}} µL for cryotube and {{volSp}} µL for peripheral blood.",
+    "badge": {
+      "targetCells": "1.5 M cells",
+      "cryo": "Cryotube: {{vol}} µL",
+      "sp": "Peripheral blood: {{vol}} µL"
+    },
+    "volumes": "Volumes per tube",
+    "empty": "There are no tubes. Add a cryotube or peripheral blood.",
+    "addCryo": "Add cryotube",
+    "addSp": "Add PB",
+    "remove": "Remove",
+    "type": {
+      "cryo": "Cryotube",
+      "sp": "Peripheral blood"
+    },
+    "col": {
+      "type": "Type",
+      "count": "Cell count (10⁹/L)",
+      "transfer": "Transfer vol. (µL)",
+      "csb": "CSB vol. (µL)",
+      "final": "Final vol. (µL)",
+      "notes": "Notes"
+    },
+    "note": {
+      "exceedsFinal": "Transfer exceeds final volume; cell count is too low"
+    },
+    "err": {
+      "invalidCount": "Invalid cell count"
+    },
+    "print": {
+      "empty": "There are no tubes to print",
+      "heading": "Volumes per tube",
+      "meta": "{{fecha}} · {{count}} tube(s)",
+      "prepareError": "Could not prepare printing",
+      "dialogError": "Error opening the print dialog"
     }
   },
   "auth": {

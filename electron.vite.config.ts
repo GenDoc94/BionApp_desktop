@@ -12,7 +12,8 @@ export default defineConfig({
   },
   renderer: {
     resolve: {
-      extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
+      // Prefer TS/TSX so stale tsc emit (*.js next to source) cannot hide UI changes.
+      extensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
       alias: {
         '@renderer': resolve('src/renderer/src'),
         '@shared': resolve('src/shared'),

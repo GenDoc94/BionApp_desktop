@@ -63,6 +63,41 @@ export function parseMuestraNavegacionFromSearchParams(
   };
 }
 
+const LAST_MUESTRA_NUMBN_KEY = "bionapp:lastMuestraNumBN"
+
+export function readLastMuestraNumBN(): number | null {
+  try {
+    const raw = window.sessionStorage.getItem(LAST_MUESTRA_NUMBN_KEY)
+    if (!raw) return null
+    if (/^\d+$/.test(raw.trim())) {
+      const n = Number(raw)
+      return Number.isFinite(n) ? n : null
+    }
+    const parsed = JSON.parse(raw) as { numBN?: unknown }
+    const n = Number(parsed?.numBN)
+    return Number.isFinite(n) ? n : null
+  } catch {
+    return null
+  }
+}
+
+export function saveLastMuestraNumBN(numBN: unknown): void {
+  const parsed = Number(numBN)
+  if (!Number.isFinite(parsed)) return
+  try {
+    window.sessionStorage.setItem(LAST_MUESTRA_NUMBN_KEY, String(parsed))
+  } catch {
+    // sessionStorage no disponible
+  }
+}
+
+/** Ruta de «Volver a la app» al BN que se estaba viendo. */
+export function buildBackToAppPath(): string {
+  const numBN = readLastMuestraNumBN()
+  if (numBN == null) return "/"
+  return buildMuestraAppPath({ numBN })
+}
+
 export function buildMuestraAppPath(target: MuestraNavegacionTarget): string {
   const params = new URLSearchParams();
   params.set("bn", String(target.numBN));

@@ -182,7 +182,7 @@
   }
 }
 
-/* Cálculos: dos bloques de pestañas (preparación vs dilución para marcaje) */
+/* Cálculos: bloques de pestañas (preparación, dilución, preparar tubos) */
 .bionapp-calcs-tabs-panel {
   display: inline-flex;
   align-items: center;
@@ -198,7 +198,8 @@
   background: color-mix(in oklab, var(--muted) 40%, var(--card));
 }
 
-.bionapp-calcs-tabs-panel--dilucion {
+.bionapp-calcs-tabs-panel--dilucion,
+.bionapp-calcs-tabs-panel--tubos {
   border-color: color-mix(in oklab, var(--border) 90%, transparent);
   background: color-mix(in oklab, var(--muted) 40%, var(--card));
 }
@@ -220,42 +221,37 @@
 }
 
 .bionapp-calcs-tabs-panel--prep [data-slot="tabs-trigger"][data-state="active"],
-.bionapp-calcs-tabs-panel--dilucion [data-slot="tabs-trigger"][data-state="active"] {
+.bionapp-calcs-tabs-panel--dilucion [data-slot="tabs-trigger"][data-state="active"],
+.bionapp-calcs-tabs-panel--tubos [data-slot="tabs-trigger"][data-state="active"] {
   background: var(--bion-info-tab-bg);
   border-color: var(--bion-info-tab-border);
   color: var(--bion-info-tab-text);
 }
 
-/* Logo (login / alta de usuario): sin fondo, escala con la pantalla */
+/* Logo (login / alta de usuario): wordmark BionApp, escala por altura */
 .bionapp-logo-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: min(92vw, 36rem);
-  max-width: 100%;
 }
 
 .bionapp-logo {
   display: block;
-  width: 100%;
-  height: auto;
-  max-height: clamp(3rem, 14vh, 7.5rem);
+  width: auto;
+  height: clamp(4.5rem, 16vh, 7.5rem);
+  max-width: min(36rem, 92vw);
   object-fit: contain;
 }
 
 @media (min-width: 640px) {
   .bionapp-logo {
-    max-height: clamp(3.5rem, 12vh, 8.5rem);
+    height: clamp(5rem, 14vh, 8rem);
   }
 }
 
 @media (min-width: 1024px) {
-  .bionapp-logo-wrap {
-    width: min(48vw, 40rem);
-  }
-
   .bionapp-logo {
-    max-height: clamp(4rem, 11vh, 9.5rem);
+    height: clamp(5.25rem, 12vh, 8.5rem);
   }
 }
 
@@ -322,18 +318,18 @@
 }
 
 .bionapp-login--dense .bionapp-login__logo {
-  max-height: clamp(2.5rem, 10vh, 5.75rem);
+  height: clamp(4rem, 14vh, 7rem);
 }
 
 @media (min-width: 640px) {
   .bionapp-login--dense .bionapp-login__logo {
-    max-height: clamp(2.75rem, 9vh, 6.25rem);
+    height: clamp(4.25rem, 12vh, 7.5rem);
   }
 }
 
 @media (min-width: 1024px) {
   .bionapp-login--dense .bionapp-login__logo {
-    max-height: clamp(3rem, 8.5vh, 6.75rem);
+    height: clamp(4.5rem, 11vh, 8rem);
   }
 }
 
@@ -1938,6 +1934,35 @@ input[type="number"] {
   line-height: 1.2;
 }
 
+.bionapp-chip-card--pick {
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.bionapp-chip-card--pick:hover {
+  border-color: #94a3b8;
+}
+
+.bionapp-chip-card--pick:disabled {
+  cursor: not-allowed;
+}
+
+.bionapp-chip-card--selected {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 1px #0f172a;
+}
+
+:is(.dark, [data-theme="dark"]) .bionapp-chip-card--selected {
+  border-color: #e2e8f0;
+  box-shadow: 0 0 0 1px #e2e8f0;
+}
+
+.bionapp-chip-fc--preview {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--bion-warn-fill, #eab308) 14%, transparent);
+}
+
 /* Preselección: formulario compacto y Dx estrecho */
 .bionapp-preselect-add-row {
   display: flex;
@@ -2085,6 +2110,18 @@ input[type="number"] {
   cursor: default;
 }
 
+.bionapp-filtros-stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 800px) {
+  .bionapp-filtros-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .bionapp-lote-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -2167,6 +2204,54 @@ input[type="number"] {
 .bionapp-lote-uso-btn:hover {
   border-color: color-mix(in oklab, var(--bion-info-solid) 40%, var(--bion-border-subtle, #cbd5e1));
   background: var(--bion-info-panel-bg, #eff6ff);
+}
+
+.bionapp-lote-uso-btn--green {
+  background: color-mix(in oklab, var(--bion-success-fill) 16%, var(--card));
+  border-color: color-mix(in oklab, var(--bion-success-fill) 50%, var(--border));
+  color: var(--bion-success-fill);
+  font-weight: 600;
+}
+
+.bionapp-lote-uso-btn--yellow {
+  background: color-mix(in oklab, var(--bion-warn-fill) 18%, var(--card));
+  border-color: color-mix(in oklab, var(--bion-warn-fill) 50%, var(--border));
+  color: var(--bion-warn-text, var(--bion-warn-fill));
+  font-weight: 600;
+}
+
+.bionapp-lote-uso-btn--red {
+  background: color-mix(in oklab, var(--bion-danger-fill) 14%, var(--card));
+  border-color: color-mix(in oklab, var(--bion-danger-fill) 50%, var(--border));
+  color: var(--bion-danger-fill);
+  font-weight: 600;
+}
+
+.bionapp-lote-uso-btn--green:hover,
+.bionapp-lote-uso-btn--yellow:hover,
+.bionapp-lote-uso-btn--red:hover {
+  filter: brightness(0.97);
+}
+
+.bionapp-lote-estado-counts {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.bionapp-lote-estado-counts .is-green {
+  color: var(--bion-success-fill);
+}
+
+.bionapp-lote-estado-counts .is-yellow {
+  color: var(--bion-warn-fill);
+}
+
+.bionapp-lote-estado-counts .is-red {
+  color: var(--bion-danger-fill);
 }
 
 .bionapp-lote-card--flash {

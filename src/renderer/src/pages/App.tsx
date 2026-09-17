@@ -11,7 +11,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
-import { Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, Save, X, Plus, Minus, Cpu, ClipboardList, LogOut, CircleDot, Loader2, ArrowDownToLine, Calculator, CircleEllipsis, TriangleAlert, RefreshCw, MessageSquare, Pickaxe, Tag, ChevronDown, Layers, User, ShieldCheck } from "lucide-react";
+import { Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, Save, X, Plus, Minus, Cpu, ClipboardList, LogOut, CircleDot, Loader2, ArrowDownToLine, Calculator, CircleEllipsis, TriangleAlert, RefreshCw, MessageSquare, Pickaxe, Tag, ChevronDown, BadgeCheck, User, ShieldCheck } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -40,6 +40,8 @@ import {
   applyMuestraNavegacion,
   parseMuestraNavegacionFromSearchParams,
   readAndClearMuestraNavegacion,
+  readLastMuestraNumBN,
+  saveLastMuestraNumBN,
 } from "../lib/navegacionMuestra";
 import { fetchPreselectLinksByNumBN, buildPreselectHighlightPath } from "../lib/preselectData";
 import {
@@ -92,29 +94,6 @@ function displayValue(value: any, emptyFallback = "—") {
   if (value === "0") return "0";
   if (value === null || value === undefined || value === "") return emptyFallback;
   return String(value);
-}
-
-const LAST_MUESTRA_NUMBN_KEY = "bionapp:lastMuestraNumBN";
-
-function readLastMuestraNumBN() {
-  try {
-    const value = window.sessionStorage.getItem(LAST_MUESTRA_NUMBN_KEY);
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveLastMuestraNumBN(numBN: unknown) {
-  const parsed = Number(numBN);
-  if (!Number.isFinite(parsed)) return;
-
-  try {
-    window.sessionStorage.setItem(LAST_MUESTRA_NUMBN_KEY, String(parsed));
-  } catch {
-    // Si el navegador bloquea sessionStorage, la navegación sigue funcionando.
-  }
 }
 
 function App() {
@@ -201,11 +180,12 @@ function App() {
   }, [currentMuestraIndex, muestras]);
 
   useEffect(() => {
+    if (loading) return;
     const numBN = muestras[currentMuestraIndex]?.NumBN;
     if (numBN != null) {
       saveLastMuestraNumBN(numBN);
     }
-  }, [currentMuestraIndex, muestras]);
+  }, [currentMuestraIndex, muestras, loading]);
 
   const navegacionIndices = useMemo(() => {
     if (!filtroActivo?.indices?.length) {
@@ -478,6 +458,7 @@ function App() {
   const fetchMuestrasCompleto = async (options?: { restoreLastMuestra?: boolean }) => {
     const fetchId = ++fetchMuestrasSeqRef.current;
     const restoreLastMuestra = options?.restoreLastMuestra ?? false;
+    const lastNumBNToRestore = restoreLastMuestra ? readLastMuestraNumBN() : null;
     const prevNumBN = muestras[currentMuestraIndex]?.NumBN;
     const prevLectura = currentLecturaIndex;
     const prevLectMarc = currentLectMarcIndex;
@@ -522,7 +503,7 @@ function App() {
       }
 
       if (!appliedDeepLink && restoreLastMuestra) {
-        const lastNumBN = readLastMuestraNumBN();
+        const lastNumBN = lastNumBNToRestore;
         const lastIndex = muestrasCompletas.findIndex((m) => Number(m.NumBN) === lastNumBN);
         if (lastIndex !== -1) {
           setCurrentMuestraIndex(lastIndex);
@@ -1255,7 +1236,7 @@ function App() {
     toast.success(t("app.toast.labeledCopied"));
   };
 
-  /** Muestras en Hacer (Estado_Muestra NULL) pasan a pendiente (2) al empezar lecturas. */
+  /** Muestras en Preparación (Estado_Muestra NULL) pasan a pendiente (2) al empezar lecturas. */
   const promoteEstadoMuestraSiNull = async (
     numBN: number,
     estadoActual: number | null | undefined
@@ -2094,20 +2075,12 @@ function App() {
                     <ClipboardList className="h-5 w-5 text-white" />
                   </Button>
                   <Button
-                    onClick={() => navigateFromBase("/lotes")}
+                    onClick={() => navigateFromBase("/calidad")}
                     size="sm"
                     className="bionapp-btn-green bionapp-nav-mini-btn bionapp-nav-mini-btn--icon shrink-0"
-                    title={t("nav.lotes")}
+                    title={t("nav.calidad")}
                   >
-                    <Layers className="h-5 w-5 text-white" />
-                  </Button>
-                  <Button
-                    onClick={() => navigateFromBase("/chips")}
-                    size="sm"
-                    className="bionapp-btn-green bionapp-nav-mini-btn bionapp-nav-mini-btn--icon shrink-0"
-                    title={t("nav.chips")}
-                  >
-                    <Cpu className="h-5 w-5 text-white" />
+                    <BadgeCheck className="h-5 w-5 text-white" />
                   </Button>
                 <Button
                   onClick={() => navigateFromBase("/actions")}
@@ -2117,6 +2090,14 @@ function App() {
                 >
                   <Pickaxe className="h-5 w-5 text-white" />
                 </Button>
+                  <Button
+                    onClick={() => navigateFromBase("/chips")}
+                    size="sm"
+                    className="bionapp-btn-green bionapp-nav-mini-btn bionapp-nav-mini-btn--icon shrink-0"
+                    title={t("nav.chips")}
+                  >
+                    <Cpu className="h-5 w-5 text-white" />
+                  </Button>
                 <Button
                   onClick={() => navigateFromBase("/calcs")}
                   size="sm"

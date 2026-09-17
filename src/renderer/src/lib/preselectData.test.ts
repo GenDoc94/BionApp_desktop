@@ -5,8 +5,10 @@ import {
   parsePeticInput,
   parsePreselectHighlightPetic,
   PRESELECT_DUPLICATE_MESSAGE,
+  PRESELECT_DX_FILTER_NONE,
   samePetic,
   sortPreselectRows,
+  filterPreselectByDx,
   type PreselectRow,
 } from "./preselectData";
 
@@ -92,5 +94,36 @@ describe("preselectData", () => {
       "30",
       "20",
     ]);
+  });
+
+  it("filters pending rows by Dx", () => {
+    const rows: PreselectRow[] = [
+      {
+        Petic_Preselect: "10",
+        Coment_Preselect: null,
+        NumBN_Preselect: null,
+        Fecha_Preselect: null,
+        Dx_Preselect: 1,
+      },
+      {
+        Petic_Preselect: "20",
+        Coment_Preselect: null,
+        NumBN_Preselect: null,
+        Fecha_Preselect: null,
+        Dx_Preselect: 2,
+      },
+      {
+        Petic_Preselect: "30",
+        Coment_Preselect: null,
+        NumBN_Preselect: null,
+        Fecha_Preselect: null,
+        Dx_Preselect: null,
+      },
+    ];
+    expect(filterPreselectByDx(rows, "").map((r) => r.Petic_Preselect)).toEqual(["10", "20", "30"]);
+    expect(filterPreselectByDx(rows, "2").map((r) => r.Petic_Preselect)).toEqual(["20"]);
+    expect(filterPreselectByDx(rows, PRESELECT_DX_FILTER_NONE).map((r) => r.Petic_Preselect)).toEqual(
+      ["30"]
+    );
   });
 });

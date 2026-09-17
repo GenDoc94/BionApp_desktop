@@ -1,7 +1,7 @@
 import "./i18n";
 import React, { Suspense, lazy, useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
-import { HashRouter, Navigate, Routes, Route } from "react-router-dom";
+import { HashRouter, Navigate, Routes, Route, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AuthProvider } from "./authContext";
 import { supabase } from "./lib/supabaseClient";
@@ -16,7 +16,7 @@ const App = lazy(() => import("./pages/App"));
 const Login = lazy(() => import("./pages/Login"));
 const CreateUser = lazy(() => import("./pages/CreateUser"));
 const ChipPage = lazy(() => import("./pages/ChipPage"));
-const LotesPage = lazy(() => import("./pages/LotesPage"));
+const CalidadPage = lazy(() => import("./pages/CalidadPage"));
 const PreselectPage = lazy(() => import("./pages/PreselectPage"));
 const ActionsPage = lazy(() => import("./pages/ActionsPage"));
 const Calcs = lazy(() => import("./pages/Calcs"));
@@ -41,12 +41,20 @@ function PublicRoutes({ onLogin }: { onLogin: (user: unknown) => void }) {
   );
 }
 
+function LotesToCalidadRedirect() {
+  const [params] = useSearchParams();
+  const qs = new URLSearchParams(params);
+  qs.set("tab", "lotes");
+  return <Navigate to={`/calidad?${qs.toString()}`} replace />;
+}
+
 function PrivateRoutes() {
   return (
     <Routes>
       <Route path="/" element={<App />} />
       <Route path="/preselect" element={<PreselectPage />} />
-      <Route path="/lotes" element={<LotesPage />} />
+      <Route path="/calidad" element={<CalidadPage />} />
+      <Route path="/lotes" element={<LotesToCalidadRedirect />} />
       <Route path="/chips" element={<ChipPage />} />
       <Route path="/actions" element={<ActionsPage />} />
       <Route path="/calcs" element={<Calcs />} />

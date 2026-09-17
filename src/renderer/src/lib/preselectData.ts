@@ -98,6 +98,21 @@ export function parsePreselectHighlightPetic(params: URLSearchParams): string | 
 
 export type PreselectSortDir = "asc" | "desc";
 export type PreselectSortKey = "added" | "numBN";
+export const PRESELECT_DX_FILTER_NONE = "none";
+
+export function filterPreselectByDx(
+  rows: PreselectRow[],
+  dxFilter: string | null | undefined
+): PreselectRow[] {
+  const f = String(dxFilter ?? "").trim();
+  if (!f) return rows;
+  if (f === PRESELECT_DX_FILTER_NONE) {
+    return rows.filter((row) => row.Dx_Preselect == null);
+  }
+  const cod = Number(f);
+  if (!Number.isFinite(cod)) return rows;
+  return rows.filter((row) => Number(row.Dx_Preselect) === cod);
+}
 
 function peticTiebreak(a: PreselectRow, b: PreselectRow): number {
   return String(a.Petic_Preselect).localeCompare(String(b.Petic_Preselect), undefined, {

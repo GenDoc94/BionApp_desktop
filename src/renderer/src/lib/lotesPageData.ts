@@ -76,11 +76,82 @@ export type LoteRow = {
   Exp: string
 }
 
-export type LoteUsoExtraido = { NumBN: number }
+export type LoteUsoExtraido = { NumBN: number; Estado_Muestra: number | null }
 export type LoteUsoLm = {
   NumBN: number
   NumLectura: number
   NumLectMarc: number
+  mediaLm: number | null
+}
+
+export type LoteEstadoColor = "green" | "yellow" | "red" | "none"
+
+export type LoteEstadoCounts = {
+  green: number
+  yellow: number
+  red: number
+  none: number
+}
+
+/** Umbral QC de lotes de marcado/membrana: media de lectura marcada. */
+export const LOTE_LM_MEDIA_THRESHOLD = 3
+
+export function emptyLoteEstadoCounts(): LoteEstadoCounts {
+  return { green: 0, yellow: 0, red: 0, none: 0 }
+}
+
+export function parseEstadoMuestra(value: unknown): number | null {
+  if (value == null || value === "") return null
+  const n = Number(value)
+  return n === 1 || n === 2 || n === 3 ? n : null
+}
+
+export function estadoMuestraColor(estado: unknown): LoteEstadoColor {
+  const n = parseEstadoMuestra(estado)
+  if (n === 1) return "red"
+  if (n === 2) return "yellow"
+  if (n === 3) return "green"
+  return "none"
+}
+
+export function parseMediaLm(row: {
+  Media_LM?: unknown
+  Izq_LM?: unknown
+  Dcha_LM?: unknown
+  mediaLm?: unknown
+}): number | null {
+  if (row.mediaLm != null && row.mediaLm !== "") {
+    const n = Number(row.mediaLm)
+    if (Number.isFinite(n)) return n
+  }
+  if (row.Media_LM != null && row.Media_LM !== "") {
+    const n = Number(row.Media_LM)
+    if (Number.isFinite(n)) return n
+  }
+  const izq = Number(row.Izq_LM)
+  const dcha = Number(row.Dcha_LM)
+  if (!Number.isFinite(izq) || !Number.isFinite(dcha)) return null
+  return (izq + dcha) / 2
+}
+
+/** Verde si la media no es inferior a 3; rojo si es < 3. Sin media: sin color. */
+export function loteLmMediaColor(media: number | null | undefined): LoteEstadoColor {
+  if (media == null || !Number.isFinite(media)) return "none"
+  return media < LOTE_LM_MEDIA_THRESHOLD ? "red" : "green"
+}
+
+export function countLoteEstados(colors: LoteEstadoColor[]): LoteEstadoCounts {
+  const counts = emptyLoteEstadoCounts()
+  for (const color of colors) counts[color] += 1
+  return counts
+}
+
+export function countEstadosExtraido(usos: LoteUsoExtraido[]): LoteEstadoCounts {
+  return countLoteEstados(usos.map((u) => estadoMuestraColor(u.Estado_Muestra)))
+}
+
+export function countEstadosLm(usos: LoteUsoLm[]): LoteEstadoCounts {
+  return countLoteEstados(usos.map((u) => loteLmMediaColor(u.mediaLm)))
 }
 
 export type LotesHighlight = {
@@ -216,7 +287,8 @@ export function buildLotesHighlightPath(highlight: LotesHighlight): string {
   } else if (highlight.ln) {
     params.set("ln", highlight.ln)
   }
-  return `/lotes?${params.toString()}`
+  params.set("tab", "lotes")
+  return `/calidad?${params.toString()}`
 }
 
 export function loteCardDomId(tipo: LoteTipo, id: number): string {
@@ -237,7 +309,7 @@ export function resolveHighlightedLotId(
 }
 
 export function groupUsosExtraido(
-  rows: Array<{ Id_LtE?: unknown; NumBN?: unknown }>
+  rows: Array<{ Id_LtE?: unknown; NumBN?: unknown; Estado_Muestra?: unknown }>
 ): Map<number, LoteUsoExtraido[]> {
   const map = new Map<number, LoteUsoExtraido[]>()
   for (const row of rows) {
@@ -245,7 +317,7 @@ export function groupUsosExtraido(
     const numBN = Number(row.NumBN)
     if (!Number.isFinite(id) || !Number.isFinite(numBN)) continue
     const arr = map.get(id)
-    const uso = { NumBN: numBN }
+    const uso = { NumBN: numBN, Estado_Muestra: parseEstadoMuestra(row.Estado_Muestra) }
     if (arr) arr.push(uso)
     else map.set(id, [uso])
   }
@@ -259,6 +331,10 @@ export function groupUsosLm(
     NumBN?: unknown
     NumLectura?: unknown
     NumLectMarc?: unknown
+    Media_LM?: unknown
+    Izq_LM?: unknown
+    Dcha_LM?: unknown
+    mediaLm?: unknown
   }>
 ): Map<number, LoteUsoLm[]> {
   const map = new Map<number, LoteUsoLm[]>()
@@ -275,7 +351,12 @@ export function groupUsosLm(
     ) {
       continue
     }
-    const uso = { NumBN: numBN, NumLectura: numLectura, NumLectMarc: numLectMarc }
+    const uso = {
+      NumBN: numBN,
+      NumLectura: numLectura,
+      NumLectMarc: numLectMarc,
+      mediaLm: parseMediaLm(row),
+    }
     const arr = map.get(id)
     if (arr) arr.push(uso)
     else map.set(id, [uso])

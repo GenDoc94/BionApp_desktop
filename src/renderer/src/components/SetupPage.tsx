@@ -33,7 +33,7 @@ export default function SetupPage({
           <LanguageToggle />
         </div>
         <div className="flex flex-col items-center gap-2">
-          <img src={logo} alt="BionApp" className="h-14 w-auto" />
+          <img src={logo} alt="BionApp" className="h-20 w-auto" />
           <h1 className="text-lg font-semibold">{t('setup.title')}</h1>
         </div>
         <p className="text-sm text-muted-foreground text-center">{t('setup.body')}</p>

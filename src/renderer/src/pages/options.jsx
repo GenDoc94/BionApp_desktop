@@ -36,6 +36,7 @@ import ExportacionTab from "../components/options/ExportacionTab";
 import LanguageToggle from "../components/LanguageToggle";
 import { getStoredTheme, setTheme } from "../lib/theme";
 import SubpageShell from "../components/SubpageShell";
+import { buildBackToAppPath } from "../lib/navegacionMuestra";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
@@ -311,7 +312,7 @@ export default function Options() {
       toast.error(t("options.setup.backBlocked"));
       return;
     }
-    navigate("/");
+    navigate(buildBackToAppPath());
   };
 
   const handleContinuarABase = () => {
@@ -1367,7 +1368,7 @@ export default function Options() {
               <div>
                 <p className="font-semibold mb-1">{t("manual.other.title")}</p>
                 <ul className="list-disc pl-5 space-y-1.5">
-                  <li>{mdStrong(t("manual.other.lotes"))}</li>
+                  <li>{mdStrong(t("manual.other.calidad"))}</li>
                   <li>{mdStrong(t("manual.other.chips"))}</li>
                   <li>{mdStrong(t("manual.other.calcs"))}</li>
                   <li>{mdStrong(t("manual.other.options"))}</li>

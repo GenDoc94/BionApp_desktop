@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3'
 import type { DbFilter, DbOrder, DbRequest, DbResponse } from '../shared/types'
 import { applyLotWrite, attachLotFields } from './lotes'
+import { ensureFiltrosSchema } from './db'
 
 const ALLOWED_TABLES = new Set([
   'Muestras',
@@ -17,6 +18,7 @@ const ALLOWED_TABLES = new Set([
   'Lotes_Extraido',
   'Lotes_Marcado',
   'Lotes_Membrana',
+  'Filtros',
   'profiles',
   'users'
 ])
@@ -279,6 +281,9 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
     }
     if (req.table === 'users') {
       return fail('Acceso directo a users no permitido')
+    }
+    if (req.table === 'Filtros') {
+      ensureFiltrosSchema(db)
     }
 
     const alias = 't'

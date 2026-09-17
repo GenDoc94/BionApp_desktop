@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Layers, Plus, Save, Search, SquarePen, X } from "lucide-react";
+import { Eye, Layers, Plus, Save, Search, SquarePen, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
+import { cn } from "../components/ui/utils";
 import SubpageShell from "../components/SubpageShell";
 import { supabase } from "../lib/supabaseClient";
 import { buildMuestraAppPath, saveMuestraNavegacion } from "../lib/navegacionMuestra";
@@ -22,10 +23,15 @@ import {
   resolveHighlightedLotId,
   sortLots,
   toLoteRow,
+  type LoteEstadoColor,
   type LoteRow,
   type LoteTipo,
   type LoteUsoExtraido,
   type LoteUsoLm,
+  countEstadosExtraido,
+  countEstadosLm,
+  estadoMuestraColor,
+  loteLmMediaColor,
 } from "../lib/lotesPageData";
 
 const TABLE_BY_TIPO: Record<LoteTipo, string> = {
@@ -34,7 +40,16 @@ const TABLE_BY_TIPO: Record<LoteTipo, string> = {
   membrana: "Lotes_Membrana",
 };
 
-function LotesPage() {
+function usoEstadoClass(color: LoteEstadoColor, active: boolean): string {
+  if (!active || color === "none") return "";
+  return `bionapp-lote-uso-btn--${color}`;
+}
+
+type LotesPageProps = {
+  embedded?: boolean;
+};
+
+function LotesPage({ embedded = false }: LotesPageProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -58,6 +73,7 @@ function LotesPage() {
   const [editLn, setEditLn] = useState("");
   const [editExp, setEditExp] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+  const [showEstados, setShowEstados] = useState(false);
   const pendingHighlight = useRef(parseLotesHighlight(searchParams));
 
   const fetchLotes = useCallback(async () => {
@@ -72,8 +88,10 @@ function LotesPage() {
       supabase.from("Lotes_Extraido").select("*"),
       supabase.from("Lotes_Marcado").select("*"),
       supabase.from("Lotes_Membrana").select("*"),
-      supabase.from("Muestras").select("NumBN, Id_LtE"),
-      supabase.from("Lecturas_Marcado").select("NumBN_LM, NumLectura_LM, NumLectMarc, Id_LtM, Id_LtMm"),
+      supabase.from("Muestras").select("NumBN, Id_LtE, Estado_Muestra"),
+      supabase
+        .from("Lecturas_Marcado")
+        .select("NumBN_LM, NumLectura_LM, NumLectMarc, Id_LtM, Id_LtMm, Media_LM, Izq_LM, Dcha_LM"),
     ]);
 
     const errors = [
@@ -98,7 +116,15 @@ function LotesPage() {
       marcado: mapRows((marcadoRes.data || []) as Record<string, unknown>[], "marcado"),
       membrana: mapRows((membranaRes.data || []) as Record<string, unknown>[], "membrana"),
     });
-    setUsosExtraido(groupUsosExtraido((muestrasRes.data || []) as Array<{ Id_LtE?: unknown; NumBN?: unknown }>));
+    setUsosExtraido(
+      groupUsosExtraido(
+        (muestrasRes.data || []) as Array<{
+          Id_LtE?: unknown;
+          NumBN?: unknown;
+          Estado_Muestra?: unknown;
+        }>
+      )
+    );
     const lmRows = (lmRes.data || []) as Array<Record<string, unknown>>;
     setUsosMarcado(
       groupUsosLm(
@@ -107,6 +133,9 @@ function LotesPage() {
           NumBN: r.NumBN_LM,
           NumLectura: r.NumLectura_LM,
           NumLectMarc: r.NumLectMarc,
+          Media_LM: r.Media_LM,
+          Izq_LM: r.Izq_LM,
+          Dcha_LM: r.Dcha_LM,
         }))
       )
     );
@@ -117,6 +146,9 @@ function LotesPage() {
           NumBN: r.NumBN_LM,
           NumLectura: r.NumLectura_LM,
           NumLectMarc: r.NumLectMarc,
+          Media_LM: r.Media_LM,
+          Izq_LM: r.Izq_LM,
+          Dcha_LM: r.Dcha_LM,
         }))
       )
     );
@@ -150,7 +182,17 @@ function LotesPage() {
     }
     pendingHighlight.current = null;
     const id = resolveHighlightedLotId(lotsByTipo[highlight.tipo], highlight);
-    setSearchParams({}, { replace: true });
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("tipo");
+        next.delete("id");
+        next.delete("ln");
+        if (!next.get("tab")) next.set("tab", "lotes");
+        return next;
+      },
+      { replace: true }
+    );
     if (id == null) {
       toast.error(t("lotes.toast.notFound"));
       return;
@@ -253,35 +295,63 @@ function LotesPage() {
   }
 
   if (loading) {
-    return (
-      <div className="bionapp-subpage min-h-screen p-4 flex items-center justify-center">
+    const spinner = (
+      <div
+        className={
+          embedded
+            ? "p-8 flex items-center justify-center"
+            : "bionapp-subpage min-h-screen p-4 flex items-center justify-center"
+        }
+      >
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
           <p className="text-muted-foreground">{t("lotes.loading")}</p>
         </div>
       </div>
     );
+    return spinner;
   }
 
-  return (
-    <SubpageShell title={t("lotes.title")} icon={Layers} maxWidthClass="max-w-[1400px]">
-      <div className="flex flex-wrap gap-2 mb-4">
-        {(["extraido", "marcado", "membrana"] as LoteTipo[]).map((key) => (
-          <Button
-            key={key}
-            type="button"
-            size="sm"
-            variant={tipo === key ? "default" : "outline"}
-            className={tipo === key ? "bionapp-btn-green" : ""}
-            onClick={() => switchTipo(key)}
-          >
-            {t(`lotes.tipo.${key}`)}
-            <Badge variant="secondary" className="ml-2">
-              {lotsByTipo[key].length}
-            </Badge>
-          </Button>
-        ))}
+  const body = (
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div className="flex flex-wrap gap-2">
+          {(["extraido", "marcado", "membrana"] as LoteTipo[]).map((key) => (
+            <Button
+              key={key}
+              type="button"
+              size="sm"
+              variant={tipo === key ? "default" : "outline"}
+              className={tipo === key ? "bionapp-btn-green" : ""}
+              onClick={() => switchTipo(key)}
+            >
+              {t(`lotes.tipo.${key}`)}
+              <Badge variant="secondary" className="ml-2">
+                {lotsByTipo[key].length}
+              </Badge>
+            </Button>
+          ))}
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant={showEstados ? "default" : "outline"}
+          className={showEstados ? "bionapp-btn-green gap-2" : "gap-2"}
+          aria-pressed={showEstados}
+          onClick={() => setShowEstados((v) => !v)}
+          title={
+            tipo === "extraido" ? t("lotes.statesHintExtraido") : t("lotes.statesHintMarcado")
+          }
+        >
+          <Eye className="h-4 w-4" />
+          {t("lotes.viewStates")}
+        </Button>
       </div>
+      {showEstados ? (
+        <p className="text-xs text-slate-500 -mt-2 mb-4">
+          {tipo === "extraido" ? t("lotes.statesHintExtraido") : t("lotes.statesHintMarcado")}
+        </p>
+      ) : null}
 
       <div className="bionapp-panel p-4 mb-4">
         <p className="text-xs text-slate-500 mb-3">{t("lotes.createHint")}</p>
@@ -344,6 +414,8 @@ function LotesPage() {
           {filtered.map((lot) => {
             const extra = tipo === "extraido" ? usosExtraido.get(lot.id) || [] : [];
             const lmUsos = tipo === "extraido" ? [] : usosLm.get(lot.id) || [];
+            const estadoCounts =
+              tipo === "extraido" ? countEstadosExtraido(extra) : countEstadosLm(lmUsos);
             return (
               <article
                 key={lot.id}
@@ -404,6 +476,24 @@ function LotesPage() {
                         ? t("lotes.samplesCount", { count: extra.length })
                         : t("lotes.readingsCount", { count: lmUsos.length })}
                     </Badge>
+                    {showEstados ? (
+                      <span className="bionapp-lote-estado-counts" title={t("lotes.statesCountTitle")}>
+                        <span className="is-green" title={t("lotes.countGreen", { count: estadoCounts.green })}>
+                          {estadoCounts.green}
+                        </span>
+                        {tipo === "extraido" ? (
+                          <span
+                            className="is-yellow"
+                            title={t("lotes.countYellow", { count: estadoCounts.yellow })}
+                          >
+                            {estadoCounts.yellow}
+                          </span>
+                        ) : null}
+                        <span className="is-red" title={t("lotes.countRed", { count: estadoCounts.red })}>
+                          {estadoCounts.red}
+                        </span>
+                      </span>
+                    ) : null}
                     {editingId === lot.id ? (
                       <>
                         <Button
@@ -449,7 +539,10 @@ function LotesPage() {
                         <button
                           key={uso.NumBN}
                           type="button"
-                          className="bionapp-lote-uso-btn"
+                          className={cn(
+                            "bionapp-lote-uso-btn",
+                            usoEstadoClass(estadoMuestraColor(uso.Estado_Muestra), showEstados)
+                          )}
                           onClick={() => handleOpenMuestra(uso.NumBN)}
                         >
                           BN {uso.NumBN}
@@ -465,7 +558,10 @@ function LotesPage() {
                       <button
                         key={`${uso.NumBN}-${uso.NumLectura}-${uso.NumLectMarc}`}
                         type="button"
-                        className="bionapp-lote-uso-btn"
+                        className={cn(
+                          "bionapp-lote-uso-btn",
+                          usoEstadoClass(loteLmMediaColor(uso.mediaLm), showEstados)
+                        )}
                         onClick={() =>
                           handleOpenMuestra(uso.NumBN, uso.NumLectura, uso.NumLectMarc)
                         }
@@ -480,6 +576,13 @@ function LotesPage() {
           })}
         </div>
       )}
+    </>
+  );
+
+  if (embedded) return body;
+  return (
+    <SubpageShell title={t("lotes.title")} icon={Layers} maxWidthClass="max-w-[1400px]">
+      {body}
     </SubpageShell>
   );
 }

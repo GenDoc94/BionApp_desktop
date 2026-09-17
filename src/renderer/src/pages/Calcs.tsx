@@ -7,6 +7,7 @@ import { Input } from "../components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import SubpageShell from "../components/SubpageShell";
 import DilucionDnaTab from "../components/calcs/DilucionDnaTab";
+import PrepararTubosTab from "../components/calcs/PrepararTubosTab";
 
 function clampInt(value: string, min: number, max: number, fallback: number) {
   const n = Number.parseInt(value, 10);
@@ -165,8 +166,13 @@ export default function Calcs() {
         </Button>
       }
     >
-        <Tabs defaultValue="extraccion" className="gap-4">
+        <Tabs defaultValue="tubos" className="gap-4">
           <div className="flex flex-wrap items-center gap-3">
+            <div className="bionapp-calcs-tabs-panel bionapp-calcs-tabs-panel--tubos">
+              <TabsList>
+                <TabsTrigger value="tubos">{t("calcs.tab.tubes")}</TabsTrigger>
+              </TabsList>
+            </div>
             <div className="bionapp-calcs-tabs-panel bionapp-calcs-tabs-panel--prep">
               <TabsList>
                 <TabsTrigger value="extraccion">{t("calcs.tab.extraction")}</TabsTrigger>
@@ -179,6 +185,10 @@ export default function Calcs() {
               </TabsList>
             </div>
           </div>
+
+          <TabsContent value="tubos">
+            <PrepararTubosTab />
+          </TabsContent>
 
           <TabsContent value="extraccion" className="space-y-4">
             <div className="bionapp-panel p-4">

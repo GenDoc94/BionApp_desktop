@@ -25,6 +25,8 @@ import {
   parsePreselectHighlightPetic,
   sortPreselectRows,
   samePetic,
+  filterPreselectByDx,
+  PRESELECT_DX_FILTER_NONE,
   type CatalogDx,
   type PreselectRow,
   type PreselectSortDir,
@@ -67,6 +69,7 @@ function PreselectPage() {
   const [inSamplesSortDir, setInSamplesSortDir] = useState<PreselectSortDir>("desc");
   const [pendingPageSize, setPendingPageSize] = useState<10 | 15 | 20 | "all">(10);
   const [pendingPageIndex, setPendingPageIndex] = useState(0);
+  const [pendingDxFilter, setPendingDxFilter] = useState("");
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
@@ -134,11 +137,14 @@ function PreselectPage() {
   const pendientes = useMemo(
     () =>
       sortPreselectRows(
-        rows.filter((row) => row.NumBN_Preselect == null),
+        filterPreselectByDx(
+          rows.filter((row) => row.NumBN_Preselect == null),
+          pendingDxFilter
+        ),
         "added",
         addedSortOrder
       ),
-    [rows, addedSortOrder]
+    [rows, addedSortOrder, pendingDxFilter]
   );
   const enMuestras = useMemo(
     () =>
@@ -164,6 +170,10 @@ function PreselectPage() {
     if (pendingPageSizeResolved <= 0) return 0;
     return Math.max(0, Math.ceil(pendientes.length / pendingPageSizeResolved) - 1);
   }, [pendingPageSizeResolved, pendientes.length]);
+
+  useEffect(() => {
+    setPendingPageIndex(0);
+  }, [pendingDxFilter]);
 
   useEffect(() => {
     setPendingPageIndex((prev) => Math.min(prev, pendingMaxPageIndex));
@@ -444,7 +454,7 @@ function PreselectPage() {
                         editingDx,
                         setEditingDx,
                         "bionapp-preselect-dx-select h-8 text-xs",
-                        t("common.selectPlaceholder")
+                        t("common.empty")
                       )
                     ) : (
                       <span className="text-sm font-medium">{labelDxPreselect(row, dxList)}</span>
@@ -589,6 +599,24 @@ function PreselectPage() {
             </Badge>
             {variant === "pendiente" ? (
               <div className="flex flex-wrap items-center gap-2 ml-auto">
+                <label className="text-xs text-muted-foreground shrink-0" htmlFor="preselect-dx-filter">
+                  Dx
+                </label>
+                <select
+                  id="preselect-dx-filter"
+                  value={pendingDxFilter}
+                  onChange={(e) => setPendingDxFilter(e.target.value)}
+                  className="h-7 text-sm border rounded-md px-2 max-w-[11rem]"
+                  title={t("preselect.filterDx")}
+                >
+                  <option value="">{t("preselect.all")}</option>
+                  <option value={PRESELECT_DX_FILTER_NONE}>{t("common.empty")}</option>
+                  {dxList.map((d) => (
+                    <option key={d.Cod} value={String(d.Cod)}>
+                      {d.Dx}
+                    </option>
+                  ))}
+                </select>
                 <div className="text-xs text-muted-foreground">
                   {pendingPageSize === "all" ? (
                     t("preselect.showingAll")
@@ -714,7 +742,7 @@ function PreselectPage() {
               newDx,
               setNewDx,
               "bionapp-preselect-dx-select h-9 text-sm",
-              t("common.selectPlaceholder")
+              t("common.empty")
             )}
           </div>
           <div className="bionapp-preselect-add-field bionapp-preselect-add-field--coment min-w-0">
@@ -754,7 +782,7 @@ function PreselectPage() {
             pendientes.length,
             pendientesPaged,
             "pendiente",
-            t("preselect.emptyPending")
+            pendingDxFilter ? t("preselect.emptyPendingDx") : t("preselect.emptyPending")
           )}
           {renderSection(
             t("preselect.inSamples"),

@@ -123,8 +123,19 @@ export function migratePeticColumnsToText(db: Database.Database): void {
  * Jerarquía cascade: Muestras → Lectura → Marcado → Lecturas_Marcado → Chips
  * Lotes_Extraido / Lotes_Marcado / Lotes_Membrana son catálogos (PN+LN+Exp)
  * referenciados por Muestras.Id_LtE y Lecturas_Marcado.Id_LtM / Id_LtMm.
+ * Filtros registra colocación/retirada de filtros (NumFiltro, FechaColoc, FechaRetir).
  * Media/SD/CV se calculan en la capa de escritura (SQLite no permite mutar NEW).
  */
+export function ensureFiltrosSchema(db: Database.Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS Filtros (
+      NumFiltro INTEGER PRIMARY KEY,
+      FechaColoc TEXT NOT NULL,
+      FechaRetir TEXT
+    );
+  `)
+}
+
 export function initSchema(db: Database.Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS meta (
@@ -190,6 +201,12 @@ export function initSchema(db: Database.Database): void {
       LN TEXT NOT NULL DEFAULT '',
       Exp TEXT NOT NULL DEFAULT '',
       UNIQUE (PN, LN, Exp)
+    );
+
+    CREATE TABLE IF NOT EXISTS Filtros (
+      NumFiltro INTEGER PRIMARY KEY,
+      FechaColoc TEXT NOT NULL,
+      FechaRetir TEXT
     );
 
     CREATE TABLE IF NOT EXISTS Muestras (
@@ -304,6 +321,7 @@ export function initSchema(db: Database.Database): void {
   migrateLegacyLotColumns(db)
   migrateHomogenizeLotExps(db)
   migratePeticColumnsToText(db)
+  ensureFiltrosSchema(db)
   db.exec(`
     CREATE INDEX IF NOT EXISTS Muestras_Id_LtE_idx ON Muestras(Id_LtE);
     CREATE INDEX IF NOT EXISTS Lecturas_Marcado_Id_LtM_idx ON Lecturas_Marcado(Id_LtM);

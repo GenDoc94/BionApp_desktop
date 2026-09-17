@@ -29,6 +29,7 @@
   "nav": {
     "backToApp": "Volver a la app",
     "preselect": "Preselección",
+    "calidad": "Calidad",
     "lotes": "Lotes",
     "chips": "Chips",
     "actions": "Acciones",
@@ -247,7 +248,7 @@
     "pctCompleted": "% Completas",
     "note": {
       "noDate": "{{count}} muestra(s) con estado 1–3 sin fecha de extracción no aparecen en el gráfico.",
-      "noStatus": "{{count}} muestra(s) sin estado (cola «Hacer») no se incluyen."
+      "noStatus": "{{count}} muestra(s) sin estado (cola «Preparar») no se incluyen."
     },
     "period": {
       "samples": "{{count}} muestras",
@@ -312,7 +313,7 @@
     },
     "actions": {
       "title": "Acciones",
-      "hacer": "**Hacer**: procesa las muestras que hayas metido y que aún no estén extraídas.",
+      "hacer": "**Preparar**: procesa las muestras que hayas metido y que aún no estén extraídas.",
       "leerExtraido": "**Leer Extraído**: una vez extraídas, sirve para meter las concentraciones de lo extraído.",
       "tirar": "**Tirar**: para aquellas que tengan poco extraído.",
       "marcar": "**Marcar**: para las extraídas pendientes de marcar.",
@@ -322,6 +323,7 @@
     "other": {
       "title": "Otras pantallas",
       "chips": "**Chips**: gestión de chips y huecos FC asociados a las lecturas marcadas.",
+      "calidad": "**Calidad**: catálogo de lotes (extracción, marcado y membrana) y registro de filtros de aire del aparato.",
       "lotes": "**Lotes**: catálogo de lotes de extracción, marcado y membrana, con las muestras y lecturas asociadas.",
       "calcs": "**Cálculos**: utilidades de laboratorio (p. ej. diluciones) a partir de los datos ya registrados.",
       "options": "**Opciones**: perfil, variables, etiquetas, estadísticas, documentos, exportación, apariencia y manual."
@@ -628,6 +630,46 @@
       "delete": "¿Eliminar chip {{num}} - {{name}}?"
     }
   },
+  "calidad": {
+    "title": "Calidad",
+    "tab": {
+      "lotes": "Lotes",
+      "filtros": "Filtros"
+    }
+  },
+  "filtros": {
+    "loading": "Cargando filtros...",
+    "hint": "Registra cada colocación del filtro de aire. Si ya hay uno en uso, esta fecha cierra el anterior y abre el siguiente. Puedes elegir hoy o el día en que se hizo el cambio.",
+    "date": "Fecha de colocación",
+    "today": "Hoy",
+    "register": "Registrar cambio",
+    "registerFirst": "Registrar colocación",
+    "registerHint": "Retira el filtro nº {{current}} y coloca el nº {{next}} el {{date}}.",
+    "current": "Filtro actual",
+    "currentNone": "Ningún filtro en uso. Registra la primera colocación.",
+    "currentNum": "Filtro nº {{num}}",
+    "placedOn": "Colocado el {{date}}",
+    "daysInUse": "{{count}} días en uso",
+    "avg": "Cada cuánto se cambia",
+    "daysAvg": "{{count}} días de media",
+    "changesCount": "{{count}} cambios completados",
+    "total": "Filtros registrados",
+    "totalCount": "{{count}} filtros",
+    "num": "Nº filtro",
+    "coloc": "Fecha colocación",
+    "retir": "Fecha retirada",
+    "days": "Días",
+    "daysCount": "{{count}} días",
+    "open": "En uso",
+    "empty": "Aún no hay cambios de filtro. Registra la primera colocación arriba.",
+    "toast": {
+      "loadError": "Error al cargar filtros",
+      "invalidDate": "Indica una fecha válida",
+      "beforeCurrent": "La fecha no puede ser anterior a la colocación del filtro actual",
+      "saved": "Cambio de filtro registrado",
+      "saveError": "Error al guardar el cambio de filtro"
+    }
+  },
   "lotes": {
     "title": "Lotes",
     "loading": "Cargando lotes...",
@@ -644,6 +686,13 @@
     "noUsos": "Todavía no hay muestras ni lecturas asociadas.",
     "samplesCount": "{{count}} muestras",
     "readingsCount": "{{count}} lecturas",
+    "viewStates": "Ver Estados",
+    "statesHintExtraido": "Color según Estado_Muestra: verde (3), amarillo (2), rojo (1). El número junto al LN es el conteo de cada color.",
+    "statesHintMarcado": "Color según media de lectura marcada: verde si es ≥ 3, rojo si es < 3. El número junto al LN es el conteo de cada color.",
+    "statesCountTitle": "Conteo de estados en este LN",
+    "countGreen": "{{count}} verdes",
+    "countYellow": "{{count}} amarillos",
+    "countRed": "{{count}} rojos",
     "tipo": {
       "extraido": "Extracción",
       "marcado": "Marcado",
@@ -674,6 +723,7 @@
     "pending": "Pendiente",
     "inSamples": "En Muestras",
     "emptyPending": "No hay peticiones pendientes de Nº Bionano.",
+    "emptyPendingDx": "No hay peticiones pendientes con ese diagnóstico.",
     "emptyInSamples": "Aún no hay peticiones pasadas a Muestras.",
     "bnNo": "Nº Bionano",
     "actions": "Acciones",
@@ -695,6 +745,7 @@
     "nextPage": "Página siguiente",
     "pageSize": "Tamaño de la página",
     "all": "Todos",
+    "filterDx": "Filtrar pendientes por diagnóstico",
     "inSamplesHint": "Para quitar una petición de esta lista, elimina primero su muestra en la app principal.",
     "dxSuffix": "· Dx: {{dx}}",
     "toast": {
@@ -725,7 +776,7 @@
   },
   "actions": {
     "title": "Acciones",
-    "hacer": "Hacer",
+    "hacer": "Preparar",
     "leerExtraido": "Leer Extraído",
     "tirar": "¿Tirar?",
     "marcar": "Marcar",
@@ -735,9 +786,9 @@
     "saveAll": "Guardar todo",
     "print": {
       "empty": "No hay muestras para imprimir",
-      "docTitle": "Hacer — Muestras",
-      "iframeTitle": "Impresión Hacer",
-      "heading": "Hacer — Muestras con Estado_Muestra = NULL",
+      "docTitle": "Preparar — Muestras",
+      "iframeTitle": "Impresión Preparar",
+      "heading": "Preparar — Muestras",
       "meta": "{{fecha}} · {{count}} muestra(s)",
       "wbAria": "Registro de lavados WB",
       "prepareError": "No se pudo preparar la impresión",
@@ -745,15 +796,31 @@
     },
     "edit": "Editar",
     "cancel": "Cancelar",
-    "hacerHeading": "Muestras con Estado_Muestra = NULL",
+    "hacerHeading": "Muestras <status></status>",
+    "emptyResults": "Ninguna muestra cumple los requisitos",
     "leerExtraidoHeading": "Leer Extraído — Estado_Muestra = 2 y lecturas sin cuantificar (Izq, Cen y Dcha vacías)",
-    "leerMarcadoHeading": "Leer Marcado — Estado_Muestra = 2, lectura marcada creada y sin cuantificar (Izq_LM y Dcha_LM vacías)",
+    "leerMarcadoHeading": "Leer Marcado — <status></status> lectura marcada creada y sin cuantificar (Izq_LM y Dcha_LM vacías)",
     "tirarHeading": "¿Tirar? — <status></status> y <mean></mean> {{cmp}} {{threshold}}",
     "extractedMeanLabel": "Media de lo extraído",
     "labeledMeanLabel": "Media de lo marcado",
     "marcarHeading": "Marcar — <status></status> y <mean></mean> {{cmp}} {{threshold}}",
     "pteChipHeading": "Pte Chip — <status></status> sin chip (<mean></mean> ≥ {{minMedia}}) o chip con <repeat></repeat>",
     "hacerEditing": "Editando {{count}} muestra(s). NumBN no se puede modificar.",
+    "sendToRead": "Mandar a leer",
+    "sendToReadConfirm": "¿Mandar a leer {{count}} muestra(s)? Se creará una lectura y pasarán a pendiente (amarillo).",
+    "sendToReadYes": "Sí, mandar",
+    "sendToReadNo": "No",
+    "applyLnAll": "Aplicar a todas",
+    "today": "Hoy",
+    "marcarCreate": "Crear lecturas marcadas",
+    "marcarCreateConfirm": "Crear",
+    "marcarCreateHint": "Se creará la lectura marcada que corresponda a {{count}} fila(s). Elige el LN de marcado y el de membrana para todas.",
+    "marcarSelected": "{{count}} seleccionada(s)",
+    "pteChipLoad": "Cargar a chip",
+    "pteChipLoadConfirm": "Cargar",
+    "pteChipLoadHint": "Elige un chip con huecos FC libres. Cada chip tiene 3 FC; se asignan en orden a {{count}} lectura(s) marcada(s).",
+    "pteChipQueueItem": "BN {{numBN}} · Lect. {{numLectura}} · LM {{numLectMarc}}",
+    "pteChipGoCreate": "Crear chip",
     "leerExtraidoEditing": "Editando {{count}} lectura(s). Media y CV se previsualizan al rellenar Izq, Cen y Dcha; se confirman al guardar.",
     "preview": {
       "lm": "Vista previa al escribir Izq_LM y Dcha_LM (se confirma al guardar)",
@@ -763,6 +830,10 @@
       "sampleType": "Tipo de muestra",
       "diagnosis": "Diagnóstico",
       "viscosityGrade": "Grado viscosidad",
+      "lnExtracted": "LN extraído",
+      "lnMarcado": "LN marcado",
+      "lnMembrana": "LN membrana",
+      "select": "Seleccionar",
       "readingNo": "Nº Lectura",
       "readingDate": "Fecha lectura",
       "extractedMean": "Media extraído",
@@ -770,7 +841,8 @@
       "lmNo": "Nº LM",
       "mean": "Media",
       "type": "Tipo",
-      "pendingChip": "Pendiente de chip (por lectura marcada)"
+      "pendingChip": "Pendiente de chip (por lectura marcada)",
+      "fc": "FC"
     },
     "marcarHelp": {
       "amber": "Ámbar — volver a marcar: 1 lectura de marcado (LM) en esa lectura extraída y ≥2 chips con !. Con 2 LM en la misma lectura extraída no aparece (sin ADN para otro intento).",
@@ -798,7 +870,28 @@
       "hacerPartial": "No se pudieron guardar {{failed}} de {{total}} muestra(s). Revisa la consola.",
       "hacerSaved": "Se actualizaron {{count}} muestra(s) correctamente",
       "loadSamples": "Error al cargar las muestras",
-      "noHacer": "No hay muestras con Estado_Muestra = NULL",
+      "noHacer": "No hay muestras sin estado",
+      "applyLnNeed": "Selecciona un LN de extracción",
+      "applyLn": "LN aplicado a {{count}} muestra(s)",
+      "applyLnError": "Error al aplicar el LN",
+      "applyDateNeed": "Selecciona una fecha de lectura",
+      "applyDate": "Fecha de lectura aplicada a {{count}} lectura(s)",
+      "applyDateToday": "Fecha de hoy aplicada a {{count}} lectura(s)",
+      "marcarNeedSelection": "Selecciona al menos una fila",
+      "marcarNeedLots": "Selecciona LN de marcado y de membrana",
+      "marcarCreated": "Se crearon {{count}} lectura(s) marcada(s)",
+      "marcarCreateError": "Error al crear las lecturas marcadas",
+      "pteChipNoChips": "No hay chips en el catálogo. Créalos en Chips.",
+      "pteChipNoFree": "Ningún chip tiene huecos FC libres",
+      "pteChipNeedChip": "Selecciona un chip",
+      "pteChipNeedFc": "Asigna un FC a cada lectura marcada",
+      "pteChipFcTaken": "El FC {{fc}} ya está usado en esta carga",
+      "pteChipNotEnough": "Este chip solo tiene {{free}} hueco(s) y hay {{count}} lectura(s) seleccionada(s)",
+      "pteChipAlready": "BN {{numBN}} L{{numLectura}} LM{{numLectMarc}} ya está en el chip #{{numChip}}",
+      "pteChipLoaded": "Se cargaron {{count}} lectura(s) marcada(s) al chip #{{numChip}}",
+      "pteChipLoadError": "Error al cargar a chip",
+      "sendToRead": "Se mandaron a leer {{count}} muestra(s)",
+      "sendToReadError": "Error al mandar a leer",
       "loadReadings": "Error al cargar las lecturas",
       "noLeerExtraido": "No hay lecturas pendientes de cuantificar (Izq, Cen y Dcha vacías) en muestras con estado 2",
       "noEstado2": "No hay muestras con Estado_Muestra = 2",
@@ -819,7 +912,8 @@
     "tab": {
       "extraction": "Extracción DNA",
       "labeling": "Marcaje DNA",
-      "dilution": "Dilución DNA"
+      "dilution": "Dilución DNA",
+      "tubes": "Preparar tubos"
     },
     "nSamplesMax6": "Nº muestras (máx. 6)",
     "nSamplesMax12": "Nº muestras (máx. 12)",
@@ -913,6 +1007,45 @@
     },
     "err": {
       "invalidMean": "Media de DNA no válida"
+    }
+  },
+  "tubos": {
+    "title": "Preparar tubos",
+    "help": "Objetivo: {{cellsM}} × 10⁶ células (1,5 M) por tubo. Volumen de transferencia = 1500 / recuento celular (10⁹/L). El tampón CSB (Cold Stabilizing Buffer) completa el volumen final: {{volCryo}} µL en criotubo y {{volSp}} µL en sangre periférica.",
+    "badge": {
+      "targetCells": "1,5 M células",
+      "cryo": "Criotubo: {{vol}} µL",
+      "sp": "Sangre periférica: {{vol}} µL"
+    },
+    "volumes": "Volúmenes por tubo",
+    "empty": "No hay tubos. Añade un criotubo o sangre periférica.",
+    "addCryo": "Añadir criotubo",
+    "addSp": "Añadir SP",
+    "remove": "Quitar",
+    "type": {
+      "cryo": "Criotubo",
+      "sp": "Sangre periférica"
+    },
+    "col": {
+      "type": "Tipo",
+      "count": "Recuento (10⁹/L)",
+      "transfer": "Vol. transferencia (µL)",
+      "csb": "Vol. CSB (µL)",
+      "final": "Vol. final (µL)",
+      "notes": "Notas"
+    },
+    "note": {
+      "exceedsFinal": "La transferencia supera el volumen final; recuento demasiado bajo"
+    },
+    "err": {
+      "invalidCount": "Recuento celular no válido"
+    },
+    "print": {
+      "empty": "No hay tubos para imprimir",
+      "heading": "Volúmenes por tubo",
+      "meta": "{{fecha}} · {{count}} tubo(s)",
+      "prepareError": "No se pudo preparar la impresión",
+      "dialogError": "Error al abrir el diálogo de impresión"
     }
   },
   "auth": {
