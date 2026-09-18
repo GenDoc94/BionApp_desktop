@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.0.0
+
+- Página **Calidad**: envíos (Sales Order y fecha de llegada), catálogo de lotes (extracción, marcado, membrana y chip), registro de filtros de aire y árbol de trazabilidad Envío → Lote → Muestra → lecturas → chips.
+- Acciones de laboratorio: preparar muestras, mandar a leer con fecha de extracción, marcar con la fecha de Datos del marcado, lotes de chip con Ver Estados, y Acciones antes de Chips en la barra.
+- Cálculos: dilución de DNA para marcado (750 ng, o la cantidad real si se llega al máximo de volumen) y preparación de tubos.
+- No se pueden repetir LN ni Sales Order al crear (aviso «Ya existe»). Los lotes muestran el envío asignado. Al volver a la app se conserva el Nº BN.
+
 ## 3.0.12
 
 - Catálogo de lotes de extracción, marcado y membrana (PN, LN y caducidad), con página de Lotes y edición de lotes existentes.
