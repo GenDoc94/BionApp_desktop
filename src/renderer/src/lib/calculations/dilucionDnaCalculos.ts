@@ -54,8 +54,9 @@ export function calcDilucionDna(
   // Excel D6: IF(($F$2-E6)<0, 0, $F$2-E6)
   const volH2OUl = Math.max(0, volTotalUl - volDnaUl);
 
-  // Excel H6: IF((E6=19.5), (19.5*C6), "")
-  const ngEnMezclaDna = volumenDnaAlMaximo ? volTotalUl * media : volDnaUl * media;
+  // Excel H6: IF((E6=19.5), (19.5*C6), "") — en app siempre mostramos ng:
+  // 750 si cabe el objetivo; 19,5 × media si el DNA va al máximo (queda por debajo).
+  const ngEnMezclaDna = volumenDnaAlMaximo ? volTotalUl * media : targetNg;
 
   const mediaFueraRangoIdeal =
     media < DILUCION_MEDIA_IDEAL_MIN || media > DILUCION_MEDIA_IDEAL_MAX;
@@ -118,8 +119,12 @@ export function effectiveCvFromLectura(row: {
   return cv;
 }
 
-const CAMPOS_MARCADO_CON_DATOS = [
-  "Fecha_Marcado",
+function tieneValorRelleno(value: unknown): boolean {
+  return value != null && value !== "";
+}
+
+/** Campos de Marcado que indican que el laboratorio ya avanzó (no el alta en Acciones). */
+const CAMPOS_MARCADO_PROGRESO = [
   "Comentario_Membrana",
   "Fecha_Lect_Marc",
   "Cargado_M",
@@ -127,24 +132,89 @@ const CAMPOS_MARCADO_CON_DATOS = [
   "Dcha_M",
 ] as const;
 
-function filaMarcadoConDatos(row: Record<string, unknown>): boolean {
-  const lms = row.Lecturas_Marcado;
-  if (Array.isArray(lms) && lms.length > 0) return true;
+/** Cuantificación de lo marcado. LN y fecha de Datos del marcado pueden existir al crear. */
+const CAMPOS_LM_PROGRESO = [
+  "Cargado_LM",
+  "Izq_LM",
+  "Dcha_LM",
+  "Media_LM",
+] as const;
 
-  return CAMPOS_MARCADO_CON_DATOS.some((k) => {
-    const v = row[k];
-    return v != null && v !== "";
-  });
+function lecturasMarcadoDe(row: Record<string, unknown>): Record<string, unknown>[] {
+  const lms = row.Lecturas_Marcado;
+  if (Array.isArray(lms)) {
+    return lms.filter((r): r is Record<string, unknown> => r != null && typeof r === "object");
+  }
+  if (lms != null && typeof lms === "object") return [lms as Record<string, unknown>];
+  return [];
+}
+
+function lmConProgreso(lm: Record<string, unknown>): boolean {
+  return CAMPOS_LM_PROGRESO.some((k) => tieneValorRelleno(lm[k]));
+}
+
+function marcadoConProgreso(row: Record<string, unknown>): boolean {
+  if (CAMPOS_MARCADO_PROGRESO.some((k) => tieneValorRelleno(row[k]))) return true;
+  return lecturasMarcadoDe(row).some(lmConProgreso);
 }
 
 /**
- * Marcaje “real” (hay LM o datos en Marcado). Una fila vacía en Marcado (solo BN+L)
- * no cuenta — p. ej. BN 235 con upsert sin rellenar.
+ * Candidata a dilución DNA: marcaje iniciado en Acciones (Marcado + ≥1 LM)
+ * y aún sin rellenar cuantificación ni otros datos de laboratorio.
+ * Fecha_Marcado y LN no cuentan como “más relleno”.
  */
-export function lecturaTieneMarcadoParaDilucion(marcado: unknown): boolean {
+export function lecturaListaParaDilucionMarcaje(marcado: unknown): boolean {
   if (marcado == null) return false;
   const rows = Array.isArray(marcado) ? marcado : [marcado];
-  return rows.some(
-    (r) => r != null && typeof r === "object" && filaMarcadoConDatos(r as Record<string, unknown>)
-  );
+  let algunaLm = false;
+  for (const r of rows) {
+    if (r == null || typeof r !== "object") continue;
+    const row = r as Record<string, unknown>;
+    const lms = lecturasMarcadoDe(row);
+    if (lms.length === 0) continue;
+    algunaLm = true;
+    if (marcadoConProgreso(row)) return false;
+  }
+  return algunaLm;
+}
+
+function claveLectura(numBN: unknown, numLectura: unknown): string | null {
+  const bn = Number(numBN);
+  const lect = Number(numLectura);
+  if (!Number.isFinite(bn) || !Number.isFinite(lect)) return null;
+  return `${bn}:${lect}`;
+}
+
+/** Une Marcado + Lecturas_Marcado a cada Lectura (el SQLite de escritorio no hace embeds PostgREST). */
+export function nestMarcadoEnLecturas(
+  lecturas: Record<string, unknown>[],
+  marcados: Record<string, unknown>[],
+  lecturasMarcado: Record<string, unknown>[]
+): Record<string, unknown>[] {
+  const lmsPorLectura = new Map<string, Record<string, unknown>[]>();
+  for (const lm of lecturasMarcado) {
+    const key = claveLectura(lm.NumBN_LM, lm.NumLectura_LM);
+    if (!key) continue;
+    const list = lmsPorLectura.get(key) ?? [];
+    list.push(lm);
+    lmsPorLectura.set(key, list);
+  }
+
+  const marcadoPorLectura = new Map<string, Record<string, unknown>>();
+  for (const row of marcados) {
+    const key = claveLectura(row.NumBN_M, row.NumLectura_M);
+    if (!key) continue;
+    marcadoPorLectura.set(key, {
+      ...row,
+      Lecturas_Marcado: lmsPorLectura.get(key) ?? [],
+    });
+  }
+
+  return lecturas.map((l) => {
+    const key = claveLectura(l.NumBN_L, l.NumLectura);
+    return {
+      ...l,
+      Marcado: key ? marcadoPorLectura.get(key) ?? null : null,
+    };
+  });
 }

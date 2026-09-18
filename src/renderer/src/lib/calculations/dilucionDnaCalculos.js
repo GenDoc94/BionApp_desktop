@@ -29,8 +29,8 @@ export function calcDilucionDna(mediaNgPerUl, options) {
     var volumenDnaAlMaximo = volDnaUl >= volTotalUl - 1e-9;
     // Excel D6: IF(($F$2-E6)<0, 0, $F$2-E6)
     var volH2OUl = Math.max(0, volTotalUl - volDnaUl);
-    // Excel H6: IF((E6=19.5), (19.5*C6), "")
-    var ngEnMezclaDna = volumenDnaAlMaximo ? volTotalUl * media : volDnaUl * media;
+    // Excel H6: IF((E6=19.5), (19.5*C6), "") — en app siempre mostramos ng
+    var ngEnMezclaDna = volumenDnaAlMaximo ? volTotalUl * media : targetNg;
     var mediaFueraRangoIdeal = media < DILUCION_MEDIA_IDEAL_MIN || media > DILUCION_MEDIA_IDEAL_MAX;
     var bajoMinimoNg = volumenDnaAlMaximo && ngEnMezclaDna < minNg;
     return {
@@ -78,30 +78,88 @@ export function effectiveCvFromLectura(row) {
     var cv = calcStatsLectura(row.Izq, row.Cen, row.Dcha).cv;
     return cv;
 }
-var CAMPOS_MARCADO_CON_DATOS = [
-    "Fecha_Marcado",
+function tieneValorRelleno(value) {
+    return value != null && value !== "";
+}
+var CAMPOS_MARCADO_PROGRESO = [
     "Comentario_Membrana",
     "Fecha_Lect_Marc",
     "Cargado_M",
     "Izq_M",
     "Dcha_M",
 ];
-function filaMarcadoConDatos(row) {
+var CAMPOS_LM_PROGRESO = [
+    "Cargado_LM",
+    "Izq_LM",
+    "Dcha_LM",
+    "Media_LM",
+];
+function lecturasMarcadoDe(row) {
     var lms = row.Lecturas_Marcado;
-    if (Array.isArray(lms) && lms.length > 0)
+    if (Array.isArray(lms))
+        return lms.filter(function (r) { return r != null && typeof r === "object"; });
+    if (lms != null && typeof lms === "object")
+        return [lms];
+    return [];
+}
+function lmConProgreso(lm) {
+    return CAMPOS_LM_PROGRESO.some(function (k) { return tieneValorRelleno(lm[k]); });
+}
+function marcadoConProgreso(row) {
+    if (CAMPOS_MARCADO_PROGRESO.some(function (k) { return tieneValorRelleno(row[k]); }))
         return true;
-    return CAMPOS_MARCADO_CON_DATOS.some(function (k) {
-        var v = row[k];
-        return v != null && v !== "";
-    });
+    return lecturasMarcadoDe(row).some(lmConProgreso);
 }
 /**
- * Marcaje “real” (hay LM o datos en Marcado). Una fila vacía en Marcado (solo BN+L)
- * no cuenta — p. ej. BN 235 con upsert sin rellenar.
+ * Candidata a dilución DNA: marcaje iniciado en Acciones (Marcado + ≥1 LM)
+ * y aún sin rellenar cuantificación ni otros datos de laboratorio.
  */
-export function lecturaTieneMarcadoParaDilucion(marcado) {
+export function lecturaListaParaDilucionMarcaje(marcado) {
     if (marcado == null)
         return false;
     var rows = Array.isArray(marcado) ? marcado : [marcado];
-    return rows.some(function (r) { return r != null && typeof r === "object" && filaMarcadoConDatos(r); });
+    var algunaLm = false;
+    for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        if (r == null || typeof r !== "object")
+            continue;
+        var lms = lecturasMarcadoDe(r);
+        if (lms.length === 0)
+            continue;
+        algunaLm = true;
+        if (marcadoConProgreso(r))
+            return false;
+    }
+    return algunaLm;
+}
+function claveLectura(numBN, numLectura) {
+    var bn = Number(numBN);
+    var lect = Number(numLectura);
+    if (!Number.isFinite(bn) || !Number.isFinite(lect))
+        return null;
+    return bn + ":" + lect;
+}
+export function nestMarcadoEnLecturas(lecturas, marcados, lecturasMarcado) {
+    var lmsPorLectura = new Map();
+    for (var i = 0; i < lecturasMarcado.length; i++) {
+        var lm = lecturasMarcado[i];
+        var key = claveLectura(lm.NumBN_LM, lm.NumLectura_LM);
+        if (!key)
+            continue;
+        var list = lmsPorLectura.get(key) || [];
+        list.push(lm);
+        lmsPorLectura.set(key, list);
+    }
+    var marcadoPorLectura = new Map();
+    for (var j = 0; j < marcados.length; j++) {
+        var row = marcados[j];
+        var mKey = claveLectura(row.NumBN_M, row.NumLectura_M);
+        if (!mKey)
+            continue;
+        marcadoPorLectura.set(mKey, Object.assign({}, row, { Lecturas_Marcado: lmsPorLectura.get(mKey) || [] }));
+    }
+    return lecturas.map(function (l) {
+        var lKey = claveLectura(l.NumBN_L, l.NumLectura);
+        return Object.assign({}, l, { Marcado: lKey ? (marcadoPorLectura.get(lKey) || null) : null });
+    });
 }

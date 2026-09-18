@@ -99,6 +99,48 @@ type PteChipItem = {
 const HACER_SELECT_CLASS =
   "h-8 text-xs border border-input rounded-md px-2 bg-background min-w-[140px] max-w-[220px]";
 
+function blurActiveElement() {
+  const el = document.activeElement;
+  if (el instanceof HTMLElement && el !== document.body) el.blur();
+}
+
+function restoreKeyboardFocus(): Promise<void> {
+  blurActiveElement();
+  const restore = window.api?.restoreKeyboardFocus;
+  if (typeof restore !== "function") return Promise.resolve();
+  return restore().catch(() => undefined);
+}
+
+function preventToolbarButtonFocus(e: React.MouseEvent) {
+  e.preventDefault();
+  blurActiveElement();
+}
+
+function HacerEditTextInput({
+  value,
+  onChange,
+  className,
+  first = false,
+}: {
+  value: unknown;
+  onChange: (value: string) => void;
+  className?: string;
+  first?: boolean;
+}) {
+  return (
+    <input
+      type="text"
+      data-hacer-edit-field={first ? "first" : undefined}
+      value={value == null ? "" : String(value)}
+      onChange={(e) => onChange(e.target.value)}
+      className={cn(
+        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input flex w-full min-w-0 rounded-md border px-3 py-1 bg-background outline-none md:text-sm",
+        className
+      )}
+    />
+  );
+}
+
 const MIN_MEDIA_LM_PTE_CHIP = MARCAR_MAX_MEDIA_LM;
 
 function nextNumLecturaForBn(
@@ -942,6 +984,7 @@ function ActionsPage() {
   const [editedMuestras, setEditedMuestras] = useState<HacerMuestraRow[]>([]);
   const [savingHacer, setSavingHacer] = useState(false);
   const [mandarConfirmOpen, setMandarConfirmOpen] = useState(false);
+  const [mandarFecha, setMandarFecha] = useState("");
   const [leerEditMode, setLeerEditMode] = useState(false);
   const [editedLeerMuestras, setEditedLeerMuestras] = useState<LeerExtraidoRow[]>([]);
   const [savingLeer, setSavingLeer] = useState(false);
@@ -959,6 +1002,7 @@ function ActionsPage() {
   const [marcarConfirmOpen, setMarcarConfirmOpen] = useState(false);
   const [marcarLotMId, setMarcarLotMId] = useState("");
   const [marcarLotMmId, setMarcarLotMmId] = useState("");
+  const [marcarFecha, setMarcarFecha] = useState("");
   const [savingMarcar, setSavingMarcar] = useState(false);
   const [pteChipSelected, setPteChipSelected] = useState<Set<string>>(() => new Set());
   const [pteChipConfirmOpen, setPteChipConfirmOpen] = useState(false);
@@ -998,6 +1042,23 @@ function ActionsPage() {
     };
   }, [user?.email]);
 
+  useEffect(() => {
+    if (!hacerEditMode && !leerEditMode && !leerMarcadoEditMode) return;
+    let cancelled = false;
+    const id = window.setTimeout(() => {
+      void restoreKeyboardFocus().then(() => {
+        if (cancelled) return;
+        if (hacerEditMode) {
+          document.querySelector<HTMLInputElement>("[data-hacer-edit-field='first']")?.focus();
+        }
+      });
+    }, 50);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
+  }, [hacerEditMode, leerEditMode, leerMarcadoEditMode]);
+
   const exitHacerEditMode = () => {
     setHacerEditMode(false);
     setEditedMuestras([]);
@@ -1014,6 +1075,7 @@ function ActionsPage() {
   };
 
   const handleLeerEditStart = () => {
+    blurActiveElement();
     setEditedLeerMuestras(
       muestras.map((row) => normalizeLeerExtraidoRow(row as Record<string, unknown>))
     );
@@ -1152,6 +1214,7 @@ function ActionsPage() {
   };
 
   const handleLeerMarcadoEditStart = () => {
+    blurActiveElement();
     setEditedLeerMarcadoRows(
       muestras.map((row) => normalizeLeerMarcadoRow(row as Record<string, unknown>))
     );
@@ -1240,11 +1303,13 @@ function ActionsPage() {
   };
 
   const handleHacerEditStart = () => {
-    setEditedMuestras(
-      muestras.map((row) => normalizeHacerRow(row as Record<string, unknown>))
-    );
-    setHacerEditMode(true);
-    if (tiposMuestra.length > 0 && dxs.length > 0 && lotesExtraido.length > 0) return;
+    blurActiveElement();
+    const rows = muestras.map((row) => normalizeHacerRow(row as Record<string, unknown>));
+    window.setTimeout(() => {
+      setEditedMuestras(rows);
+      setHacerEditMode(true);
+    }, 0);
+    if (tiposMuestra.length > 0 && dxs.length > 0) return;
     void (async () => {
       try {
         const [catalogs, lots] = await Promise.all([
@@ -1357,6 +1422,11 @@ function ActionsPage() {
 
   const handleMandarALeer = async () => {
     if (!muestras.length || hacerEditMode) return;
+    const fechaExtraccion = mandarFecha.trim();
+    if (!fechaExtraccion) {
+      toast.error(t("actions.toast.sendToReadNeedDate"));
+      return;
+    }
     setMandarConfirmOpen(false);
     setSavingHacer(true);
     try {
@@ -1382,7 +1452,7 @@ function ActionsPage() {
 
           const { error: estadoError } = await supabase
             .from("Muestras")
-            .update({ Estado_Muestra: 2 })
+            .update({ Estado_Muestra: 2, Fecha: fechaExtraccion })
             .eq("NumBN", numBN)
             .is("Estado_Muestra", null);
           return { numBN, error: estadoError };
@@ -1610,6 +1680,7 @@ function ActionsPage() {
       toast.error(t("actions.toast.marcarNeedSelection"));
       return;
     }
+    setMarcarFecha((prev) => prev || todayIsoDate());
     setMarcarConfirmOpen(true);
   };
 
@@ -1625,6 +1696,11 @@ function ActionsPage() {
     const lotMm = lotesMembrana.find((l) => l.id === Number(marcarLotMmId)) ?? null;
     if (!lotM || !lotMm) {
       toast.error(t("actions.toast.marcarNeedLots"));
+      return;
+    }
+    const fechaMarcado = marcarFecha.trim();
+    if (!fechaMarcado) {
+      toast.error(t("actions.toast.marcarNeedDate"));
       return;
     }
     setSavingMarcar(true);
@@ -1648,6 +1724,7 @@ function ActionsPage() {
           {
             NumBN_M: numBN,
             NumLectura_M: numLectura,
+            Fecha_Marcado: fechaMarcado,
           },
         ]);
         if (marcadoError) {
@@ -1663,6 +1740,7 @@ function ActionsPage() {
             NumLectMarc: nextLm,
             Id_LtM: lotM.id,
             Id_LtMm: lotMm.id,
+            Fecha_Lect_Marc: fechaMarcado,
           },
         ]);
         if (!lmError) {
@@ -1691,6 +1769,7 @@ function ActionsPage() {
       setMarcarSelected(new Set());
       setMarcarLotMId("");
       setMarcarLotMmId("");
+      setMarcarFecha("");
       await handleActionClick("marcar");
     } catch (err) {
       console.error(err);
@@ -1766,11 +1845,13 @@ function ActionsPage() {
     setMarcarConfirmOpen(false);
     setMarcarLotMId("");
     setMarcarLotMmId("");
+    setMarcarFecha("");
     setPteChipSelected(new Set());
     setPteChipConfirmOpen(false);
     setPteChipNumChip("");
     setPteChipFcByItem({});
     setMandarConfirmOpen(false);
+    setMandarFecha("");
     exitHacerEditMode();
     exitLeerEditMode();
     exitLeerMarcadoEditMode();
@@ -2210,8 +2291,10 @@ function ActionsPage() {
               return (
               <Button
                 key={accion.key}
+                type="button"
                 size="sm"
                 className="gap-2 bionapp-btn-green shrink-0"
+                onMouseDown={preventToolbarButtonFocus}
                 onClick={() => handleActionClick(accion.key)}
                 disabled={
                   loading ||
@@ -2219,10 +2302,7 @@ function ActionsPage() {
                   savingLeer ||
                   savingLeerMarcado ||
                   savingMarcar ||
-                  savingPteChip ||
-                  hacerEditMode ||
-                  leerEditMode ||
-                  leerMarcadoEditMode
+                  savingPteChip
                 }
               >
                 <AccionIcon className="h-4 w-4" />
@@ -2342,11 +2422,32 @@ function ActionsPage() {
                           ))}
                         </select>
                       </label>
+                      <label className="min-w-[180px]">
+                        <span className="block text-xs text-muted-foreground mb-1">
+                          {t("actions.col.markingDate")}
+                        </span>
+                        <Input
+                          type="date"
+                          value={marcarFecha}
+                          onChange={(e) => setMarcarFecha(e.target.value)}
+                          className="h-8 text-sm min-w-[160px]"
+                          disabled={savingMarcar}
+                        />
+                      </label>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8"
+                        onClick={() => setMarcarFecha(todayIsoDate())}
+                        disabled={savingMarcar}
+                      >
+                        {t("actions.today")}
+                      </Button>
                       <Button
                         size="sm"
                         className="h-8 gap-2 bionapp-btn-green"
                         onClick={() => void handleCreateMarcarLm()}
-                        disabled={savingMarcar || !marcarLotMId || !marcarLotMmId}
+                        disabled={savingMarcar || !marcarLotMId || !marcarLotMmId || !marcarFecha}
                       >
                         {savingMarcar ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -2611,51 +2712,63 @@ function ActionsPage() {
                   <Printer className="h-4 w-4" />
                   {t("common.print")}
                 </Button>
-                {isAdmin &&
-                  (!hacerEditMode ? (
-                    <Button
+                {isAdmin && (
+                  <>
+                    <button
                       type="button"
-                      size="sm"
-                      className="gap-2"
+                      tabIndex={-1}
+                      className={cn(
+                        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-8 px-3",
+                        "bg-primary text-primary-foreground hover:bg-primary/90",
+                        hacerEditMode && "hidden"
+                      )}
+                      onMouseDown={preventToolbarButtonFocus}
                       onClick={handleHacerEditStart}
                       disabled={loading || savingHacer}
                     >
                       <Edit className="h-4 w-4" />
                       {t("actions.edit")}
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        size="sm"
-                        className="gap-2 bionapp-btn-green"
-                        onClick={handleHacerSave}
-                        disabled={savingHacer}
-                      >
-                        {savingHacer ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Save className="h-4 w-4" />
-                        )}
-                        {savingHacer ? t("actions.saving") : t("actions.saveAll")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-2"
-                        onClick={handleHacerEditCancel}
-                        disabled={savingHacer}
-                      >
-                        <X className="h-4 w-4" />
-                        {t("actions.cancel")}
-                      </Button>
-                    </>
-                  ))}
+                    </button>
+                    {hacerEditMode ? (
+                      <>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="gap-2 bionapp-btn-green"
+                          onClick={handleHacerSave}
+                          disabled={savingHacer}
+                        >
+                          {savingHacer ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4" />
+                          )}
+                          {savingHacer ? t("actions.saving") : t("actions.saveAll")}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="gap-2"
+                          onClick={handleHacerEditCancel}
+                          disabled={savingHacer}
+                        >
+                          <X className="h-4 w-4" />
+                          {t("actions.cancel")}
+                        </Button>
+                      </>
+                    ) : null}
+                  </>
+                )}
                 {isAdmin && (
                   <Button
                     type="button"
                     size="sm"
                     className="gap-2 bionapp-btn-green"
-                    onClick={() => setMandarConfirmOpen(true)}
+                    onClick={() => {
+                      setMandarFecha(todayIsoDate());
+                      setMandarConfirmOpen(true);
+                    }}
                     disabled={loading || savingHacer || hacerEditMode || muestras.length === 0}
                   >
                     {savingHacer && !hacerEditMode ? (
@@ -2675,13 +2788,35 @@ function ActionsPage() {
                 {isAdmin && mandarConfirmOpen && !hacerEditMode ? (
                   <div className="bionapp-panel p-4 border border-slate-200 dark:border-slate-800">
                     <p className="text-sm mb-3">{t("actions.sendToReadConfirm", { count: muestras.length })}</p>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-end gap-2">
+                      <label className="min-w-[180px]">
+                        <span className="block text-xs text-muted-foreground mb-1">
+                          {t("actions.col.extractionDate")}
+                        </span>
+                        <Input
+                          type="date"
+                          value={mandarFecha}
+                          onChange={(e) => setMandarFecha(e.target.value)}
+                          className="h-8 text-sm min-w-[160px]"
+                          disabled={savingHacer}
+                        />
+                      </label>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8"
+                        onClick={() => setMandarFecha(todayIsoDate())}
+                        disabled={savingHacer}
+                      >
+                        {t("actions.today")}
+                      </Button>
                       <Button
                         type="button"
                         size="sm"
                         className="h-8 gap-2 bionapp-btn-green"
                         onClick={() => void handleMandarALeer()}
-                        disabled={savingHacer || muestras.length === 0}
+                        disabled={savingHacer || muestras.length === 0 || !mandarFecha}
                       >
                         {savingHacer ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -2742,8 +2877,10 @@ function ActionsPage() {
                 {isAdmin &&
                   (!leerMarcadoEditMode ? (
                     <Button
+                      type="button"
                       size="sm"
                       className="gap-2 bionapp-btn-green"
+                      onMouseDown={preventToolbarButtonFocus}
                       onClick={handleLeerMarcadoEditStart}
                       disabled={loading || savingLeerMarcado}
                     >
@@ -2790,8 +2927,10 @@ function ActionsPage() {
                 {isAdmin &&
                   (!leerEditMode ? (
                     <Button
+                      type="button"
                       size="sm"
                       className="gap-2 bionapp-btn-green"
+                      onMouseDown={preventToolbarButtonFocus}
                       onClick={handleLeerEditStart}
                       disabled={loading || savingLeer}
                     >
@@ -3286,30 +3425,24 @@ function ActionsPage() {
                     {mode === "hacer" && hacerEditMode ? (
                       <>
                         <TableCell>
-                          <Input
-                            value={muestra.Petic == null ? "" : String(muestra.Petic)}
-                            onChange={(e) =>
-                              handleHacerFieldChange(rowIndex, "Petic", e.target.value)
-                            }
-                            className="h-8 text-xs min-w-[80px]"
-                            autoFocus={rowIndex === 0}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={muestra.Posic == null ? "" : String(muestra.Posic)}
-                            onChange={(e) =>
-                              handleHacerFieldChange(rowIndex, "Posic", e.target.value)
-                            }
+                          <HacerEditTextInput
+                            first={rowIndex === 0}
+                            value={muestra.Petic}
+                            onChange={(value) => handleHacerFieldChange(rowIndex, "Petic", value)}
                             className="h-8 text-xs min-w-[80px]"
                           />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            value={muestra.Proces == null ? "" : String(muestra.Proces)}
-                            onChange={(e) =>
-                              handleHacerFieldChange(rowIndex, "Proces", e.target.value)
-                            }
+                          <HacerEditTextInput
+                            value={muestra.Posic}
+                            onChange={(value) => handleHacerFieldChange(rowIndex, "Posic", value)}
+                            className="h-8 text-xs min-w-[80px]"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <HacerEditTextInput
+                            value={muestra.Proces}
+                            onChange={(value) => handleHacerFieldChange(rowIndex, "Proces", value)}
                             className="h-8 text-xs min-w-[80px]"
                           />
                         </TableCell>
@@ -3354,20 +3487,16 @@ function ActionsPage() {
                           </select>
                         </TableCell>
                         <TableCell>
-                          <Input
-                            value={muestra.Pellet == null ? "" : String(muestra.Pellet)}
-                            onChange={(e) =>
-                              handleHacerFieldChange(rowIndex, "Pellet", e.target.value)
-                            }
+                          <HacerEditTextInput
+                            value={muestra.Pellet}
+                            onChange={(value) => handleHacerFieldChange(rowIndex, "Pellet", value)}
                             className="h-8 text-xs min-w-[80px]"
                           />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            value={muestra.Medusa == null ? "" : String(muestra.Medusa)}
-                            onChange={(e) =>
-                              handleHacerFieldChange(rowIndex, "Medusa", e.target.value)
-                            }
+                          <HacerEditTextInput
+                            value={muestra.Medusa}
+                            onChange={(value) => handleHacerFieldChange(rowIndex, "Medusa", value)}
                             className="h-8 text-xs min-w-[100px]"
                           />
                         </TableCell>

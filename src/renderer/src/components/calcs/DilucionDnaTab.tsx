@@ -27,7 +27,8 @@ import {
   effectiveCvFromLectura,
   effectiveMediaNgPerUlFromLectura,
   lecturaDilucionKey,
-  lecturaTieneMarcadoParaDilucion,
+  lecturaListaParaDilucionMarcaje,
+  nestMarcadoEnLecturas,
   type DilucionDnaResultado,
 } from "../../lib/calculations/dilucionDnaCalculos";
 
@@ -43,46 +44,52 @@ type FilaDilucion = LecturaDilucionCandidata & {
   resultado: DilucionDnaResultado;
 };
 
-const LECTURA_DILUCION_SELECT = `
-  NumBN_L,
-  NumLectura,
-  Media_Lectura,
-  CV_Lectura,
-  Izq,
-  Cen,
-  Dcha,
-  Muestras!inner(Estado_Muestra),
-  Marcado(
-    NumBN_M,
-    NumLectura_M,
-    Fecha_Marcado,
-    Fecha_Lect_Marc,
-    Lecturas_Marcado(NumLectMarc)
-  )
-`;
+const LECTURA_DILUCION_SELECT =
+  "NumBN_L, NumLectura, Media_Lectura, CV_Lectura, Izq, Cen, Dcha";
+const MARCADO_DILUCION_SELECT =
+  "NumBN_M, NumLectura_M, Fecha_Marcado, Fecha_Lect_Marc, Cargado_M, Izq_M, Dcha_M, Comentario_Membrana";
+const LM_DILUCION_SELECT =
+  "NumBN_LM, NumLectura_LM, NumLectMarc, Izq_LM, Dcha_LM, Media_LM, Fecha_Lect_Marc, Cargado_LM";
+const IN_CHUNK = 400;
 
-/** PostgREST devuelve como máximo 1000 filas por petición; paginamos para no perder BN altos (p. ej. 235). */
-async function fetchAllLecturasEstado2Paginated(): Promise<Record<string, unknown>[]> {
-  const pageSize = 1000;
+async function fetchByInChunks(
+  table: string,
+  select: string,
+  column: string,
+  ids: number[]
+): Promise<Record<string, unknown>[]> {
   const all: Record<string, unknown>[] = [];
-
-  for (let from = 0; ; from += pageSize) {
-    const { data, error } = await supabase
-      .from("Lectura")
-      .select(LECTURA_DILUCION_SELECT)
-      .eq("Muestras.Estado_Muestra", 2)
-      .order("NumBN_L", { ascending: true })
-      .order("NumLectura", { ascending: true })
-      .range(from, from + pageSize - 1);
-
+  for (let i = 0; i < ids.length; i += IN_CHUNK) {
+    const chunk = ids.slice(i, i + IN_CHUNK);
+    const { data, error } = await supabase.from(table).select(select).in(column, chunk);
     if (error) throw error;
-
-    const chunk = data ?? [];
-    all.push(...chunk);
-    if (chunk.length < pageSize) break;
+    all.push(...((data ?? []) as Record<string, unknown>[]));
   }
-
   return all;
+}
+
+/** Estado 2 en Muestras; Marcado y LM se cargan aparte (SQLite de escritorio no embebe PostgREST). */
+async function fetchAllLecturasEstado2Paginated(): Promise<Record<string, unknown>[]> {
+  const { data: muestras, error: muestrasError } = await supabase
+    .from("Muestras")
+    .select("NumBN")
+    .eq("Estado_Muestra", 2);
+  if (muestrasError) throw muestrasError;
+
+  const bns = [...new Set(
+    (muestras ?? [])
+      .map((m) => Number((m as { NumBN?: unknown }).NumBN))
+      .filter((n) => Number.isFinite(n))
+  )];
+  if (!bns.length) return [];
+
+  const [lecturas, marcados, lecturasMarcado] = await Promise.all([
+    fetchByInChunks("Lectura", LECTURA_DILUCION_SELECT, "NumBN_L", bns),
+    fetchByInChunks("Marcado", MARCADO_DILUCION_SELECT, "NumBN_M", bns),
+    fetchByInChunks("Lecturas_Marcado", LM_DILUCION_SELECT, "NumBN_LM", bns),
+  ]);
+
+  return nestMarcadoEnLecturas(lecturas, marcados, lecturasMarcado);
 }
 
 function buildCandidatasFromLecturas(
@@ -91,7 +98,7 @@ function buildCandidatasFromLecturas(
   const candidatas: LecturaDilucionCandidata[] = [];
 
   for (const l of lecturas) {
-    if (lecturaTieneMarcadoParaDilucion(l.Marcado)) continue;
+    if (!lecturaListaParaDilucionMarcaje(l.Marcado)) continue;
 
     const numBN = Number(l.NumBN_L);
     const numLectura = Number(l.NumLectura);
@@ -112,7 +119,7 @@ function buildCandidatasFromLecturas(
   return candidatas;
 }
 
-/** BN estado 2, lectura sin Marcado y con media de DNA (Media_Lectura o I/C/D). */
+/** BN estado 2, marcaje iniciado (Marcado + LM) sin cuantificar, y con media de DNA. */
 async function fetchLecturasDilucionCandidatasFromRows(
   lecturas: Record<string, unknown>[]
 ): Promise<LecturaDilucionCandidata[]> {
@@ -333,7 +340,7 @@ export default function DilucionDnaTab() {
                       {formatDilucionUl(r.volDnaUl)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {r.volumenDnaAlMaximo ? formatDilucionNg(r.ngEnMezclaDna) : t("common.empty")}
+                      {formatDilucionNg(r.ngEnMezclaDna)}
                     </TableCell>
                     <TableCell className="text-xs bionapp-text-warn">
                       {notas.length ? notas.join(" · ") : t("common.empty")}

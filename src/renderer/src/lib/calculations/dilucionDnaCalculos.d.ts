@@ -39,7 +39,12 @@ export declare function effectiveCvFromLectura(row: {
     Dcha?: unknown;
 }): number | null;
 /**
- * Marcaje “real” (hay LM o datos en Marcado). Una fila vacía en Marcado (solo BN+L)
- * no cuenta — p. ej. BN 235 con upsert sin rellenar.
+ * Candidata a dilución DNA: marcaje iniciado en Acciones (Marcado + ≥1 LM)
+ * y aún sin rellenar cuantificación ni otros datos de laboratorio.
  */
-export declare function lecturaTieneMarcadoParaDilucion(marcado: unknown): boolean;
+export declare function lecturaListaParaDilucionMarcaje(marcado: unknown): boolean;
+export declare function nestMarcadoEnLecturas(
+    lecturas: Record<string, unknown>[],
+    marcados: Record<string, unknown>[],
+    lecturasMarcado: Record<string, unknown>[]
+): Record<string, unknown>[];

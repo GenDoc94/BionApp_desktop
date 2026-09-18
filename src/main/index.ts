@@ -270,6 +270,17 @@ function registerIpc(): void {
     return { name: file.name, data: file.data }
   })
 
+  ipcMain.handle('app:restoreKeyboardFocus', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender) ?? mainWindow
+    if (!win || win.isDestroyed()) return
+    // Windows: setEnabled(false/true) suelta el teclado atrapado en un botón
+    // sin minimizar ni mandar la ventana detrás.
+    win.setEnabled(false)
+    win.setEnabled(true)
+    win.focus()
+    win.webContents.focus()
+  })
+
   ipcMain.on('auth:subscribe', (event) => {
     authListeners++
     const user = session ? toAuthUser(session) : null

@@ -51,7 +51,9 @@ const api = {
     ipcRenderer.on('auth:state', handler)
     ipcRenderer.send('auth:subscribe')
     return () => ipcRenderer.removeListener('auth:state', handler)
-  }
+  },
+
+  restoreKeyboardFocus: (): Promise<void> => ipcRenderer.invoke('app:restoreKeyboardFocus')
 }
 
 contextBridge.exposeInMainWorld('api', api)

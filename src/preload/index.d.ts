@@ -26,6 +26,7 @@ declare const api: {
     }>;
     onDataChanged: (cb: () => void) => (() => void);
     onAuthState: (cb: (user: AuthUser | null) => void) => (() => void);
+    restoreKeyboardFocus: () => Promise<void>;
 };
 export type BionApi = typeof api;
 export {};
