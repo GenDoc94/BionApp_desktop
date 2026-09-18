@@ -547,3 +547,32 @@ export function ensureLotesChipsSchema(db: Database.Database): void {
   addFkColumnIfMissing(db, 'DChips', 'Id_LtC', LOTE_TABLE.chip, LOTE_ID_COL.chip)
   db.exec(`CREATE INDEX IF NOT EXISTS DChips_Id_LtC_idx ON DChips(Id_LtC);`)
 }
+
+/** Catálogo de envíos y FK inferencial Lotes_*.Id_Envio. Idempotente. */
+export function ensureEnviosSchema(db: Database.Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS Envios (
+      Id_Envio INTEGER PRIMARY KEY AUTOINCREMENT,
+      Sales_Order TEXT NOT NULL,
+      Fecha_Llegada TEXT NOT NULL DEFAULT '',
+      UNIQUE (Sales_Order)
+    );
+  `)
+  addFkColumnIfMissing(db, LOTE_TABLE.extraido, 'Id_Envio', 'Envios', 'Id_Envio')
+  addFkColumnIfMissing(db, LOTE_TABLE.marcado, 'Id_Envio', 'Envios', 'Id_Envio')
+  addFkColumnIfMissing(db, LOTE_TABLE.membrana, 'Id_Envio', 'Envios', 'Id_Envio')
+  addFkColumnIfMissing(db, LOTE_TABLE.chip, 'Id_Envio', 'Envios', 'Id_Envio')
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS Lotes_Extraido_Id_Envio_idx ON Lotes_Extraido(Id_Envio);
+    CREATE INDEX IF NOT EXISTS Lotes_Marcado_Id_Envio_idx ON Lotes_Marcado(Id_Envio);
+    CREATE INDEX IF NOT EXISTS Lotes_Membrana_Id_Envio_idx ON Lotes_Membrana(Id_Envio);
+    CREATE INDEX IF NOT EXISTS Lotes_Chips_Id_Envio_idx ON Lotes_Chips(Id_Envio);
+  `)
+  try {
+    db.exec(
+      `CREATE UNIQUE INDEX IF NOT EXISTS Envios_Sales_Order_ci ON Envios(Sales_Order COLLATE NOCASE);`
+    )
+  } catch {
+    /* Filas previas que solo se diferencian por mayúsculas. */
+  }
+}

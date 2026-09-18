@@ -8,6 +8,7 @@ export const EXPORT_TABLES = [
   'Lotes_Marcado',
   'Lotes_Membrana',
   'Lotes_Chips',
+  'Envios',
   'Filtros',
   'Muestras',
   'Lectura',

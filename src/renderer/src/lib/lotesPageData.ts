@@ -82,6 +82,9 @@ export type LoteRow = {
   PN: string
   LN: string
   Exp: string
+  idEnvio?: number | null
+  envioSalesOrder?: string | null
+  envioFechaLlegada?: string | null
 }
 
 export type LoteUsoExtraido = { NumBN: number; Estado_Muestra: number | null }
@@ -205,6 +208,12 @@ export function lotIdFromRow(
   return Number.isFinite(n) ? n : null
 }
 
+export function parseIdEnvio(value: unknown): number | null {
+  if (value == null || value === "") return null
+  const n = Number(value)
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
 export function toLoteRow(row: Record<string, unknown>, tipo: LoteTipo): LoteRow | null {
   const id = lotIdFromRow(row, tipo)
   if (id == null) return null
@@ -213,7 +222,54 @@ export function toLoteRow(row: Record<string, unknown>, tipo: LoteTipo): LoteRow
     PN: String(row.PN ?? ""),
     LN: String(row.LN ?? ""),
     Exp: String(row.Exp ?? ""),
+    idEnvio: parseIdEnvio(row.Id_Envio),
   }
+}
+
+export function normalizeCatalogKey(value: unknown): string {
+  return String(value ?? "").trim()
+}
+
+export function sameCatalogKey(a: unknown, b: unknown): boolean {
+  const na = normalizeCatalogKey(a)
+  const nb = normalizeCatalogKey(b)
+  return na !== "" && na.toLowerCase() === nb.toLowerCase()
+}
+
+export function findLotByLn(
+  lots: LoteRow[],
+  ln: string,
+  excludeId?: number
+): LoteRow | null {
+  const needle = normalizeCatalogKey(ln)
+  if (!needle) return null
+  return (
+    lots.find((lot) => {
+      if (excludeId != null && lot.id === excludeId) return false
+      return sameCatalogKey(lot.LN, needle)
+    }) ?? null
+  )
+}
+
+export function findDuplicateLot(
+  lots: LoteRow[],
+  candidate: { PN: string; LN: string; Exp: string },
+  excludeId?: number
+): LoteRow | null {
+  const pn = normalizeCatalogKey(candidate.PN)
+  const ln = normalizeCatalogKey(candidate.LN)
+  if (!pn || !ln) return null
+  const exp = lotExpFromInputValue(candidate.Exp)
+  return (
+    lots.find((lot) => {
+      if (excludeId != null && lot.id === excludeId) return false
+      return (
+        sameCatalogKey(lot.PN, pn) &&
+        sameCatalogKey(lot.LN, ln) &&
+        sameCatalogKey(lotExpFromInputValue(lot.Exp), exp)
+      )
+    }) ?? null
+  )
 }
 
 export function sortLots(lots: LoteRow[]): LoteRow[] {
@@ -470,7 +526,8 @@ export function filterLots(
     if (
       lot.LN.toLowerCase().includes(q) ||
       lot.PN.toLowerCase().includes(q) ||
-      lot.Exp.toLowerCase().includes(q)
+      lot.Exp.toLowerCase().includes(q) ||
+      (lot.envioSalesOrder != null && lot.envioSalesOrder.toLowerCase().includes(q))
     ) {
       return true
     }
@@ -502,6 +559,7 @@ export function lotMatchesSearchBlob(lot: LoteRow, query: string): boolean {
   return (
     lot.LN.toLowerCase().includes(q) ||
     lot.PN.toLowerCase().includes(q) ||
-    lot.Exp.toLowerCase().includes(q)
+    lot.Exp.toLowerCase().includes(q) ||
+    (lot.envioSalesOrder != null && lot.envioSalesOrder.toLowerCase().includes(q))
   )
 }

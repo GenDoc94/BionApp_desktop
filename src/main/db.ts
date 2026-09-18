@@ -2,7 +2,7 @@ import Database from 'better-sqlite3'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import { ensureLotesChipsSchema, migrateHomogenizeLotExps, migrateLegacyLotColumns } from './lotes'
+import { ensureLotesChipsSchema, ensureEnviosSchema, migrateHomogenizeLotExps, migrateLegacyLotColumns } from './lotes'
 
 export const DB_FILENAME = 'bionapp.sqlite'
 
@@ -123,6 +123,7 @@ export function migratePeticColumnsToText(db: Database.Database): void {
  * Jerarquía cascade: Muestras → Lectura → Marcado → Lecturas_Marcado → Chips
  * Lotes_Extraido / Lotes_Marcado / Lotes_Membrana / Lotes_Chips son catálogos (PN+LN+Exp)
  * referenciados por Muestras.Id_LtE, Lecturas_Marcado.Id_LtM / Id_LtMm y DChips.Id_LtC.
+ * Envios agrupa lotes (Id_Envio) para trazabilidad Envío → Lote → Muestra.
  * Filtros registra colocación/retirada de filtros (NumFiltro, FechaColoc, FechaRetir).
  * Media/SD/CV se calculan en la capa de escritura (SQLite no permite mutar NEW).
  */
@@ -179,11 +180,19 @@ export function initSchema(db: Database.Database): void {
     CREATE UNIQUE INDEX IF NOT EXISTS Tags_Tag_Name_ci_uniq
       ON Tags(lower(Tag_Name));
 
+    CREATE TABLE IF NOT EXISTS Envios (
+      Id_Envio INTEGER PRIMARY KEY AUTOINCREMENT,
+      Sales_Order TEXT NOT NULL,
+      Fecha_Llegada TEXT NOT NULL DEFAULT '',
+      UNIQUE (Sales_Order)
+    );
+
     CREATE TABLE IF NOT EXISTS Lotes_Extraido (
       Id_LtE INTEGER PRIMARY KEY AUTOINCREMENT,
       PN TEXT NOT NULL,
       LN TEXT NOT NULL DEFAULT '',
       Exp TEXT NOT NULL DEFAULT '',
+      Id_Envio INTEGER REFERENCES Envios(Id_Envio) ON UPDATE CASCADE ON DELETE SET NULL,
       UNIQUE (PN, LN, Exp)
     );
 
@@ -192,6 +201,7 @@ export function initSchema(db: Database.Database): void {
       PN TEXT NOT NULL,
       LN TEXT NOT NULL DEFAULT '',
       Exp TEXT NOT NULL DEFAULT '',
+      Id_Envio INTEGER REFERENCES Envios(Id_Envio) ON UPDATE CASCADE ON DELETE SET NULL,
       UNIQUE (PN, LN, Exp)
     );
 
@@ -200,6 +210,7 @@ export function initSchema(db: Database.Database): void {
       PN TEXT NOT NULL,
       LN TEXT NOT NULL DEFAULT '',
       Exp TEXT NOT NULL DEFAULT '',
+      Id_Envio INTEGER REFERENCES Envios(Id_Envio) ON UPDATE CASCADE ON DELETE SET NULL,
       UNIQUE (PN, LN, Exp)
     );
 
@@ -208,6 +219,7 @@ export function initSchema(db: Database.Database): void {
       PN TEXT NOT NULL,
       LN TEXT NOT NULL DEFAULT '',
       Exp TEXT NOT NULL DEFAULT '',
+      Id_Envio INTEGER REFERENCES Envios(Id_Envio) ON UPDATE CASCADE ON DELETE SET NULL,
       UNIQUE (PN, LN, Exp)
     );
 
@@ -331,6 +343,7 @@ export function initSchema(db: Database.Database): void {
   migratePeticColumnsToText(db)
   ensureFiltrosSchema(db)
   ensureLotesChipsSchema(db)
+  ensureEnviosSchema(db)
   db.exec(`
     CREATE INDEX IF NOT EXISTS Muestras_Id_LtE_idx ON Muestras(Id_LtE);
     CREATE INDEX IF NOT EXISTS Lecturas_Marcado_Id_LtM_idx ON Lecturas_Marcado(Id_LtM);

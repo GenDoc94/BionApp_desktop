@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest"
 import {
   buildLotesHighlightPath,
   filterLots,
+  findDuplicateLot,
+  findLotByLn,
   findLotId,
   hydrateLecturasMarcadoFromLots,
   hydrateMuestrasFromLots,
@@ -119,6 +121,30 @@ describe("lotesPageData", () => {
     ])
     expect(chips.get(2)?.map((u) => u.NumChip)).toEqual([4, 12])
     expect(filterLots(lots, extra, lm, "Chip4", chips).map((l) => l.id)).toEqual([2])
+  })
+
+  it("filters lots by assigned sales order", () => {
+    const withSo: LoteRow[] = [
+      { ...lots[0], envioSalesOrder: "WR00001234" },
+      lots[1],
+      lots[2],
+    ]
+    expect(filterLots(withSo, new Map(), new Map(), "WR0000").map((l) => l.id)).toEqual([1])
+  })
+
+  it("detects duplicate LN ignoring case and spaces", () => {
+    expect(findLotByLn(lots, " 250428048 ")?.id).toBe(1)
+    expect(findLotByLn(lots, "240515028", 3)).toBe(null)
+    expect(findLotByLn(lots, "")).toBe(null)
+  })
+
+  it("detects duplicate PN+LN+Exp across date formats", () => {
+    expect(
+      findDuplicateLot(lots, { PN: "80118", LN: "250428048", Exp: "2026-08-26" })?.id
+    ).toBe(2)
+    expect(
+      findDuplicateLot(lots, { PN: "80118", LN: "250428048", Exp: "2026-08-26" }, 2)
+    ).toBe(null)
   })
 
   it("colors extraido samples by Estado_Muestra and counts them", () => {

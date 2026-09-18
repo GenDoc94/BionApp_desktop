@@ -13,6 +13,8 @@ import { supabase } from "../lib/supabaseClient";
 import { buildMuestraAppPath, saveMuestraNavegacion } from "../lib/navegacionMuestra";
 import {
   filterLots,
+  findDuplicateLot,
+  findLotByLn,
   groupUsosChip,
   groupUsosExtraido,
   groupUsosLm,
@@ -24,6 +26,7 @@ import {
   LOTE_TIPOS,
   parseLotesHighlight,
   resolveHighlightedLotId,
+  sameCatalogKey,
   sortLots,
   toLoteRow,
   type LoteEstadoColor,
@@ -39,6 +42,8 @@ import {
   loteChipEstadoColor,
   loteLmMediaColor,
 } from "../lib/lotesPageData";
+import { attachEnvioSalesOrders, parseEnvioRow, type EnvioRow } from "../lib/enviosPageData";
+import { formatIsoDateDisplay } from "../lib/filtrosPageData";
 
 function usoEstadoClass(color: LoteEstadoColor, active: boolean): string {
   if (!active || color === "none") return "";
@@ -89,6 +94,7 @@ function LotesPage({ embedded = false }: LotesPageProps) {
       lmRes,
       dChipsRes,
       chipsAsigRes,
+      enviosRes,
     ] = await Promise.all([
       supabase.from("Lotes_Extraido").select("*"),
       supabase.from("Lotes_Marcado").select("*"),
@@ -100,6 +106,7 @@ function LotesPage({ embedded = false }: LotesPageProps) {
         .select("NumBN_LM, NumLectura_LM, NumLectMarc, Id_LtM, Id_LtMm, Media_LM, Izq_LM, Dcha_LM"),
       supabase.from("DChips").select("NumChip_D, Nombre_Chip, Id_LtC"),
       supabase.from("Chips").select("NumChip, FC, NumBN_C, Repetir_Chip"),
+      supabase.from("Envios").select("Id_Envio, Sales_Order, Fecha_Llegada"),
     ]);
 
     const errors = [
@@ -119,8 +126,19 @@ function LotesPage({ embedded = false }: LotesPageProps) {
       return;
     }
 
+    const envios: EnvioRow[] = enviosRes.error
+      ? []
+      : (enviosRes.data || [])
+          .map((row) => parseEnvioRow(row as Record<string, unknown>))
+          .filter((row): row is EnvioRow => row != null);
+
     const mapRows = (rows: Record<string, unknown>[] | null, kind: LoteTipo) =>
-      sortLots((rows || []).map((row) => toLoteRow(row, kind)).filter((r): r is LoteRow => r != null));
+      sortLots(
+        attachEnvioSalesOrders(
+          (rows || []).map((row) => toLoteRow(row, kind)).filter((r): r is LoteRow => r != null),
+          envios
+        )
+      );
 
     setLotsByTipo({
       extraido: mapRows((extraidoRes.data || []) as Record<string, unknown>[], "extraido"),
@@ -199,6 +217,30 @@ function LotesPage({ embedded = false }: LotesPageProps) {
     [lots, usosExtraido, usosLm, searchQuery, usosChip]
   );
   const searchActive = searchQuery.trim().length > 0;
+  const duplicateNewLot = useMemo(() => findLotByLn(lots, newLn), [lots, newLn]);
+  const duplicateEditLot = useMemo(() => {
+    if (editingId == null) return null;
+    const current = lots.find((lot) => lot.id === editingId);
+    if (!current) return null;
+    const identity = findDuplicateLot(
+      lots,
+      { PN: editPn, LN: editLn, Exp: editExp },
+      editingId
+    );
+    if (identity) return identity;
+    if (!sameCatalogKey(editLn, current.LN)) return findLotByLn(lots, editLn, editingId);
+    return null;
+  }, [lots, editingId, editPn, editLn, editExp]);
+
+  function flashLotCard(lotId: number) {
+    window.requestAnimationFrame(() => {
+      const el = document.getElementById(loteCardDomId(tipo, lotId));
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("bionapp-lote-card--flash");
+      window.setTimeout(() => el.classList.remove("bionapp-lote-card--flash"), 1800);
+    });
+  }
 
   useEffect(() => {
     if (loading) return;
@@ -244,6 +286,12 @@ function LotesPage({ embedded = false }: LotesPageProps) {
       toast.error(t("lotes.toast.needPnLn"));
       return;
     }
+    const existing = findLotByLn(lots, ln) ?? findDuplicateLot(lots, { PN: pn, LN: ln, Exp: exp });
+    if (existing) {
+      toast.error(t("lotes.toast.duplicate"));
+      flashLotCard(existing.id);
+      return;
+    }
     setSaving(true);
     try {
       const { error } = await supabase.from(LOTE_TABLE[tipo]).insert({
@@ -287,6 +335,15 @@ function LotesPage({ embedded = false }: LotesPageProps) {
     const exp = lotExpFromInputValue(editExp);
     if (!pn || !ln) {
       toast.error(t("lotes.toast.needPnLn"));
+      return;
+    }
+    const current = lots.find((lot) => lot.id === lotId);
+    const existing =
+      findDuplicateLot(lots, { PN: pn, LN: ln, Exp: exp }, lotId) ??
+      (current && !sameCatalogKey(ln, current.LN) ? findLotByLn(lots, ln, lotId) : null);
+    if (existing) {
+      toast.error(t("lotes.toast.duplicate"));
+      flashLotCard(existing.id);
       return;
     }
     setSavingEdit(true);
@@ -400,8 +457,23 @@ function LotesPage({ embedded = false }: LotesPageProps) {
             <Input value={newPn} onChange={(e) => setNewPn(e.target.value)} className="h-9 text-sm" />
           </div>
           <div>
-            <p className="text-xs text-slate-500 mb-1">LN</p>
-            <Input value={newLn} onChange={(e) => setNewLn(e.target.value)} className="h-9 text-sm" />
+            <p className="text-xs text-slate-500 mb-1 flex items-center gap-2">
+              LN
+              {duplicateNewLot ? (
+                <span className="bionapp-existe-inline">{t("lotes.exists")}</span>
+              ) : null}
+            </p>
+            <Input
+              value={newLn}
+              onChange={(e) => setNewLn(e.target.value)}
+              className={cn(
+                "h-9 text-sm",
+                duplicateNewLot ? "border-destructive bg-destructive/10" : ""
+              )}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void handleAddLote();
+              }}
+            />
           </div>
           <div>
             <p className="text-xs text-slate-500 mb-1">Exp</p>
@@ -417,7 +489,7 @@ function LotesPage({ embedded = false }: LotesPageProps) {
             size="sm"
             className="h-9 gap-2 bionapp-btn-green"
             onClick={() => void handleAddLote()}
-            disabled={saving}
+            disabled={saving || duplicateNewLot != null}
           >
             <Plus className="h-4 w-4" />
             {t("lotes.add")}
@@ -491,11 +563,19 @@ function LotesPage({ embedded = false }: LotesPageProps) {
                       }}
                     >
                       <label className="min-w-0">
-                        <span className="text-xs text-slate-500">LN</span>
+                        <span className="text-xs text-slate-500 flex items-center gap-2">
+                          LN
+                          {duplicateEditLot ? (
+                            <span className="bionapp-existe-inline">{t("lotes.exists")}</span>
+                          ) : null}
+                        </span>
                         <Input
                           value={editLn}
                           onChange={(e) => setEditLn(e.target.value)}
-                          className="h-8 text-sm"
+                          className={cn(
+                            "h-8 text-sm",
+                            duplicateEditLot ? "border-destructive bg-destructive/10" : ""
+                          )}
                           autoFocus
                         />
                       </label>
@@ -524,6 +604,14 @@ function LotesPage({ embedded = false }: LotesPageProps) {
                         PN {lot.PN || t("common.empty")}
                         {lot.Exp ? ` · Exp ${lot.Exp}` : ""}
                       </p>
+                      {lot.envioSalesOrder ? (
+                        <p className="bionapp-lote-card__envio">
+                          {t("lotes.envioAssigned", { so: lot.envioSalesOrder })}
+                          {lot.envioFechaLlegada
+                            ? ` · ${formatIsoDateDisplay(lot.envioFechaLlegada)}`
+                            : ""}
+                        </p>
+                      ) : null}
                     </div>
                   )}
                   <div className="bionapp-lote-card__actions">
@@ -554,7 +642,7 @@ function LotesPage({ embedded = false }: LotesPageProps) {
                           variant="ghost"
                           size="sm"
                           onClick={() => void handleSaveEdit(lot.id)}
-                          disabled={savingEdit}
+                          disabled={savingEdit || duplicateEditLot != null}
                           className="h-7 w-7 p-0"
                           title={t("lotes.save")}
                         >

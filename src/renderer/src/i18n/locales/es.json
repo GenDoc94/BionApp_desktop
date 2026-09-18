@@ -323,7 +323,7 @@
     "other": {
       "title": "Otras pantallas",
       "chips": "**Chips**: gestión de chips y huecos FC asociados a las lecturas marcadas.",
-      "calidad": "**Calidad**: catálogo de lotes (extracción, marcado, membrana y chip) y registro de filtros de aire del aparato.",
+      "calidad": "**Calidad**: envíos (sales order y fecha de llegada), catálogo de lotes (extracción, marcado, membrana y chip), trazabilidad Envío → Lote → Muestra y registro de filtros de aire del aparato.",
       "lotes": "**Lotes**: catálogo de lotes de extracción, marcado, membrana y chip, con las muestras, lecturas y chips asociados.",
       "calcs": "**Cálculos**: utilidades de laboratorio (p. ej. diluciones) a partir de los datos ya registrados.",
       "options": "**Opciones**: perfil, variables, etiquetas, estadísticas, documentos, exportación, apariencia y manual."
@@ -636,8 +636,66 @@
   "calidad": {
     "title": "Calidad",
     "tab": {
+      "envios": "Envíos",
       "lotes": "Lotes",
-      "filtros": "Filtros"
+      "filtros": "Filtros",
+      "trazabilidad": "Trazabilidad"
+    }
+  },
+  "envios": {
+    "loading": "Cargando envíos...",
+    "help": "Cada envío (Sales Order y fecha de llegada) agrupa los LN de extracción, marcado, membrana y chip que vinieron juntos. Luego el lote se asigna a muestras: Envío → Lotes → Muestras.",
+    "salesOrder": "Sales Order",
+    "salesOrderPlaceholder": "Ej. WR00001234",
+    "exists": "Ya existe",
+    "arrivalDate": "Fecha de llegada",
+    "today": "Hoy",
+    "add": "Añadir envío",
+    "searchPlaceholder": "Buscar por Sales Order o fecha...",
+    "empty": "No hay envíos. Añade el primero con el formulario de arriba.",
+    "noMatch": "Ningún envío coincide con la búsqueda.",
+    "lotsCount": "{{count}} LN",
+    "noLotsTipo": "Ningún LN de este tipo en el envío.",
+    "assignTipo": "Tipo de lote",
+    "assignLn": "LN sin envío",
+    "assign": "Asignar al envío",
+    "unassign": "Quitar del envío",
+    "toast": {
+      "loadError": "Error al cargar envíos",
+      "needSalesOrder": "Indica el Sales Order",
+      "needLot": "Selecciona un LN",
+      "added": "Envío añadido",
+      "addError": "Error al añadir el envío",
+      "duplicate": "Ese Sales Order ya existe",
+      "assigned": "LN asignado al envío",
+      "unassigned": "LN quitado del envío",
+      "assignError": "Error al asignar el LN"
+    }
+  },
+  "trazabilidad": {
+    "loading": "Cargando trazabilidad...",
+    "help": "Árbol Envío → lote (LN) → muestra (BN) → lecturas extraídas → lecturas marcadas → chips. Busca por Nº BN, Sales Order o LN.",
+    "search": "Buscar",
+    "searchPlaceholder": "BN, Sales Order o LN...",
+    "show": "Mostrar árbol",
+    "emptyHint": "Escribe un BN, Sales Order o LN y pulsa Mostrar árbol.",
+    "emptyQuery": "Nada coincide con esa búsqueda.",
+    "envioNode": "Envío {{so}} · llegada {{date}}",
+    "noEnvio": "Sin envío asociado",
+    "loteNode": "{{tipo}} · LN {{ln}}",
+    "loteUnknown": "Sin lote de extracción",
+    "noLots": "Este envío aún no tiene LN asignados.",
+    "noSamples": "Ninguna muestra usa este LN.",
+    "noReadings": "Sin lecturas.",
+    "bnNode": "BN {{numBN}}",
+    "lecturaNode": "Lectura {{n}}",
+    "lmNode": "Marcado LM {{n}}",
+    "lnMarcado": "LN marcado {{ln}}",
+    "lnMembrana": "LN membrana {{ln}}",
+    "lnChip": "LN chip {{ln}}",
+    "chipNode": "Chip #{{num}} {{name}} · FC {{fc}}",
+    "toast": {
+      "loadError": "Error al cargar la trazabilidad"
     }
   },
   "filtros": {
@@ -682,12 +740,14 @@
     "edit": "Editar lote",
     "save": "Guardar lote",
     "cancel": "Cancelar",
-    "searchPlaceholder": "Buscar por LN, PN, caducidad, Nº BN o chip...",
+    "searchPlaceholder": "Buscar por LN, PN, caducidad, Nº BN, chip o Sales Order...",
     "searchCount": "{{filtered}} de {{total}} lotes",
     "empty": "No hay lotes en este catálogo. Añade el primero con el formulario de arriba.",
     "noMatch": "Ningún lote coincide con la búsqueda.",
     "noUsos": "Todavía no hay muestras ni lecturas asociadas.",
     "noUsosChip": "Todavía no hay chips asociados a este LN.",
+    "exists": "Ya existe",
+    "envioAssigned": "Envío {{so}}",
     "samplesCount": "{{count}} muestras",
     "readingsCount": "{{count}} lecturas",
     "chipsCount": "{{count}} chips",
@@ -710,7 +770,7 @@
       "needPnLn": "Indica PN y LN del lote",
       "added": "Lote añadido",
       "addError": "Error al añadir el lote",
-      "duplicate": "Ese lote (PN, LN y caducidad) ya existe",
+      "duplicate": "Ese LN ya existe en este catálogo",
       "notFound": "No se encontró el lote",
       "updated": "Lote actualizado",
       "updateError": "Error al actualizar el lote"

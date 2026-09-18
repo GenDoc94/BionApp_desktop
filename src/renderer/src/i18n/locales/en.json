@@ -323,7 +323,7 @@
     "other": {
       "title": "Other screens",
       "chips": "**Chips**: manage chips and FC slots linked to labeled readings.",
-      "calidad": "**Quality**: lot catalog (extraction, labeling, membrane and chip) and air-filter change log.",
+      "calidad": "**Quality**: shipments (sales order and arrival date), lot catalog (extraction, labeling, membrane and chip), Envío → Lot → Sample traceability, and air-filter change log.",
       "lotes": "**Lots**: catalog of extraction, labeling, membrane and chip lots, with the linked samples, readings and chips.",
       "calcs": "**Calculations**: lab utilities (e.g. dilutions) from already recorded data.",
       "options": "**Options**: profile, variables, tags, statistics, documents, export, appearance and manual."
@@ -636,8 +636,66 @@
   "calidad": {
     "title": "Quality",
     "tab": {
+      "envios": "Shipments",
       "lotes": "Lots",
-      "filtros": "Filters"
+      "filtros": "Filters",
+      "trazabilidad": "Traceability"
+    }
+  },
+  "envios": {
+    "loading": "Loading shipments...",
+    "help": "Each shipment (sales order and arrival date) groups the extraction, labeling, membrane and chip LNs that arrived together. The lot is then assigned to samples: Shipment → Lots → Samples.",
+    "salesOrder": "Sales order",
+    "salesOrderPlaceholder": "e.g. WR00001234",
+    "exists": "Already exists",
+    "arrivalDate": "Arrival date",
+    "today": "Today",
+    "add": "Add shipment",
+    "searchPlaceholder": "Search by sales order or date...",
+    "empty": "There are no shipments. Add the first one with the form above.",
+    "noMatch": "No shipment matches the search.",
+    "lotsCount": "{{count}} LN",
+    "noLotsTipo": "No LN of this type in the shipment.",
+    "assignTipo": "Lot type",
+    "assignLn": "LN without shipment",
+    "assign": "Assign to shipment",
+    "unassign": "Remove from shipment",
+    "toast": {
+      "loadError": "Error loading shipments",
+      "needSalesOrder": "Enter the sales order",
+      "needLot": "Select an LN",
+      "added": "Shipment added",
+      "addError": "Error adding the shipment",
+      "duplicate": "That sales order already exists",
+      "assigned": "LN assigned to the shipment",
+      "unassigned": "LN removed from the shipment",
+      "assignError": "Error assigning the LN"
+    }
+  },
+  "trazabilidad": {
+    "loading": "Loading traceability...",
+    "help": "Tree: shipment → lot (LN) → sample (BN) → extracted readings → labeled readings → chips. Search by BN, sales order or LN.",
+    "search": "Search",
+    "searchPlaceholder": "BN, sales order or LN...",
+    "show": "Show tree",
+    "emptyHint": "Type a BN, sales order or LN and press Show tree.",
+    "emptyQuery": "Nothing matches that search.",
+    "envioNode": "Shipment {{so}} · arrived {{date}}",
+    "noEnvio": "No shipment linked",
+    "loteNode": "{{tipo}} · LN {{ln}}",
+    "loteUnknown": "No extraction lot",
+    "noLots": "This shipment has no LN assigned yet.",
+    "noSamples": "No sample uses this LN.",
+    "noReadings": "No readings.",
+    "bnNode": "BN {{numBN}}",
+    "lecturaNode": "Reading {{n}}",
+    "lmNode": "Labeled LM {{n}}",
+    "lnMarcado": "Labeling LN {{ln}}",
+    "lnMembrana": "Membrane LN {{ln}}",
+    "lnChip": "Chip LN {{ln}}",
+    "chipNode": "Chip #{{num}} {{name}} · FC {{fc}}",
+    "toast": {
+      "loadError": "Error loading traceability"
     }
   },
   "filtros": {
@@ -682,12 +740,14 @@
     "edit": "Edit lot",
     "save": "Save lot",
     "cancel": "Cancel",
-    "searchPlaceholder": "Search by LN, PN, expiry, sample no. or chip...",
+    "searchPlaceholder": "Search by LN, PN, expiry, sample no., chip or sales order...",
     "searchCount": "{{filtered}} of {{total}} lots",
     "empty": "There are no lots in this catalog. Add the first one with the form above.",
     "noMatch": "No lots match the search.",
     "noUsos": "No samples or readings linked yet.",
     "noUsosChip": "No chips linked to this LN yet.",
+    "exists": "Already exists",
+    "envioAssigned": "Shipment {{so}}",
     "samplesCount": "{{count}} samples",
     "readingsCount": "{{count}} readings",
     "chipsCount": "{{count}} chips",
@@ -710,7 +770,7 @@
       "needPnLn": "Enter the lot PN and LN",
       "added": "Lot added",
       "addError": "Error adding the lot",
-      "duplicate": "That lot (PN, LN and expiry) already exists",
+      "duplicate": "That LN already exists in this catalog",
       "notFound": "Lot not found",
       "updated": "Lot updated",
       "updateError": "Error updating the lot"

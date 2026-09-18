@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { BadgeCheck, Filter, Layers } from "lucide-react";
+import { BadgeCheck, Filter, GitBranch, Layers, Truck } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "../components/ui/button";
@@ -24,11 +24,16 @@ import {
   type FiltroRow,
 } from "../lib/filtrosPageData";
 import LotesPage from "./LotesPage";
+import EnviosTab from "../components/calidad/EnviosTab";
+import TrazabilidadTab from "../components/calidad/TrazabilidadTab";
 
-type CalidadTab = "lotes" | "filtros";
+type CalidadTab = "envios" | "lotes" | "filtros" | "trazabilidad";
 
 function parseCalidadTab(raw: string | null): CalidadTab {
-  return raw === "filtros" || raw === "fechas" ? "filtros" : "lotes";
+  if (raw === "filtros" || raw === "fechas") return "filtros";
+  if (raw === "envios") return "envios";
+  if (raw === "trazabilidad") return "trazabilidad";
+  return "lotes";
 }
 
 function FiltrosTab() {
@@ -259,21 +264,43 @@ function CalidadPage() {
   return (
     <SubpageShell title={t("calidad.title")} icon={BadgeCheck} maxWidthClass="max-w-[1400px]">
       <Tabs value={tab} onValueChange={handleTabChange} className="gap-4">
-        <TabsList>
-          <TabsTrigger value="lotes" className="gap-1.5">
-            <Layers className="h-4 w-4" />
-            {t("calidad.tab.lotes")}
-          </TabsTrigger>
-          <TabsTrigger value="filtros" className="gap-1.5">
-            <Filter className="h-4 w-4" />
-            {t("calidad.tab.filtros")}
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="bionapp-calcs-tabs-panel bionapp-calcs-tabs-panel--prep">
+            <TabsList>
+              <TabsTrigger value="envios" className="gap-1.5">
+                <Truck className="h-4 w-4" />
+                {t("calidad.tab.envios")}
+              </TabsTrigger>
+              <TabsTrigger value="lotes" className="gap-1.5">
+                <Layers className="h-4 w-4" />
+                {t("calidad.tab.lotes")}
+              </TabsTrigger>
+              <TabsTrigger value="filtros" className="gap-1.5">
+                <Filter className="h-4 w-4" />
+                {t("calidad.tab.filtros")}
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <div className="bionapp-calcs-tabs-panel bionapp-calcs-tabs-panel--dilucion">
+            <TabsList>
+              <TabsTrigger value="trazabilidad" className="gap-1.5">
+                <GitBranch className="h-4 w-4" />
+                {t("calidad.tab.trazabilidad")}
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
+        <TabsContent value="envios">
+          <EnviosTab />
+        </TabsContent>
         <TabsContent value="lotes">
           <LotesPage embedded />
         </TabsContent>
         <TabsContent value="filtros">
           <FiltrosTab />
+        </TabsContent>
+        <TabsContent value="trazabilidad">
+          <TrazabilidadTab />
         </TabsContent>
       </Tabs>
     </SubpageShell>
