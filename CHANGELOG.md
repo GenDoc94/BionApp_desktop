@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.0.1
+
+- El pie muestra cuándo se cambió por última vez la base SQLite, para ver si varios PCs apuntan a la carpeta más actualizada.
+- En el login, **Configuración** (código maestro) permite cambiar la carpeta de `bionapp.sqlite`.
+
 ## 4.0.0
 
 - Página **Calidad**: envíos (Sales Order y fecha de llegada), catálogo de lotes (extracción, marcado, membrana y chip), registro de filtros de aire y árbol de trazabilidad Envío → Lote → Muestra → lecturas → chips.

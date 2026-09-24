@@ -11,15 +11,16 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
 import { Toaster, toast } from "sonner@2.0.3";
-import { LogIn, Mail, Lock, UserPlus } from "lucide-react";
+import { LogIn, Mail, Lock, Settings, UserPlus } from "lucide-react";
 import pkg from "bionapp-pkg";
 import logo from "../assets/BionApp.svg";
 import { translateIpcError } from "../i18n/ipcErrors";
+import { formatDbLastWrite } from "../lib/dbActivityDisplay";
 
 const version = pkg.version;
 
 export default function Login({ onLogin }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const localInstall = isLocalInstall();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,9 +31,20 @@ export default function Login({ onLogin }) {
   const [fadeIn, setFadeIn] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateInfo, setUpdateInfo] = useState(null);
+  const [lastWriteAt, setLastWriteAt] = useState(null);
 
   useEffect(() => {
     setFadeIn(true);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void window.api?.getDbActivity?.().then((activity) => {
+      if (!cancelled) setLastWriteAt(activity.lastWriteAt);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -106,6 +118,8 @@ export default function Login({ onLogin }) {
       setCheckingUpdate(false);
     }
   };
+
+  const dbWhen = formatDbLastWrite(lastWriteAt, i18n.language);
 
   return (
     <>
@@ -221,6 +235,18 @@ export default function Login({ onLogin }) {
               {t("login.restricted")}
             </p>
           </div>
+        </div>
+
+        <div className="flex flex-col items-center gap-1.5 mt-3">
+          <Button variant="outline" className="gap-2" size="sm" asChild>
+            <Link to="/configuracion">
+              <Settings className="h-4 w-4" />
+              {t("login.settings")}
+            </Link>
+          </Button>
+          <p className="text-[11px] text-muted-foreground text-center max-w-sm">
+            {dbWhen ? t("footer.dbUpdated", { when: dbWhen }) : t("footer.dbUpdatedUnknown")}
+          </p>
         </div>
 
         <div className="flex justify-center mt-3">

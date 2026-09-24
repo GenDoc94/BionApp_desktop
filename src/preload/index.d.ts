@@ -1,10 +1,12 @@
 import type { AppLocale } from '../shared/locale';
-import type { AppConfigState, AuthUser, DbRequest, DbResponse, DocumentoItem, ExportFormat, ExportResult, Role } from '../shared/types';
+import type { AppConfigState, AuthUser, DbActivity, DbRequest, DbResponse, DocumentoItem, ExportFormat, ExportResult, Role } from '../shared/types';
 declare const api: {
     getState: () => Promise<AppConfigState>;
+    getDbActivity: () => Promise<DbActivity>;
     setLocale: (locale: AppLocale) => Promise<AppLocale>;
     pickDataFolder: () => Promise<string | null>;
     setDataFolder: (path: string, adminCode?: string) => Promise<AppConfigState>;
+    verifyAdminCode: (adminCode: string) => Promise<{ ok: true } | { ok: false; error: string }>;
     login: (email: string, password: string) => Promise<any>;
     logout: () => Promise<any>;
     getSession: () => Promise<any>;

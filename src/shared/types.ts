@@ -26,6 +26,11 @@ export interface AppConfigState {
   hasAdminCode: boolean
 }
 
+export interface DbActivity {
+  lastWriteAt: string | null
+  dataPath: string | null
+}
+
 export type DbFilter =
   | { type: 'eq'; column: string; value: unknown }
   | { type: 'neq'; column: string; value: unknown }

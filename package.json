@@ -1,6 +1,6 @@
 {
   "name": "bionapp-desktop",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "BionApp Desktop (beta) — gestión local de muestras de OGM",
   "main": "./out/main/index.js",
   "repository": {

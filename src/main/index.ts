@@ -3,8 +3,8 @@ import { join } from 'path'
 import fs from 'fs'
 import Store from 'electron-store'
 import type Database from 'better-sqlite3'
-import { dbPathFor, initSchema, openDatabase } from './db'
-import { hasAdminCode, hasUsers, createUser, login, setAdminCode, toAuthUser } from './auth'
+import { initSchema, openDatabase } from './db'
+import { hasAdminCode, hasUsers, createUser, login, setAdminCode, toAuthUser, verifyAdminCode } from './auth'
 import { executeDbRequest } from './query'
 import { exportDatabase } from './exportDb'
 import type { ExportFormat } from '../shared/types'
@@ -12,6 +12,7 @@ import * as docs from './documentos'
 import type {
   AppConfigState,
   AuthUser,
+  DbActivity,
   DbRequest,
   Role,
   UserSession
@@ -19,6 +20,7 @@ import type {
 
 import type { AppLocale } from '../shared/locale'
 import { mt, setMainLocale } from './i18n'
+import { dataDirMtimeMs, readLastWriteIso } from './dbActivity'
 
 const store = new Store<{ dataPath?: string; locale?: AppLocale }>({ name: 'bionapp-desktop-config' })
 
@@ -70,16 +72,14 @@ function getState(): AppConfigState {
 
 function startWatch(dataPath: string): void {
   if (watchTimer) clearInterval(watchTimer)
-  const file = dbPathFor(dataPath)
   try {
-    lastMtime = fs.existsSync(file) ? fs.statSync(file).mtimeMs : 0
+    lastMtime = dataDirMtimeMs(dataPath)
   } catch {
     lastMtime = 0
   }
   watchTimer = setInterval(() => {
     try {
-      if (!fs.existsSync(file)) return
-      const m = fs.statSync(file).mtimeMs
+      const m = dataDirMtimeMs(dataPath)
       if (m > lastMtime + 50) {
         lastMtime = m
         mainWindow?.webContents.send('data:changed')
@@ -88,6 +88,14 @@ function startWatch(dataPath: string): void {
       /* ignore */
     }
   }, 2000)
+}
+
+function getDbActivity(): DbActivity {
+  const dataPath = store.get('dataPath') ?? null
+  return {
+    dataPath,
+    lastWriteAt: readLastWriteIso(db, dataPath)
+  }
 }
 
 function broadcastAuth(user: AuthUser | null): void {
@@ -155,6 +163,14 @@ function createWindow(): void {
 
 function registerIpc(): void {
   ipcMain.handle('app:getState', () => getState())
+  ipcMain.handle('app:getDbActivity', () => getDbActivity())
+
+  ipcMain.handle('app:verifyAdminCode', (_e, adminCode: string) => {
+    if (!verifyAdminCode(ensureDb(), String(adminCode ?? ''))) {
+      return { ok: false as const, error: 'Código maestro incorrecto' }
+    }
+    return { ok: true as const }
+  })
 
   ipcMain.handle('app:setLocale', (_e, locale: unknown) => {
     const next = setMainLocale(locale)
@@ -173,6 +189,10 @@ function registerIpc(): void {
   })
 
   ipcMain.handle('app:setDataFolder', (_e, dataPath: string, adminCode?: string) => {
+    const switching = !!db && hasAdminCode(db)
+    if (switching && !verifyAdminCode(db!, String(adminCode ?? ''))) {
+      throw new Error('Código maestro incorrecto')
+    }
     session = null
     broadcastAuth(null)
     const state = connectDataPath(dataPath)

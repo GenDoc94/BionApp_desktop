@@ -8,6 +8,7 @@ import { supabase } from "./lib/supabaseClient";
 import { applyTheme, getStoredTheme } from "./lib/theme";
 import { getStoredLocale } from "./i18n";
 import SetupPage from "./components/SetupPage";
+import DataFolderSettingsPage from "./pages/DataFolderSettingsPage";
 import "./index.css";
 
 applyTheme(getStoredTheme());
@@ -36,6 +37,7 @@ function PublicRoutes({ onLogin }: { onLogin: (user: unknown) => void }) {
   return (
     <Routes>
       <Route path="/nuevo-usuario" element={<CreateUser />} />
+      <Route path="/configuracion" element={<DataFolderSettingsPage />} />
       <Route path="*" element={<Login onLogin={onLogin} />} />
     </Routes>
   );

@@ -1,11 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron';
 var api = {
     getState: function () { return ipcRenderer.invoke('app:getState'); },
+    getDbActivity: function () { return ipcRenderer.invoke('app:getDbActivity'); },
     setLocale: function (locale) { return ipcRenderer.invoke('app:setLocale', locale); },
     pickDataFolder: function () { return ipcRenderer.invoke('app:pickDataFolder'); },
     setDataFolder: function (path, adminCode) {
         return ipcRenderer.invoke('app:setDataFolder', path, adminCode);
     },
+    verifyAdminCode: function (adminCode) { return ipcRenderer.invoke('app:verifyAdminCode', adminCode); },
     login: function (email, password) { return ipcRenderer.invoke('auth:login', email, password); },
     logout: function () { return ipcRenderer.invoke('auth:logout'); },
     getSession: function () { return ipcRenderer.invoke('auth:session'); },
@@ -38,6 +40,7 @@ var api = {
         ipcRenderer.on('auth:state', handler);
         ipcRenderer.send('auth:subscribe');
         return function () { return ipcRenderer.removeListener('auth:state', handler); };
-    }
+    },
+    restoreKeyboardFocus: function () { return ipcRenderer.invoke('app:restoreKeyboardFocus'); }
 };
 contextBridge.exposeInMainWorld('api', api);

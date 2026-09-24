@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3'
 import type { DbFilter, DbOrder, DbRequest, DbResponse } from '../shared/types'
 import { ensureFiltrosSchema } from './db'
+import { touchLastWrite } from './dbActivity'
 import { applyLotWrite, attachLotFields, ensureEnviosSchema, ensureLotesChipsSchema } from './lotes'
 
 const ALLOWED_TABLES = new Set([
@@ -280,6 +281,15 @@ function fail(message: string): DbResponse {
   return { data: null, error: { message } }
 }
 
+function okMutation(db: Database.Database, data: unknown): DbResponse {
+  try {
+    touchLastWrite(db)
+  } catch {
+    /* ignore */
+  }
+  return ok(data)
+}
+
 export function executeDbRequest(db: Database.Database, req: DbRequest): DbResponse {
   try {
     if (!ALLOWED_TABLES.has(req.table)) {
@@ -368,7 +378,7 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
       })
       tx()
       attachLotFields(db, req.table, inserted)
-      return ok(Array.isArray(req.data) ? inserted : inserted[0])
+      return okMutation(db, Array.isArray(req.data) ? inserted : inserted[0])
     }
 
     if (req.action === 'update') {
@@ -387,14 +397,14 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
         .prepare(`SELECT * FROM ${quoteId(req.table)} WHERE ${whereSqlBare}`)
         .all(...whereParams) as Record<string, unknown>[]
       attachLotFields(db, req.table, updated)
-      return ok(updated)
+      return okMutation(db, updated)
     }
 
     if (req.action === 'delete') {
       if (!req.filters?.length) return fail('delete sin filtro rechazado')
       const { sql: whereSqlBare, params } = buildFilterClause(req.filters)
       db.prepare(`DELETE FROM ${quoteId(req.table)} WHERE ${whereSqlBare}`).run(...params)
-      return ok(null)
+      return okMutation(db, null)
     }
 
     if (req.action === 'upsert') {
@@ -427,7 +437,7 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
       })
       tx()
       attachLotFields(db, req.table, upserted)
-      return ok(Array.isArray(req.data) ? upserted : upserted[0])
+      return okMutation(db, Array.isArray(req.data) ? upserted : upserted[0])
     }
 
     return fail(`Acción no soportada: ${req.action}`)

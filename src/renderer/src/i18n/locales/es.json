@@ -38,6 +38,8 @@
   },
   "footer": {
     "tagline": "BionApp v{{version}} (beta) · Gestión de muestras de OGM",
+    "dbUpdated": "Último cambio {{when}}",
+    "dbUpdatedUnknown": "Último cambio —",
     "createdBy": "Created by"
   },
   "role": {
@@ -79,7 +81,8 @@
     "createFirst": "Crea el primer usuario de esta instalación",
     "needEmailPassword": "Introduce correo y contraseña",
     "signedIn": "Sesión iniciada correctamente",
-    "offline": "No se pudo comprobar. ¿Hay conexión a internet?"
+    "offline": "No se pudo comprobar. ¿Hay conexión a internet?",
+    "settings": "Configuración"
   },
   "createUser": {
     "title": "Crear nuevo usuario",
@@ -95,6 +98,24 @@
     "incomplete": "Completa correo, contraseña, rol y código maestro",
     "created": "Usuario {{email}} creado como {{role}}",
     "emailPlaceholder": "usuario@ejemplo.com"
+  },
+  "dataSettings": {
+    "title": "Carpeta de datos",
+    "unlockHelp": "Introduce el código maestro para cambiar la carpeta desde la que se lee bionapp.sqlite.",
+    "adminCode": "Código maestro",
+    "adminCodePlaceholder": "Código privado",
+    "unlock": "Entrar",
+    "unlocking": "Comprobando…",
+    "needCode": "Introduce el código maestro",
+    "folderHelp": "Varios ordenadores pueden apuntar a la misma carpeta (por ejemplo en red). Elige la que tenga la base más actualizada.",
+    "currentFolder": "Carpeta actual",
+    "newFolder": "Carpeta nueva",
+    "pickFolder": "Elegir otra carpeta…",
+    "save": "Usar esta carpeta",
+    "saving": "Cambiando carpeta…",
+    "saved": "Carpeta de datos actualizada",
+    "needFolder": "Elige una carpeta",
+    "needRestart": "Reinicia BionApp para aplicar la configuración de datos"
   },
   "updates": {
     "newVersion": "Hay una versión nueva: {{version}}",

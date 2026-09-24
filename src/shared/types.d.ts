@@ -28,6 +28,10 @@ export interface AppConfigState {
     version: string;
     hasAdminCode: boolean;
 }
+export interface DbActivity {
+    lastWriteAt: string | null;
+    dataPath: string | null;
+}
 export type DbFilter = {
     type: 'eq';
     column: string;

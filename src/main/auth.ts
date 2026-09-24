@@ -2,6 +2,7 @@ import type Database from 'better-sqlite3'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { getMeta, setMeta, sha256 } from './db'
+import { touchLastWrite } from './dbActivity'
 import type { AuthUser, Role, UserSession } from '../shared/types'
 
 const ADMIN_CODE_META = 'admin_code_hash'
@@ -13,6 +14,12 @@ export function hasUsers(db: Database.Database): boolean {
 
 export function hasAdminCode(db: Database.Database): boolean {
   return !!getMeta(db, ADMIN_CODE_META)
+}
+
+export function verifyAdminCode(db: Database.Database, adminCode: string): boolean {
+  const storedHash = getMeta(db, ADMIN_CODE_META)
+  if (!storedHash) return false
+  return storedHash === sha256(String(adminCode ?? '').trim())
 }
 
 function toSession(row: { id: string; username: string; role: Role }): UserSession {
@@ -97,6 +104,11 @@ export function createUser(
   db.prepare(
     'INSERT INTO users (id, username, password_hash, role) VALUES (?, ?, ?, ?)'
   ).run(id, email, password_hash, role)
+  try {
+    touchLastWrite(db)
+  } catch {
+    /* ignore */
+  }
 
   return { user: { id, email, role } }
 }
