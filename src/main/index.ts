@@ -21,6 +21,7 @@ import type {
 import type { AppLocale } from '../shared/locale'
 import { mt, setMainLocale } from './i18n'
 import { dataDirMtimeMs, readLastWriteIso } from './dbActivity'
+import { inspectDataFolder } from './dataFolder'
 
 const store = new Store<{ dataPath?: string; locale?: AppLocale }>({ name: 'bionapp-desktop-config' })
 
@@ -53,6 +54,7 @@ function connectDataPath(dataPath: string): AppConfigState {
   }
   fs.mkdirSync(dataPath, { recursive: true })
   fs.mkdirSync(join(dataPath, 'documentos'), { recursive: true })
+  // Abre bionapp.sqlite si ya existe; no sustituye ni vacía el archivo.
   db = openDatabase(dataPath)
   initSchema(db)
   store.set('dataPath', dataPath)
@@ -188,20 +190,24 @@ function registerIpc(): void {
     return result.filePaths[0]
   })
 
+  ipcMain.handle('app:inspectDataFolder', (_e, dataPath: string) => inspectDataFolder(String(dataPath ?? '')))
+
   ipcMain.handle('app:setDataFolder', (_e, dataPath: string, adminCode?: string) => {
     const switching = !!db && hasAdminCode(db)
     if (switching && !verifyAdminCode(db!, String(adminCode ?? ''))) {
       throw new Error('Código maestro incorrecto')
     }
+    const sqliteAlreadyThere = inspectDataFolder(dataPath).sqliteExists
     session = null
     broadcastAuth(null)
-    const state = connectDataPath(dataPath)
+    connectDataPath(dataPath)
     const database = ensureDb()
-    if (!hasAdminCode(database)) {
-      const result = setAdminCode(database, String(adminCode ?? ''))
-      if (!result.ok) {
-        throw new Error(result.error)
-      }
+    if (hasAdminCode(database) || sqliteAlreadyThere) {
+      return getState()
+    }
+    const result = setAdminCode(database, String(adminCode ?? ''))
+    if (!result.ok) {
+      throw new Error(result.error)
     }
     return getState()
   })

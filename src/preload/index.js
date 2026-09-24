@@ -4,6 +4,7 @@ var api = {
     getDbActivity: function () { return ipcRenderer.invoke('app:getDbActivity'); },
     setLocale: function (locale) { return ipcRenderer.invoke('app:setLocale', locale); },
     pickDataFolder: function () { return ipcRenderer.invoke('app:pickDataFolder'); },
+    inspectDataFolder: function (path) { return ipcRenderer.invoke('app:inspectDataFolder', path); },
     setDataFolder: function (path, adminCode) {
         return ipcRenderer.invoke('app:setDataFolder', path, adminCode);
     },

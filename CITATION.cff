@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "Si usas BionApp, cítalo con estos datos."
 type: software
 title: "BionApp"
-version: 4.0.1
+version: 4.0.2
 date-released: 2026-09-24
 license: MIT
 repository-code: "https://github.com/GenDoc94/BionApp_desktop"

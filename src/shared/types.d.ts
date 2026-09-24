@@ -28,6 +28,11 @@ export interface AppConfigState {
     version: string;
     hasAdminCode: boolean;
 }
+export interface DataFolderInspection {
+    sqliteExists: boolean;
+    hasAdminCode: boolean;
+    needsNewAdminCode: boolean;
+}
 export interface DbActivity {
     lastWriteAt: string | null;
     dataPath: string | null;

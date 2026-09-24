@@ -12,6 +12,7 @@ import { Badge } from "../components/ui/badge";
 import { translateIpcError } from "../i18n/ipcErrors";
 import { formatDbLastWrite } from "../lib/dbActivityDisplay";
 import logo from "../assets/BionApp.svg";
+import type { DataFolderInspection } from "@shared/types";
 
 const version = pkg.version;
 
@@ -23,6 +24,7 @@ export default function DataFolderSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [currentPath, setCurrentPath] = useState("");
   const [pickedPath, setPickedPath] = useState<string | null>(null);
+  const [pickedInspection, setPickedInspection] = useState<DataFolderInspection | null>(null);
   const [lastWriteAt, setLastWriteAt] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,7 +73,18 @@ export default function DataFolderSettingsPage() {
 
   async function handlePickFolder() {
     const next = await window.api.pickDataFolder();
-    if (next) setPickedPath(next);
+    if (!next) return;
+    setPickedPath(next);
+    const inspect = window.api.inspectDataFolder;
+    if (!inspect) {
+      setPickedInspection(null);
+      return;
+    }
+    try {
+      setPickedInspection(await inspect(next));
+    } catch {
+      setPickedInspection({ sqliteExists: true, hasAdminCode: true, needsNewAdminCode: false });
+    }
   }
 
   async function handleSave() {
@@ -160,6 +173,11 @@ export default function DataFolderSettingsPage() {
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">{t("dataSettings.newFolder")}</p>
                     <code className="block text-xs break-all bg-muted/40 rounded p-2">{pickedPath}</code>
+                    {pickedInspection?.sqliteExists ? (
+                      <p className="text-xs text-muted-foreground mt-2">{t("dataSettings.existingDb")}</p>
+                    ) : pickedInspection ? (
+                      <p className="text-xs text-muted-foreground mt-2">{t("dataSettings.newDb")}</p>
+                    ) : null}
                   </div>
                 ) : null}
                 <Button

@@ -3,6 +3,7 @@ import type { AppLocale } from '../shared/locale'
 import type {
   AppConfigState,
   AuthUser,
+  DataFolderInspection,
   DbActivity,
   DbRequest,
   DbResponse,
@@ -17,6 +18,8 @@ const api = {
   getDbActivity: (): Promise<DbActivity> => ipcRenderer.invoke('app:getDbActivity'),
   setLocale: (locale: AppLocale): Promise<AppLocale> => ipcRenderer.invoke('app:setLocale', locale),
   pickDataFolder: (): Promise<string | null> => ipcRenderer.invoke('app:pickDataFolder'),
+  inspectDataFolder: (path: string): Promise<DataFolderInspection> =>
+    ipcRenderer.invoke('app:inspectDataFolder', path),
   setDataFolder: (path: string, adminCode?: string): Promise<AppConfigState> =>
     ipcRenderer.invoke('app:setDataFolder', path, adminCode),
   verifyAdminCode: (adminCode: string): Promise<{ ok: true } | { ok: false; error: string }> =>

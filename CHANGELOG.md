@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.2
+
+- En el setup inicial se elige primero la carpeta. Si ya hay `bionapp.sqlite`, se usa esa base y su código maestro; no se pide otro código ni se sustituye el archivo.
+
 ## 4.0.1
 
 - El pie muestra cuándo se cambió por última vez la base SQLite, para ver si varios PCs apuntan a la carpeta más actualizada.
