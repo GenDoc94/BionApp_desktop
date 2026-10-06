@@ -19,13 +19,14 @@ import type {
 } from '../shared/types'
 
 import type { AppLocale } from '../shared/locale'
-import { mt, setMainLocale } from './i18n'
+import { mt, setMainLocale, getMainLocale } from './i18n'
 import { dataDirMtimeMs, readLastWriteIso } from './dbActivity'
 import { inspectDataFolder } from './dataFolder'
 
 const store = new Store<{ dataPath?: string; locale?: AppLocale }>({ name: 'bionapp-desktop-config' })
 
 let mainWindow: BrowserWindow | null = null
+let splashWindow: BrowserWindow | null = null
 let db: Database.Database | null = null
 let session: UserSession | null = null
 let watchTimer: NodeJS.Timeout | null = null
@@ -127,10 +128,76 @@ function applyNativeLocale(): void {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 }
 
+function resourceFile(name: string): string {
+  return join(__dirname, '../../resources', name)
+}
+
+function focusExistingWindow(): void {
+  const win =
+    mainWindow && !mainWindow.isDestroyed()
+      ? mainWindow
+      : splashWindow && !splashWindow.isDestroyed()
+        ? splashWindow
+        : null
+  if (!win) return
+  if (win.isMinimized()) win.restore()
+  win.show()
+  win.focus()
+}
+
+function closeSplash(): void {
+  const splash = splashWindow
+  splashWindow = null
+  if (!splash || splash.isDestroyed()) return
+  // close() no cierra si closable:false; destroy sí.
+  try {
+    splash.hide()
+  } catch {
+    /* ignore */
+  }
+  splash.destroy()
+}
+
+function showSplash(): void {
+  const iconPath = resourceFile('icon.ico')
+  splashWindow = new BrowserWindow({
+    width: 420,
+    height: 280,
+    frame: false,
+    resizable: false,
+    maximizable: false,
+    minimizable: false,
+    closable: false,
+    fullscreenable: false,
+    center: true,
+    show: true,
+    alwaysOnTop: true,
+    autoHideMenuBar: true,
+    title: mt('windowTitle'),
+    icon: iconPath,
+    backgroundColor: '#f8fafc',
+    webPreferences: {
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  })
+  splashWindow.setMenu(null)
+  const lang = getMainLocale() === 'en' ? 'en' : 'es'
+  void splashWindow.loadFile(resourceFile('splash.html'), { query: { lang } })
+}
+
+function revealMainWindow(): void {
+  if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+    mainWindow.show()
+  }
+  closeSplash()
+}
+
 function createWindow(): void {
   applyNativeLocale()
 
-  const iconPath = join(__dirname, '../../resources/icon.ico')
+  const iconPath = resourceFile('icon.ico')
 
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -150,7 +217,11 @@ function createWindow(): void {
   })
 
   mainWindow.setMenuBarVisibility(false)
-  mainWindow.on('ready-to-show', () => mainWindow?.show())
+  mainWindow.once('ready-to-show', () => revealMainWindow())
+  mainWindow.on('show', () => closeSplash())
+  mainWindow.on('closed', () => {
+    mainWindow = null
+  })
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
     return { action: 'deny' }
@@ -161,6 +232,8 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  setTimeout(() => revealMainWindow(), 12000)
 }
 
 function registerIpc(): void {
@@ -314,25 +387,34 @@ function registerIpc(): void {
   })
 }
 
-app.whenReady().then(() => {
-  if (process.platform === 'win32') {
-    app.setAppUserModelId('es.hospital.bionapp')
-  }
-  setMainLocale(store.get('locale'))
-  registerIpc()
-  const saved = store.get('dataPath')
-  if (saved && fs.existsSync(saved)) {
-    try {
-      connectDataPath(saved)
-    } catch (err) {
-      console.error('No se pudo abrir la BD', err)
-    }
-  }
-  createWindow()
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+if (!app.requestSingleInstanceLock()) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    focusExistingWindow()
   })
-})
+
+  app.whenReady().then(() => {
+    if (process.platform === 'win32') {
+      app.setAppUserModelId('es.hospital.bionapp')
+    }
+    setMainLocale(store.get('locale'))
+    showSplash()
+    registerIpc()
+    const saved = store.get('dataPath')
+    if (saved && fs.existsSync(saved)) {
+      try {
+        connectDataPath(saved)
+      } catch (err) {
+        console.error('No se pudo abrir la BD', err)
+      }
+    }
+    createWindow()
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
+  })
+}
 
 app.on('window-all-closed', () => {
   if (watchTimer) clearInterval(watchTimer)

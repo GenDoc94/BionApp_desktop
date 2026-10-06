@@ -1688,6 +1688,12 @@ export default function Options() {
                           className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
                         />
                       ),
+                      email: (
+                        <a
+                          href="mailto:juanjose.dominguez@scsalud.es"
+                          className="font-medium text-foreground underline underline-offset-2 hover:opacity-80"
+                        />
+                      ),
                     }}
                   />
                 </p>

@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.1.1
+
+- Al abrir el `.exe` se muestra una pantalla de inicio mientras se desempaqueta, y otra al arrancar Electron, para que no parezca que se ha quedado colgada.
+- En Autoría, junto al ORCID aparece el correo de contacto.
+
 ## 4.1.0
 
 - Calidad: pestaña **Stock** (cajas por BIO y LN, dónde están y cuántas quedan; las consumidas se marcan en rojo empezando por el envío más antiguo).

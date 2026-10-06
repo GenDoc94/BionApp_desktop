@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>BionApp</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #f8fafc;
+        color: #0f172a;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        user-select: none;
+        overflow: hidden;
+      }
+      .wrap {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      img {
+        width: 72px;
+        height: 72px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 0;
+        font-size: 13px;
+        color: #64748b;
+        text-align: center;
+        line-height: 1.45;
+      }
+      #dots {
+        display: inline-block;
+        min-width: 1.15em;
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <img src="./logo.svg" alt="" />
+      <h1>BionApp</h1>
+      <p>
+        <span id="titleLine">Iniciando.</span><br />
+        <span id="label">Espere unos segundos</span><span id="dots">.</span>
+      </p>
+    </div>
+    <script>
+      const lang = new URLSearchParams(location.search).get("lang");
+      if (lang === "en") {
+        document.documentElement.lang = "en";
+        document.getElementById("titleLine").textContent = "Starting.";
+        document.getElementById("label").textContent = "Please wait a few seconds";
+      }
+      const dots = document.getElementById("dots");
+      const frames = [".", "..", "..."];
+      let i = 0;
+      setInterval(() => {
+        i = (i + 1) % frames.length;
+        dots.textContent = frames[i];
+      }, 400);
+    </script>
+  </body>
+</html>
