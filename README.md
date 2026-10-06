@@ -50,8 +50,8 @@ El portable queda en `release/BionApp.exe`.
 Publicar una versión: con Zenodo ya conectado al repo, sube los cambios a `master` y crea el tag:
 
 ```bash
-git tag v4.0.2
-git push origin v4.0.2
+git tag v4.1.0
+git push origin v4.1.0
 ```
 
 GitHub Actions empaqueta el `.exe` y abre el Release. Zenodo archiva el tag y asigna el DOI.

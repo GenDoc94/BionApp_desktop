@@ -2075,6 +2075,7 @@ function App() {
                     <ClipboardList className="h-5 w-5 text-white" />
                   </Button>
                   <Button
+                    type="button"
                     onClick={() => navigateFromBase("/calidad")}
                     size="sm"
                     className="bionapp-btn-green bionapp-nav-mini-btn bionapp-nav-mini-btn--icon shrink-0"

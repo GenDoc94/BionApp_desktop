@@ -7,11 +7,32 @@ import {
 } from "./trazabilidadPageData"
 
 const catalog: TrazabilidadCatalogo = {
-  envios: [{ id: 1, Sales_Order: "SO-9", Fecha_Llegada: "2026-09-18" }],
+  envios: [
+    { id: 1, Sales_Order: "WR00004939", Fecha_Llegada: "2026-05-28", Fecha_Envio: "" },
+    { id: 2, Sales_Order: "WR00005007", Fecha_Llegada: "2026-06-11", Fecha_Envio: "" },
+  ],
+  cajas: [
+    {
+      id: 1,
+      idEnvio: 1,
+      Codigo_BIO: "BIO-80118",
+      Nombre: "SP-G2",
+      LN: "LN-E",
+      Num_Cajas: 3,
+    },
+    {
+      id: 2,
+      idEnvio: 2,
+      Codigo_BIO: "BIO-80118",
+      Nombre: "SP-G2",
+      LN: "LN-E",
+      Num_Cajas: 3,
+    },
+  ],
   lotes: [
-    { id: 10, tipo: "extraido", PN: "p", LN: "LN-E", Exp: "", idEnvio: 1 },
-    { id: 20, tipo: "marcado", PN: "p", LN: "LN-M", Exp: "", idEnvio: 1 },
-    { id: 30, tipo: "chip", PN: "p", LN: "LN-C", Exp: "", idEnvio: 1 },
+    { id: 10, tipo: "extraido", PN: "80118", LN: "LN-E", Exp: "" },
+    { id: 20, tipo: "marcado", PN: "80117", LN: "LN-M", Exp: "" },
+    { id: 30, tipo: "chip", PN: "p", LN: "LN-C", Exp: "" },
   ],
   muestras: [{ NumBN: 253, Id_LtE: 10 }],
   lecturas: [{ NumBN_L: 253, NumLectura: 1 }],
@@ -21,34 +42,31 @@ const catalog: TrazabilidadCatalogo = {
 }
 
 describe("buildArbolEnvio", () => {
-  it("walks envío → lote extraído → BN → lectura → LM → chip", () => {
+  it("walks envío → cajas → lote extraído matching LN → BN", () => {
     const tree = buildArbolEnvio(catalog, 1)
-    expect(tree?.envio?.Sales_Order).toBe("SO-9")
+    expect(tree?.envio?.Sales_Order).toBe("WR00004939")
+    expect(tree?.cajas).toHaveLength(1)
     const extraido = tree?.lotes.find((l) => l.tipo === "extraido")
     expect(extraido?.LN).toBe("LN-E")
     expect(extraido?.muestras[0]?.numBN).toBe(253)
-    expect(extraido?.muestras[0]?.lecturas[0]?.lms[0]?.chips[0]).toMatchObject({
-      numChip: 5,
-      fc: 2,
-      loteChipLn: "LN-C",
-    })
   })
 })
 
 describe("buildArbolMuestra", () => {
-  it("starts from BN and keeps the extraction shipment", () => {
+  it("lists every shipment that received that extraction LN", () => {
     const tree = buildArbolMuestra(catalog, 253)
-    expect(tree?.envio?.id).toBe(1)
+    expect(tree?.posiblesEnvios.map((e) => e.Sales_Order)).toEqual(["WR00004939", "WR00005007"])
     expect(tree?.lotes[0]?.muestras).toHaveLength(1)
     expect(tree?.lotes[0]?.muestras[0]?.lecturas[0]?.lms[0]?.loteMarcadoLn).toBe("LN-M")
   })
 })
 
 describe("findEnviosForQuery", () => {
-  it("matches BN, sales order and LN", () => {
-    expect(findEnviosForQuery(catalog, "253")).toEqual([1])
-    expect(findEnviosForQuery(catalog, "SO-9")).toEqual([1])
-    expect(findEnviosForQuery(catalog, "LN-M")).toEqual([1])
+  it("matches BN, sales order, BIO and LN", () => {
+    expect(findEnviosForQuery(catalog, "253")).toEqual([1, 2])
+    expect(findEnviosForQuery(catalog, "WR00004939")).toEqual([1])
+    expect(findEnviosForQuery(catalog, "LN-E")).toEqual([1, 2])
+    expect(findEnviosForQuery(catalog, "80118")).toEqual([1, 2])
     expect(findEnviosForQuery(catalog, "nope")).toEqual([])
   })
 })

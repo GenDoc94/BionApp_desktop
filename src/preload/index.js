@@ -18,8 +18,8 @@ var api = {
         return ipcRenderer.invoke('fn:create-user', method, body);
     },
     dbRequest: function (req) { return ipcRenderer.invoke('db:request', req); },
-    exportDatabase: function (format) {
-        return ipcRenderer.invoke('export:database', format);
+    exportDatabase: function (format, tables) {
+        return ipcRenderer.invoke('export:database', format, tables);
     },
     listDocumentos: function () { return ipcRenderer.invoke('docs:list'); },
     uploadDocumento: function (name, data) {

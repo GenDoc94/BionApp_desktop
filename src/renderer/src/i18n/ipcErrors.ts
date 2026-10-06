@@ -14,6 +14,9 @@ const IPC_ERROR_KEYS: Record<string, string> = {
   "Ya existe un usuario con ese correo": "auth.err.userExists",
   "Nombre de archivo no válido": "docs.err.invalidName",
   "Archivo no encontrado": "docs.err.notFound",
+  "Selecciona al menos una tabla": "export.toast.needTables",
+  "Formato no soportado": "export.toast.error",
+  "No se puede exportar sobre la base de datos en uso": "export.toast.overwriteLive",
 };
 
 export function translateIpcError(message: string | null | undefined): string {

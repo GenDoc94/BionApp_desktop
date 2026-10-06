@@ -10,7 +10,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { formatIsoDateDisplay } from "../../lib/filtrosPageData";
 import { buildMuestraAppPath, saveMuestraNavegacion } from "../../lib/navegacionMuestra";
 import { toLoteRow, type LoteTipo } from "../../lib/lotesPageData";
-import { parseEnvioRow, type EnvioRow, type LoteCatalogo } from "../../lib/enviosPageData";
+import { parseEnvioCajaRow, parseEnvioRow, type EnvioCajaRow, type EnvioRow, type LoteCatalogo } from "../../lib/enviosPageData";
 import {
   buildArbolEnvio,
   buildArbolMuestra,
@@ -26,6 +26,7 @@ import {
 
 function collectCatalog(
   envios: EnvioRow[],
+  cajas: EnvioCajaRow[],
   lotes: LoteCatalogo[],
   muestras: Record<string, unknown>[],
   lecturas: Record<string, unknown>[],
@@ -33,7 +34,7 @@ function collectCatalog(
   chips: Record<string, unknown>[],
   dchips: Record<string, unknown>[]
 ): TrazabilidadCatalogo {
-  return { envios, lotes, muestras, lecturas, lms, chips, dchips };
+  return { envios, cajas, lotes, muestras, lecturas, lms, chips, dchips };
 }
 
 export default function TrazabilidadTab() {
@@ -48,6 +49,7 @@ export default function TrazabilidadTab() {
     setLoading(true);
     const [
       envRes,
+      cajasRes,
       extraido,
       marcado,
       membrana,
@@ -59,6 +61,7 @@ export default function TrazabilidadTab() {
       dchipsRes,
     ] = await Promise.all([
       supabase.from("Envios").select("*"),
+      supabase.from("Envio_Cajas").select("*"),
       supabase.from("Lotes_Extraido").select("*"),
       supabase.from("Lotes_Marcado").select("*"),
       supabase.from("Lotes_Membrana").select("*"),
@@ -71,6 +74,7 @@ export default function TrazabilidadTab() {
     ]);
     const err =
       envRes.error ||
+      cajasRes.error ||
       extraido.error ||
       marcado.error ||
       membrana.error ||
@@ -90,6 +94,9 @@ export default function TrazabilidadTab() {
     const envios = (envRes.data || [])
       .map((r) => parseEnvioRow(r as Record<string, unknown>))
       .filter((r): r is EnvioRow => r != null);
+    const cajas = (cajasRes.data || [])
+      .map((r) => parseEnvioCajaRow(r as Record<string, unknown>))
+      .filter((r): r is EnvioCajaRow => r != null);
     const lotes: LoteCatalogo[] = [];
     const push = (rows: unknown[] | null, tipo: LoteTipo) => {
       for (const raw of rows || []) {
@@ -104,6 +111,7 @@ export default function TrazabilidadTab() {
     setCatalog(
       collectCatalog(
         envios,
+        cajas,
         lotes,
         (muestrasRes.data || []) as Record<string, unknown>[],
         (lecturasRes.data || []) as Record<string, unknown>[],
@@ -213,11 +221,41 @@ function ArbolEnvio({
           : t("common.empty"),
       })
     : t("trazabilidad.noEnvio");
+  const extraEnvios = tree.posiblesEnvios.filter((e) => e.id !== tree.envio?.id);
 
   return (
     <ul className="bionapp-traza">
       <li>
         <div className="bionapp-traza__node bionapp-traza__node--envio">{envioLabel}</div>
+        {extraEnvios.length > 0 ? (
+          <p className="text-xs text-muted-foreground mt-1">
+            {t("trazabilidad.posiblesEnvios", {
+              so: extraEnvios.map((e) => e.Sales_Order).join(", "),
+            })}
+          </p>
+        ) : tree.posiblesEnvios.length > 1 && !tree.envio ? (
+          <p className="text-xs text-muted-foreground mt-1">
+            {t("trazabilidad.posiblesEnvios", {
+              so: tree.posiblesEnvios.map((e) => e.Sales_Order).join(", "),
+            })}
+          </p>
+        ) : null}
+        {tree.cajas.length > 0 ? (
+          <ul>
+            {tree.cajas.map((caja) => (
+              <li key={caja.id}>
+                <div className="bionapp-traza__node bionapp-traza__node--caja">
+                  {t("trazabilidad.cajaNode", {
+                    bio: caja.Codigo_BIO,
+                    ln: caja.LN,
+                    count: caja.Num_Cajas,
+                    name: caja.Nombre || "—",
+                  })}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {tree.lotes.length === 0 ? (
           <p className="text-xs text-slate-400 mt-2">{t("trazabilidad.noLots")}</p>
         ) : (

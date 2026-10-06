@@ -48,6 +48,8 @@ import {
   getSetupPhase,
   setSetupPhase,
 } from "../lib/setupInicial";
+import { normalizeBioCode } from "../lib/bioCodes";
+import { CAJA_TIPOS } from "../lib/dCajas";
 
 function clampText(s) {
   return (s ?? "").toString().trim();
@@ -260,11 +262,15 @@ export default function Options() {
 
   const [dmuestra, setDMuestra] = useState([]);
   const [ddx, setDDx] = useState([]);
+  const [dcajas, setDCajas] = useState([]);
   const [muestrasStats, setMuestrasStats] = useState([]);
   const [tags, setTags] = useState([]);
 
   const [newTipoMuestra, setNewTipoMuestra] = useState("");
   const [newDx, setNewDx] = useState("");
+  const [newCajaBio, setNewCajaBio] = useState("");
+  const [newCajaNombre, setNewCajaNombre] = useState("");
+  const [newCajaTipo, setNewCajaTipo] = useState("marcado");
   const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState("#64748b");
 
@@ -275,6 +281,8 @@ export default function Options() {
   const [filtroDx, setFiltroDx] = useState("");
   const [catalogEdit, setCatalogEdit] = useState(null);
   const [catalogEditText, setCatalogEditText] = useState("");
+  const [catalogEditTipo, setCatalogEditTipo] = useState("marcado");
+  const [catalogEditBio, setCatalogEditBio] = useState("");
   const [tagEditNumber, setTagEditNumber] = useState(null);
   const [tagEditName, setTagEditName] = useState("");
   const [tagEditColor, setTagEditColor] = useState("#64748b");
@@ -339,6 +347,7 @@ export default function Options() {
         setUserRole(null);
         setDMuestra([]);
         setDDx([]);
+        setDCajas([]);
         setMuestrasStats([]);
         return;
       }
@@ -357,21 +366,25 @@ export default function Options() {
       const [
         { data: dm, error: dmErr },
         { data: dx, error: dxErr },
+        { data: cajas, error: cajasErr },
         { data: muestras, error: muestrasErr },
         { data: tagsData, error: tagsErr },
       ] = await Promise.all([
         supabase.from("DMuestra").select("Cod, TipoMuestra").order("Cod", { ascending: true }),
         supabase.from("DDx").select("Cod, Dx").order("Cod", { ascending: true }),
+        supabase.from("DCajas").select("Codigo_BIO, Nombre, Tipo").order("Codigo_BIO", { ascending: true }),
         supabase.from("Muestras").select("Fecha, Estado_Muestra, Muestra, Dx"),
         supabase.from("Tags").select("Tag_Number, Tag_Name, Tag_Color").order("Tag_Number", { ascending: true }),
       ]);
       if (dmErr) throw dmErr;
       if (dxErr) throw dxErr;
+      if (cajasErr) throw cajasErr;
       if (muestrasErr) throw muestrasErr;
       if (tagsErr) throw tagsErr;
 
       setDMuestra(dm ?? []);
       setDDx(dx ?? []);
+      setDCajas(cajas ?? []);
       setMuestrasStats(muestras ?? []);
       setTags(tagsData ?? []);
     } catch (e) {
@@ -418,14 +431,18 @@ export default function Options() {
     }
   };
 
-  const startCatalogEdit = (kind, cod, currentText) => {
+  const startCatalogEdit = (kind, cod, currentText, tipo) => {
     setCatalogEdit({ kind, cod });
     setCatalogEditText(currentText);
+    setCatalogEditTipo(tipo || "marcado");
+    setCatalogEditBio(kind === "dcajas" ? String(cod ?? "") : "");
   };
 
   const cancelCatalogEdit = () => {
     setCatalogEdit(null);
     setCatalogEditText("");
+    setCatalogEditTipo("marcado");
+    setCatalogEditBio("");
   };
 
   const saveCatalogEdit = async () => {
@@ -433,6 +450,10 @@ export default function Options() {
     const text = clampText(catalogEditText);
     if (!text) {
       toast.error(t("options.toast.emptyName"));
+      return;
+    }
+    if (catalogEdit.kind === "dcajas" && !normalizeBioCode(catalogEditBio)) {
+      toast.error(t("options.toast.emptyBio"));
       return;
     }
 
@@ -445,6 +466,39 @@ export default function Options() {
           .update({ TipoMuestra: text })
           .eq("Cod", catalogEdit.cod);
         if (error) throw error;
+      } else if (catalogEdit.kind === "dcajas") {
+        const oldCode = normalizeBioCode(catalogEdit.cod);
+        const newCode = normalizeBioCode(catalogEditBio);
+        if (!newCode) {
+          toast.error(t("options.toast.emptyBio"));
+          return;
+        }
+        const clash = dcajas.some(
+          (r) =>
+            normalizeBioCode(r.Codigo_BIO) !== oldCode &&
+            normalizeBioCode(r.Codigo_BIO) === newCode
+        );
+        if (clash) {
+          toast.error(t("options.toast.duplicateBio"));
+          return;
+        }
+        const { error } = await supabase
+          .from("DCajas")
+          .update({ Codigo_BIO: newCode, Nombre: text, Tipo: catalogEditTipo })
+          .eq("Codigo_BIO", catalogEdit.cod);
+        if (error) throw error;
+        if (newCode !== oldCode) {
+          const { error: cajasErr } = await supabase
+            .from("Envio_Cajas")
+            .update({ Codigo_BIO: newCode })
+            .eq("Codigo_BIO", catalogEdit.cod);
+          if (cajasErr) throw cajasErr;
+          const { error: stockErr } = await supabase
+            .from("Stock")
+            .update({ Codigo_BIO: newCode })
+            .eq("Codigo_BIO", catalogEdit.cod);
+          if (stockErr) throw stockErr;
+        }
       } else {
         const { error } = await supabase
           .from("DDx")
@@ -529,6 +583,79 @@ export default function Options() {
     } catch (e) {
       console.error(e);
       setErrorMsg(e?.message ?? t("options.err.addDx"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addDCaja = async () => {
+    const code = normalizeBioCode(newCajaBio);
+    const nombre = clampText(newCajaNombre);
+    if (!code) {
+      toast.error(t("options.toast.emptyBio"));
+      return;
+    }
+    if (!nombre) {
+      toast.error(t("options.toast.emptyName"));
+      return;
+    }
+    const exists = dcajas.some(
+      (r) => String(r.Codigo_BIO ?? "").trim().toUpperCase() === code
+    );
+    if (exists) {
+      toast.error(t("options.toast.duplicateBio"));
+      return;
+    }
+
+    setSaving(true);
+    setErrorMsg(null);
+    try {
+      const { error: insErr } = await supabase.from("DCajas").insert([
+        { Codigo_BIO: code, Nombre: nombre, Tipo: newCajaTipo },
+      ]);
+      if (insErr) throw insErr;
+
+      setNewCajaBio("");
+      setNewCajaNombre("");
+      setVariablesSubTab("dcajas");
+      await loadAll();
+    } catch (e) {
+      console.error(e);
+      const msg = e?.message ?? "";
+      if (/UNIQUE/i.test(msg)) toast.error(t("options.toast.duplicateBio"));
+      else setErrorMsg(msg || t("options.err.addCaja"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteDCaja = async (code) => {
+    if (!confirm(t("options.toast.confirmDeleteCaja", { code }))) return;
+
+    setSaving(true);
+    setErrorMsg(null);
+    try {
+      const { count, error: countErr } = await supabase
+        .from("Envio_Cajas")
+        .select("*", { count: "exact", head: true })
+        .eq("Codigo_BIO", code);
+      if (countErr) throw countErr;
+      if ((count ?? 0) > 0) {
+        toast.error(t("options.toast.inUseCaja", { count }));
+        return;
+      }
+
+      const { error } = await supabase.from("DCajas").delete().eq("Codigo_BIO", code);
+      if (error) throw error;
+
+      if (catalogEdit?.kind === "dcajas" && catalogEdit.cod === code) {
+        cancelCatalogEdit();
+      }
+      await loadAll();
+      toast.success(t("options.toast.cajaDeleted"));
+    } catch (e) {
+      console.error(e);
+      setErrorMsg(e?.message ?? t("options.err.deleteCatalog"));
     } finally {
       setSaving(false);
     }
@@ -640,6 +767,7 @@ export default function Options() {
       <TabsList>
         <TabsTrigger value="dmuestra">{t("options.vars.sampleTypes")}</TabsTrigger>
         <TabsTrigger value="ddx">{t("options.vars.diagnoses")}</TabsTrigger>
+        <TabsTrigger value="dcajas">{t("options.vars.boxes")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="dmuestra" className="space-y-4">
@@ -760,6 +888,155 @@ export default function Options() {
                 {!ddx.length ? (
                   <tr>
                     <td className="py-2 pr-3 text-slate-500" colSpan={3}>
+                      {t("options.empty.values")}
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="dcajas" className="space-y-4">
+        <div className="bionapp-panel p-4">
+          <div className="font-semibold mb-2">{t("options.vars.addBox")}</div>
+          <div className="flex flex-wrap gap-2 items-end">
+            <div className="min-w-[140px]">
+              <div className="text-xs text-slate-500 mb-1">{t("options.vars.boxCodeHint")}</div>
+              <Input
+                value={newCajaBio}
+                onChange={(e) => setNewCajaBio(e.target.value)}
+                placeholder={t("options.vars.boxCodePlaceholder")}
+              />
+            </div>
+            <div className="min-w-[260px] flex-1">
+              <div className="text-xs text-slate-500 mb-1">{t("options.vars.boxNameHint")}</div>
+              <Input
+                value={newCajaNombre}
+                onChange={(e) => setNewCajaNombre(e.target.value)}
+                placeholder={t("options.vars.boxNamePlaceholder")}
+              />
+            </div>
+            <div className="min-w-[140px]">
+              <div className="text-xs text-slate-500 mb-1">{t("options.vars.boxTipo")}</div>
+              <select
+                value={newCajaTipo}
+                onChange={(e) => setNewCajaTipo(e.target.value)}
+                className="h-9 w-full text-sm border border-input rounded-md px-2 bg-background"
+              >
+                {CAJA_TIPOS.map((tipo) => (
+                  <option key={tipo} value={tipo}>
+                    {t(`options.vars.cajaTipo.${tipo}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Button
+              onClick={addDCaja}
+              disabled={saving || !clampText(newCajaBio) || !clampText(newCajaNombre)}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              {t("common.add")}
+            </Button>
+          </div>
+          <div className="text-xs text-slate-500 mt-2">
+            {t("options.vars.boxDeleteHint")}
+          </div>
+        </div>
+
+        <div className="bionapp-panel p-4">
+          <div className="font-semibold mb-3">{t("options.list.current")}</div>
+          <div className="overflow-auto">
+            <table className="min-w-[640px] w-full text-sm border-collapse">
+              <thead>
+                <tr className="text-left border-b border-border">
+                  <th className="py-2 pr-3 w-32">{t("options.col.bio")}</th>
+                  <th className="py-2 pr-3">{t("options.col.boxName")}</th>
+                  <th className="py-2 pr-3 w-36">{t("options.col.boxTipo")}</th>
+                  <th className="py-2 pr-3 w-28">{t("options.col.actions")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dcajas.map((r) => {
+                  const isEditing = catalogEdit?.kind === "dcajas" && catalogEdit.cod === r.Codigo_BIO;
+                  return (
+                    <tr key={r.Codigo_BIO} className="border-b border-border/60">
+                      <td className="py-2 pr-3 font-mono">
+                        {isEditing ? (
+                          <Input
+                            value={catalogEditBio}
+                            onChange={(e) => setCatalogEditBio(e.target.value)}
+                            className="font-mono"
+                          />
+                        ) : (
+                          r.Codigo_BIO
+                        )}
+                      </td>
+                      <td className="py-2 pr-3">
+                        {isEditing ? (
+                          <Input
+                            value={catalogEditText}
+                            onChange={(e) => setCatalogEditText(e.target.value)}
+                          />
+                        ) : (
+                          r.Nombre
+                        )}
+                      </td>
+                      <td className="py-2 pr-3">
+                        {isEditing ? (
+                          <select
+                            value={catalogEditTipo}
+                            onChange={(e) => setCatalogEditTipo(e.target.value)}
+                            className="h-8 w-full text-sm border border-input rounded-md px-2 bg-background"
+                          >
+                            {CAJA_TIPOS.map((tipo) => (
+                              <option key={tipo} value={tipo}>
+                                {t(`options.vars.cajaTipo.${tipo}`)}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          t(`options.vars.cajaTipo.${r.Tipo}`)
+                        )}
+                      </td>
+                      <td className="py-2 pr-3">
+                        {isEditing ? (
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="outline" onClick={saveCatalogEdit} disabled={saving}>
+                              <Save className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={cancelCatalogEdit} disabled={saving}>
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => startCatalogEdit("dcajas", r.Codigo_BIO, r.Nombre, r.Tipo)}
+                              disabled={saving}
+                            >
+                              <PenLine className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => deleteDCaja(r.Codigo_BIO)}
+                              disabled={saving}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {!dcajas.length ? (
+                  <tr>
+                    <td className="py-2 pr-3 text-slate-500" colSpan={4}>
                       {t("options.empty.values")}
                     </td>
                   </tr>

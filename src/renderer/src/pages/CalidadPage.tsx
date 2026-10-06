@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { Component, Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { BadgeCheck, Filter, GitBranch, Layers, Truck } from "lucide-react";
+import { BadgeCheck, Boxes, Filter, GitBranch, Layers, Truck } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "../components/ui/button";
@@ -24,16 +24,50 @@ import {
   type FiltroRow,
 } from "../lib/filtrosPageData";
 import LotesPage from "./LotesPage";
-import EnviosTab from "../components/calidad/EnviosTab";
-import TrazabilidadTab from "../components/calidad/TrazabilidadTab";
 
-type CalidadTab = "envios" | "lotes" | "filtros" | "trazabilidad";
+const EnviosTab = lazy(() => import("../components/calidad/EnviosTab"));
+const StockTab = lazy(() => import("../components/calidad/StockTab"));
+const TrazabilidadTab = lazy(() => import("../components/calidad/TrazabilidadTab"));
+
+type CalidadTab = "envios" | "stock" | "lotes" | "filtros" | "trazabilidad";
 
 function parseCalidadTab(raw: string | null): CalidadTab {
   if (raw === "filtros" || raw === "fechas") return "filtros";
   if (raw === "envios") return "envios";
+  if (raw === "stock") return "stock";
   if (raw === "trazabilidad") return "trazabilidad";
   return "lotes";
+}
+
+class TabErrorBoundary extends Component<
+  { children: React.ReactNode; label: string },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <p className="text-sm text-red-600 dark:text-red-400 p-4">
+          {this.props.label}: {this.state.error.message}
+        </p>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function TabFallback() {
+  const { t } = useTranslation();
+  return (
+    <div className="p-8 flex items-center justify-center">
+      <p className="text-muted-foreground">{t("common.loading")}</p>
+    </div>
+  );
 }
 
 function FiltrosTab() {
@@ -289,18 +323,43 @@ function CalidadPage() {
               </TabsTrigger>
             </TabsList>
           </div>
+          <div className="bionapp-calcs-tabs-panel bionapp-calcs-tabs-panel--tubos">
+            <TabsList>
+              <TabsTrigger value="stock" className="gap-1.5">
+                <Boxes className="h-4 w-4" />
+                {t("calidad.tab.stock")}
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
         <TabsContent value="envios">
-          <EnviosTab />
+          <TabErrorBoundary label="Envíos">
+            <Suspense fallback={<TabFallback />}>
+              <EnviosTab />
+            </Suspense>
+          </TabErrorBoundary>
+        </TabsContent>
+        <TabsContent value="stock">
+          <TabErrorBoundary label="Stock">
+            <Suspense fallback={<TabFallback />}>
+              <StockTab />
+            </Suspense>
+          </TabErrorBoundary>
         </TabsContent>
         <TabsContent value="lotes">
-          <LotesPage embedded />
+          <TabErrorBoundary label="Lotes">
+            <LotesPage embedded />
+          </TabErrorBoundary>
         </TabsContent>
         <TabsContent value="filtros">
           <FiltrosTab />
         </TabsContent>
         <TabsContent value="trazabilidad">
-          <TrazabilidadTab />
+          <TabErrorBoundary label="Trazabilidad">
+            <Suspense fallback={<TabFallback />}>
+              <TrazabilidadTab />
+            </Suspense>
+          </TabErrorBoundary>
         </TabsContent>
       </Tabs>
     </SubpageShell>

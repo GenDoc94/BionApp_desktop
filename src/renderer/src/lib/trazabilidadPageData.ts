@@ -1,5 +1,6 @@
 import type { LoteTipo } from "./lotesPageData"
-import type { EnvioRow, LoteCatalogo } from "./enviosPageData"
+import type { EnvioCajaRow, EnvioRow, LoteCatalogo } from "./enviosPageData"
+import { sameLn } from "./bioCodes"
 
 export type TrazabilidadChip = {
   numChip: number
@@ -39,7 +40,9 @@ export type TrazabilidadLoteNodo = {
 
 export type TrazabilidadEnvioArbol = {
   envio: EnvioRow | null
+  cajas: EnvioCajaRow[]
   lotes: TrazabilidadLoteNodo[]
+  posiblesEnvios: EnvioRow[]
 }
 
 export type TrazabilidadMuestraInput = {
@@ -76,6 +79,7 @@ export type TrazabilidadDChipInput = {
 
 export type TrazabilidadCatalogo = {
   envios: EnvioRow[]
+  cajas: EnvioCajaRow[]
   lotes: LoteCatalogo[]
   muestras: TrazabilidadMuestraInput[]
   lecturas: TrazabilidadLecturaInput[]
@@ -236,22 +240,65 @@ function loteNodo(catalog: TrazabilidadCatalogo, lot: LoteCatalogo): Trazabilida
   }
 }
 
-/** Árbol Envío → lotes → muestras → lecturas → LM → chips. */
+function lotesMatchingCaja(catalog: TrazabilidadCatalogo, caja: EnvioCajaRow): LoteCatalogo[] {
+  return catalog.lotes.filter((lot) => sameLn(lot.LN, caja.LN))
+}
+
+function enviosForLn(catalog: TrazabilidadCatalogo, ln: string): EnvioRow[] {
+  const ids = new Set<number>()
+  for (const caja of catalog.cajas) {
+    if (sameLn(caja.LN, ln)) ids.add(caja.idEnvio)
+  }
+  const fromCajas = catalog.envios.filter((e) => ids.has(e.id))
+  if (fromCajas.length > 0) return fromCajas
+  const lot = catalog.lotes.find((l) => sameLn(l.LN, ln) && l.idEnvio != null)
+  if (lot?.idEnvio != null) {
+    const envio = catalog.envios.find((e) => e.id === lot.idEnvio)
+    return envio ? [envio] : []
+  }
+  return []
+}
+
+function lotesDeEnvioCatalog(catalog: TrazabilidadCatalogo, envioId: number): LoteCatalogo[] {
+  const lines = catalog.cajas.filter((c) => c.idEnvio === envioId)
+  if (lines.length === 0) {
+    return catalog.lotes.filter((l) => l.idEnvio === envioId)
+  }
+  const seen = new Set<string>()
+  const out: LoteCatalogo[] = []
+  for (const line of lines) {
+    for (const lot of lotesMatchingCaja(catalog, line)) {
+      const key = `${lot.tipo}-${lot.id}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.push(lot)
+    }
+  }
+  return out
+}
+
+/** Árbol Envío → cajas (BIO+LN) → lotes coincidentes → muestras → lecturas → chips. */
 export function buildArbolEnvio(
   catalog: TrazabilidadCatalogo,
   envioId: number
 ): TrazabilidadEnvioArbol | null {
   const envio = catalog.envios.find((e) => e.id === envioId) ?? null
   if (!envio) return null
-  const lotes = catalog.lotes
-    .filter((l) => l.idEnvio === envioId)
-    .sort((a, b) => a.tipo.localeCompare(b.tipo) || a.LN.localeCompare(b.LN, undefined, { numeric: true }))
-  return { envio, lotes: lotes.map((l) => loteNodo(catalog, l)) }
+  const cajas = catalog.cajas.filter((c) => c.idEnvio === envioId)
+  const lotes = lotesDeEnvioCatalog(catalog, envioId).sort(
+    (a, b) => a.tipo.localeCompare(b.tipo) || a.LN.localeCompare(b.LN, undefined, { numeric: true })
+  )
+  return {
+    envio,
+    cajas,
+    lotes: lotes.map((l) => loteNodo(catalog, l)),
+    posiblesEnvios: [envio],
+  }
 }
 
 /**
- * Camino de una muestra: envío del lote de extracción → lote → BN → lecturas → LM → chips.
- * Si no hay lote de extracción, el envío queda null y solo se muestra la muestra.
+ * Camino de una muestra: lote de extracción → BN → lecturas → LM → chips,
+ * con los envíos posibles de ese LN.
  */
 export function buildArbolMuestra(
   catalog: TrazabilidadCatalogo,
@@ -261,21 +308,26 @@ export function buildArbolMuestra(
   if (!muestra) return null
   const idLtE = num(muestra.Id_LtE)
   const loteExt = idLtE != null ? catalog.lotes.find((l) => l.tipo === "extraido" && l.id === idLtE) : null
-  const envio =
-    loteExt?.idEnvio != null ? catalog.envios.find((e) => e.id === loteExt.idEnvio) ?? null : null
+  const posiblesEnvios = loteExt ? enviosForLn(catalog, loteExt.LN) : []
+  const envio = posiblesEnvios[0] ?? null
   if (loteExt) {
     return {
       envio,
+      cajas: catalog.cajas.filter(
+        (c) => posiblesEnvios.some((e) => e.id === c.idEnvio) && sameLn(c.LN, loteExt.LN)
+      ),
       lotes: [
         {
           ...loteNodo(catalog, loteExt),
           muestras: [muestraNodo(catalog, numBN)],
         },
       ],
+      posiblesEnvios,
     }
   }
   return {
     envio: null,
+    cajas: [],
     lotes: [
       {
         tipo: "extraido",
@@ -286,6 +338,7 @@ export function buildArbolMuestra(
         chipsCatalogo: [],
       },
     ],
+    posiblesEnvios: [],
   }
 }
 
@@ -299,7 +352,7 @@ export function findEnviosForQuery(catalog: TrazabilidadCatalogo, query: string)
     if (muestra) {
       const idLtE = num(muestra.Id_LtE)
       const lote = idLtE != null ? catalog.lotes.find((l) => l.tipo === "extraido" && l.id === idLtE) : null
-      if (lote?.idEnvio != null) return [lote.idEnvio]
+      if (lote) return enviosForLn(catalog, lote.LN).map((e) => e.id)
       return []
     }
   }
@@ -308,8 +361,18 @@ export function findEnviosForQuery(catalog: TrazabilidadCatalogo, query: string)
   for (const e of catalog.envios) {
     if (e.Sales_Order.toLowerCase().includes(q) || String(e.id) === q) ids.add(e.id)
   }
+  for (const caja of catalog.cajas) {
+    if (
+      caja.LN.toLowerCase().includes(q) ||
+      caja.Codigo_BIO.toLowerCase().includes(q) ||
+      caja.Nombre.toLowerCase().includes(q)
+    ) {
+      ids.add(caja.idEnvio)
+    }
+  }
   for (const lot of catalog.lotes) {
-    if (lot.LN.toLowerCase().includes(q) && lot.idEnvio != null) ids.add(lot.idEnvio)
+    if (!lot.LN.toLowerCase().includes(q)) continue
+    for (const envio of enviosForLn(catalog, lot.LN)) ids.add(envio.id)
   }
   return [...ids]
 }

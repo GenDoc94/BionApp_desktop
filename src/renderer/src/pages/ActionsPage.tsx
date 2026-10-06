@@ -384,6 +384,25 @@ function AccionPreparacionHeading() {
   );
 }
 
+function AccionLeerExtraidoHeading() {
+  const { t } = useTranslation();
+  return (
+    <span className="inline-flex items-center gap-1.5 flex-wrap">
+      <Trans
+        i18nKey="actions.leerExtraidoHeading"
+        components={{
+          status: (
+            <HeadingStatusDot
+              title={t("app.state.yellow")}
+              aria-label={t("app.state.yellow")}
+            />
+          ),
+        }}
+      />
+    </span>
+  );
+}
+
 function AccionLeerMarcadoHeading() {
   const { t } = useTranslation();
   return (
@@ -400,6 +419,23 @@ function AccionLeerMarcadoHeading() {
         }}
       />
     </span>
+  );
+}
+
+function AccionPteChipHelp() {
+  const { t } = useTranslation();
+  return (
+    <Trans
+      i18nKey="actions.pteChipHelp"
+      components={{
+        repeat: (
+          <HeadingRepeatChipIcon
+            title={t("app.chips.repeatOn")}
+            aria-label={t("app.chips.repeatOn")}
+          />
+        ),
+      }}
+    />
   );
 }
 
@@ -2322,7 +2358,7 @@ function ActionsPage() {
           <div className="mt-6 bionapp-panel p-4">
             <h2 className="text-base font-semibold mb-2 text-foreground">
               {mode === "leer-extraido" ? (
-                t("actions.leerExtraidoHeading")
+                <AccionLeerExtraidoHeading />
               ) : mode === "leer-marcado" ? (
                 <AccionLeerMarcadoHeading />
               ) : mode === "tirar" ? (
@@ -2474,7 +2510,7 @@ function ActionsPage() {
             {mode === "pte-chip" && (
               <div className="flex flex-col gap-3 mb-4">
                 <p className="text-xs text-muted-foreground">
-                  {t("actions.pteChipHelp")}
+                  <AccionPteChipHelp />
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
@@ -3018,10 +3054,15 @@ function ActionsPage() {
                       <TableHead>{t("app.quant.left")}</TableHead>
                       <TableHead>{t("app.quant.center")}</TableHead>
                       <TableHead>{t("app.quant.right")}</TableHead>
-                      <TableHead>Media_Lectura</TableHead>
+                      <TableHead>
+                        <HeadingMeanSymbol
+                          title={t("actions.extractedMeanLabel")}
+                          aria-label={t("actions.extractedMeanLabel")}
+                        />
+                      </TableHead>
                       <TableHead>CV_Lectura</TableHead>
                       <TableHead>{t("actions.col.readingDate")}</TableHead>
-                      <TableHead>Coment_Lectura</TableHead>
+                      <TableHead>{t("actions.col.comment")}</TableHead>
                     </>
                   ) : mode === "leer-marcado" ? (
                     <>
@@ -3030,10 +3071,15 @@ function ActionsPage() {
                       <TableHead>{t("actions.col.lmNo")}</TableHead>
                       <TableHead>{t("actions.col.extractedMean")}</TableHead>
                       <TableHead>{t("actions.col.extractedCv")}</TableHead>
-                      <TableHead>{t("app.quant.left")}_LM</TableHead>
-                      <TableHead>{t("app.quant.right")}_LM</TableHead>
-                      <TableHead>Media_LM</TableHead>
-                      <TableHead>CV_LM</TableHead>
+                      <TableHead>{t("app.quant.left")}</TableHead>
+                      <TableHead>{t("app.quant.right")}</TableHead>
+                      <TableHead>
+                        <HeadingMeanSymbol
+                          title={t("actions.labeledMeanLabel")}
+                          aria-label={t("actions.labeledMeanLabel")}
+                        />
+                      </TableHead>
+                      <TableHead>{t("actions.col.cv")}</TableHead>
                     </>
                   ) : (
                     <>
@@ -3080,8 +3126,13 @@ function ActionsPage() {
                       {(mode === "tirar" || mode === "marcar") && (
                         <>
                           <TableHead>{t("actions.col.readingNo")}</TableHead>
-                          <TableHead>{t("actions.col.mean")}</TableHead>
-                          <TableHead>Coment_Lectura</TableHead>
+                          <TableHead>
+                            <HeadingMeanSymbol
+                              title={t("actions.extractedMeanLabel")}
+                              aria-label={t("actions.extractedMeanLabel")}
+                            />
+                          </TableHead>
+                          <TableHead>{t("actions.col.comment")}</TableHead>
                         </>
                       )}
                       {mode === "marcar" && <TableHead>{t("actions.col.type")}</TableHead>}

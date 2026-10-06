@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.1.0
+
+- Calidad: pestaña **Stock** (cajas por BIO y LN, dónde están y cuántas quedan; las consumidas se marcan en rojo empezando por el envío más antiguo).
+- Envíos ligados al catálogo **DCajas** (código BIO + LN); el LN se filtra por el tipo de caja (extracción, marcado o chip).
+- Opciones: catálogo de cajas BIO y exportación eligiendo tablas y formato (Excel, JSON o SQLite).
+- Acciones: títulos con icono de estado; la media se muestra como x̄ y el comentario como «Comentario».
+
 ## 4.0.2
 
 - En el setup inicial se elige primero la carpeta. Si ya hay `bionapp.sqlite`, se usa esa base y su código maestro; no se pide otro código ni se sustituye el archivo.

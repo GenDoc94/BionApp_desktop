@@ -84,7 +84,16 @@ export type LoteRow = {
   Exp: string
   idEnvio?: number | null
   envioSalesOrder?: string | null
+  envioSalesOrders?: string[]
   envioFechaLlegada?: string | null
+  envioAsignados?: LoteEnvioAsignado[]
+  tipo?: LoteTipo
+}
+
+export type LoteEnvioAsignado = {
+  id: number
+  Sales_Order: string
+  Fecha_Llegada: string
 }
 
 export type LoteUsoExtraido = { NumBN: number; Estado_Muestra: number | null }
@@ -223,6 +232,7 @@ export function toLoteRow(row: Record<string, unknown>, tipo: LoteTipo): LoteRow
     LN: String(row.LN ?? ""),
     Exp: String(row.Exp ?? ""),
     idEnvio: parseIdEnvio(row.Id_Envio),
+    tipo,
   }
 }
 
@@ -527,7 +537,13 @@ export function filterLots(
       lot.LN.toLowerCase().includes(q) ||
       lot.PN.toLowerCase().includes(q) ||
       lot.Exp.toLowerCase().includes(q) ||
-      (lot.envioSalesOrder != null && lot.envioSalesOrder.toLowerCase().includes(q))
+      (lot.envioSalesOrder != null && lot.envioSalesOrder.toLowerCase().includes(q)) ||
+      (lot.envioSalesOrders ?? []).some((so) => so.toLowerCase().includes(q)) ||
+      (lot.envioAsignados ?? []).some(
+        (envio) =>
+          envio.Sales_Order.toLowerCase().includes(q) ||
+          envio.Fecha_Llegada.toLowerCase().includes(q)
+      )
     ) {
       return true
     }
@@ -560,6 +576,12 @@ export function lotMatchesSearchBlob(lot: LoteRow, query: string): boolean {
     lot.LN.toLowerCase().includes(q) ||
     lot.PN.toLowerCase().includes(q) ||
     lot.Exp.toLowerCase().includes(q) ||
-    (lot.envioSalesOrder != null && lot.envioSalesOrder.toLowerCase().includes(q))
+    (lot.envioSalesOrder != null && lot.envioSalesOrder.toLowerCase().includes(q)) ||
+    (lot.envioSalesOrders ?? []).some((so) => so.toLowerCase().includes(q)) ||
+    (lot.envioAsignados ?? []).some(
+      (envio) =>
+        envio.Sales_Order.toLowerCase().includes(q) ||
+        envio.Fecha_Llegada.toLowerCase().includes(q)
+    )
   )
 }

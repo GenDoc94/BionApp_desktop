@@ -13,6 +13,7 @@ const ALLOWED_TABLES = new Set([
   'DChips',
   'DDx',
   'DMuestra',
+  'DCajas',
   'Tags',
   'Muestra_Tags',
   'Preselect',
@@ -21,6 +22,8 @@ const ALLOWED_TABLES = new Set([
   'Lotes_Membrana',
   'Lotes_Chips',
   'Envios',
+  'Envio_Cajas',
+  'Stock',
   'Filtros',
   'profiles',
   'users'
@@ -310,6 +313,9 @@ export function executeDbRequest(db: Database.Database, req: DbRequest): DbRespo
     }
     if (
       req.table === 'Envios' ||
+      req.table === 'Envio_Cajas' ||
+      req.table === 'Stock' ||
+      req.table === 'DCajas' ||
       req.table === 'Lotes_Extraido' ||
       req.table === 'Lotes_Marcado' ||
       req.table === 'Lotes_Membrana' ||

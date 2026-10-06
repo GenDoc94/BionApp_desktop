@@ -15,7 +15,7 @@ declare const api: {
     getSessionRole: () => Promise<Role | null>;
     createUserFn: (method: string, body?: unknown) => Promise<any>;
     dbRequest: (req: DbRequest) => Promise<DbResponse>;
-    exportDatabase: (format: ExportFormat) => Promise<ExportResult>;
+    exportDatabase: (format: ExportFormat, tables?: readonly string[]) => Promise<ExportResult>;
     listDocumentos: () => Promise<DocumentoItem[]>;
     uploadDocumento: (name: string, data: ArrayBuffer) => Promise<{
         ok: boolean;

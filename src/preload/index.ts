@@ -36,8 +36,8 @@ const api = {
 
   dbRequest: (req: DbRequest): Promise<DbResponse> => ipcRenderer.invoke('db:request', req),
 
-  exportDatabase: (format: ExportFormat): Promise<ExportResult> =>
-    ipcRenderer.invoke('export:database', format),
+  exportDatabase: (format: ExportFormat, tables?: readonly string[]): Promise<ExportResult> =>
+    ipcRenderer.invoke('export:database', format, tables),
 
   listDocumentos: (): Promise<DocumentoItem[]> => ipcRenderer.invoke('docs:list'),
   uploadDocumento: (name: string, data: ArrayBuffer): Promise<{ ok: boolean }> =>

@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3'
+import { DEFAULT_DCJAS } from '../shared/dCajas'
 
 export const LOTE_TABLE = {
   extraido: 'Lotes_Extraido',
@@ -548,14 +549,35 @@ export function ensureLotesChipsSchema(db: Database.Database): void {
   db.exec(`CREATE INDEX IF NOT EXISTS DChips_Id_LtC_idx ON DChips(Id_LtC);`)
 }
 
-/** Catálogo de envíos y FK inferencial Lotes_*.Id_Envio. Idempotente. */
+/** Catálogo de envíos, líneas de cajas (BIO+LN) y stock. Idempotente. */
 export function ensureEnviosSchema(db: Database.Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS Envios (
       Id_Envio INTEGER PRIMARY KEY AUTOINCREMENT,
       Sales_Order TEXT NOT NULL,
       Fecha_Llegada TEXT NOT NULL DEFAULT '',
+      Fecha_Envio TEXT NOT NULL DEFAULT '',
       UNIQUE (Sales_Order)
+    );
+  `)
+  if (!tableHasColumn(db, 'Envios', 'Fecha_Envio')) {
+    db.exec(`ALTER TABLE Envios ADD COLUMN Fecha_Envio TEXT NOT NULL DEFAULT ''`)
+  }
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS Envio_Cajas (
+      Id_EnvioCaja INTEGER PRIMARY KEY AUTOINCREMENT,
+      Id_Envio INTEGER NOT NULL REFERENCES Envios(Id_Envio) ON UPDATE CASCADE ON DELETE CASCADE,
+      Codigo_BIO TEXT NOT NULL,
+      Nombre TEXT NOT NULL DEFAULT '',
+      LN TEXT NOT NULL DEFAULT '',
+      Num_Cajas INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE TABLE IF NOT EXISTS Stock (
+      Codigo_BIO TEXT NOT NULL,
+      LN TEXT NOT NULL,
+      Lugar TEXT NOT NULL DEFAULT '',
+      Cajas_Quedan INTEGER,
+      PRIMARY KEY (Codigo_BIO, LN)
     );
   `)
   addFkColumnIfMissing(db, LOTE_TABLE.extraido, 'Id_Envio', 'Envios', 'Id_Envio')
@@ -567,6 +589,8 @@ export function ensureEnviosSchema(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS Lotes_Marcado_Id_Envio_idx ON Lotes_Marcado(Id_Envio);
     CREATE INDEX IF NOT EXISTS Lotes_Membrana_Id_Envio_idx ON Lotes_Membrana(Id_Envio);
     CREATE INDEX IF NOT EXISTS Lotes_Chips_Id_Envio_idx ON Lotes_Chips(Id_Envio);
+    CREATE INDEX IF NOT EXISTS Envio_Cajas_Id_Envio_idx ON Envio_Cajas(Id_Envio);
+    CREATE INDEX IF NOT EXISTS Envio_Cajas_BIO_LN_idx ON Envio_Cajas(Codigo_BIO, LN);
   `)
   try {
     db.exec(
@@ -575,4 +599,43 @@ export function ensureEnviosSchema(db: Database.Database): void {
   } catch {
     /* Filas previas que solo se diferencian por mayúsculas. */
   }
+  try {
+    db.exec(
+      `CREATE UNIQUE INDEX IF NOT EXISTS Envio_Cajas_Envio_BIO_LN_ci
+       ON Envio_Cajas(Id_Envio, Codigo_BIO COLLATE NOCASE, LN COLLATE NOCASE);`
+    )
+  } catch {
+    /* Líneas previas duplicadas en el mismo envío. */
+  }
+  ensureDCajasSchema(db)
+}
+
+/** Diccionario de códigos BIO (kit + tipo de caja). Idempotente. */
+export function ensureDCajasSchema(db: Database.Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS DCajas (
+      Codigo_BIO TEXT PRIMARY KEY COLLATE NOCASE,
+      Nombre TEXT NOT NULL DEFAULT '',
+      Tipo TEXT NOT NULL CHECK (Tipo IN ('extraido', 'marcado', 'chip'))
+    );
+  `)
+  if (!tableHasColumn(db, 'DCajas', 'Tipo')) {
+    db.exec(`ALTER TABLE DCajas ADD COLUMN Tipo TEXT NOT NULL DEFAULT 'extraido'`)
+  }
+  const backfill = db.prepare(
+    `UPDATE DCajas SET Tipo = ? WHERE Codigo_BIO = ? COLLATE NOCASE
+     AND (Tipo IS NULL OR TRIM(Tipo) = '')`
+  )
+  for (const row of DEFAULT_DCJAS) {
+    backfill.run(row.Tipo, row.Codigo_BIO)
+  }
+  const n = (db.prepare('SELECT COUNT(*) AS n FROM DCajas').get() as { n: number }).n
+  if (n > 0) return
+  const ins = db.prepare('INSERT INTO DCajas (Codigo_BIO, Nombre, Tipo) VALUES (?, ?, ?)')
+  const tx = db.transaction(() => {
+    for (const row of DEFAULT_DCJAS) {
+      ins.run(row.Codigo_BIO, row.Nombre, row.Tipo)
+    }
+  })
+  tx()
 }

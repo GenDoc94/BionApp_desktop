@@ -278,8 +278,8 @@ function registerIpc(): void {
 
   ipcMain.handle('db:request', (_e, req: DbRequest) => executeDbRequest(ensureDb(), req))
 
-  ipcMain.handle('export:database', async (_e, format: ExportFormat) => {
-    return exportDatabase(ensureDb(), ensureDataPath(), format, mainWindow)
+  ipcMain.handle('export:database', async (_e, format: ExportFormat, tables?: unknown) => {
+    return exportDatabase(ensureDb(), ensureDataPath(), format, tables, mainWindow)
   })
 
   ipcMain.handle('docs:list', () => docs.listDocumentos(ensureDataPath()))

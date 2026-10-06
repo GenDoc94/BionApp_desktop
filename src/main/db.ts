@@ -123,7 +123,8 @@ export function migratePeticColumnsToText(db: Database.Database): void {
  * Jerarquía cascade: Muestras → Lectura → Marcado → Lecturas_Marcado → Chips
  * Lotes_Extraido / Lotes_Marcado / Lotes_Membrana / Lotes_Chips son catálogos (PN+LN+Exp)
  * referenciados por Muestras.Id_LtE, Lecturas_Marcado.Id_LtM / Id_LtMm y DChips.Id_LtC.
- * Envios agrupa lotes (Id_Envio) para trazabilidad Envío → Lote → Muestra.
+ * Envios agrupa cajas (BIO+LN+cantidad). Un mismo LN puede llegar en varios envíos.
+ * Stock agrupa esas cajas por BIO+LN. Lotes_* siguen siendo el LN de la muestra.
  * Filtros registra colocación/retirada de filtros (NumFiltro, FechaColoc, FechaRetir).
  * Media/SD/CV se calculan en la capa de escritura (SQLite no permite mutar NEW).
  */
@@ -170,6 +171,12 @@ export function initSchema(db: Database.Database): void {
       TipoMuestra TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS DCajas (
+      Codigo_BIO TEXT PRIMARY KEY COLLATE NOCASE,
+      Nombre TEXT NOT NULL DEFAULT '',
+      Tipo TEXT NOT NULL CHECK (Tipo IN ('extraido', 'marcado', 'chip'))
+    );
+
     CREATE TABLE IF NOT EXISTS Tags (
       Tag_Number INTEGER PRIMARY KEY AUTOINCREMENT,
       Tag_Name TEXT NOT NULL,
@@ -184,7 +191,25 @@ export function initSchema(db: Database.Database): void {
       Id_Envio INTEGER PRIMARY KEY AUTOINCREMENT,
       Sales_Order TEXT NOT NULL,
       Fecha_Llegada TEXT NOT NULL DEFAULT '',
+      Fecha_Envio TEXT NOT NULL DEFAULT '',
       UNIQUE (Sales_Order)
+    );
+
+    CREATE TABLE IF NOT EXISTS Envio_Cajas (
+      Id_EnvioCaja INTEGER PRIMARY KEY AUTOINCREMENT,
+      Id_Envio INTEGER NOT NULL REFERENCES Envios(Id_Envio) ON UPDATE CASCADE ON DELETE CASCADE,
+      Codigo_BIO TEXT NOT NULL,
+      Nombre TEXT NOT NULL DEFAULT '',
+      LN TEXT NOT NULL DEFAULT '',
+      Num_Cajas INTEGER NOT NULL DEFAULT 1
+    );
+
+    CREATE TABLE IF NOT EXISTS Stock (
+      Codigo_BIO TEXT NOT NULL,
+      LN TEXT NOT NULL,
+      Lugar TEXT NOT NULL DEFAULT '',
+      Cajas_Quedan INTEGER,
+      PRIMARY KEY (Codigo_BIO, LN)
     );
 
     CREATE TABLE IF NOT EXISTS Lotes_Extraido (

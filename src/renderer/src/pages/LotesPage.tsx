@@ -42,7 +42,7 @@ import {
   loteChipEstadoColor,
   loteLmMediaColor,
 } from "../lib/lotesPageData";
-import { attachEnvioSalesOrders, parseEnvioRow, type EnvioRow } from "../lib/enviosPageData";
+import { attachEnvioSalesOrders, parseEnvioCajaRow, parseEnvioRow, type EnvioCajaRow, type EnvioRow } from "../lib/enviosPageData";
 import { formatIsoDateDisplay } from "../lib/filtrosPageData";
 
 function usoEstadoClass(color: LoteEstadoColor, active: boolean): string {
@@ -85,6 +85,7 @@ function LotesPage({ embedded = false }: LotesPageProps) {
 
   const fetchLotes = useCallback(async () => {
     setLoading(true);
+    try {
     const [
       extraidoRes,
       marcadoRes,
@@ -95,6 +96,7 @@ function LotesPage({ embedded = false }: LotesPageProps) {
       dChipsRes,
       chipsAsigRes,
       enviosRes,
+      cajasRes,
     ] = await Promise.all([
       supabase.from("Lotes_Extraido").select("*"),
       supabase.from("Lotes_Marcado").select("*"),
@@ -106,7 +108,8 @@ function LotesPage({ embedded = false }: LotesPageProps) {
         .select("NumBN_LM, NumLectura_LM, NumLectMarc, Id_LtM, Id_LtMm, Media_LM, Izq_LM, Dcha_LM"),
       supabase.from("DChips").select("NumChip_D, Nombre_Chip, Id_LtC"),
       supabase.from("Chips").select("NumChip, FC, NumBN_C, Repetir_Chip"),
-      supabase.from("Envios").select("Id_Envio, Sales_Order, Fecha_Llegada"),
+      supabase.from("Envios").select("Id_Envio, Sales_Order, Fecha_Llegada, Fecha_Envio"),
+      supabase.from("Envio_Cajas").select("*"),
     ]);
 
     const errors = [
@@ -122,7 +125,6 @@ function LotesPage({ embedded = false }: LotesPageProps) {
     if (errors.length) {
       console.error(errors[0]);
       toast.error(t("lotes.toast.loadError"));
-      setLoading(false);
       return;
     }
 
@@ -131,12 +133,18 @@ function LotesPage({ embedded = false }: LotesPageProps) {
       : (enviosRes.data || [])
           .map((row) => parseEnvioRow(row as Record<string, unknown>))
           .filter((row): row is EnvioRow => row != null);
+    const cajas: EnvioCajaRow[] = cajasRes.error
+      ? []
+      : (cajasRes.data || [])
+          .map((row) => parseEnvioCajaRow(row as Record<string, unknown>))
+          .filter((row): row is EnvioCajaRow => row != null);
 
     const mapRows = (rows: Record<string, unknown>[] | null, kind: LoteTipo) =>
       sortLots(
         attachEnvioSalesOrders(
           (rows || []).map((row) => toLoteRow(row, kind)).filter((r): r is LoteRow => r != null),
-          envios
+          envios,
+          cajas
         )
       );
 
@@ -197,7 +205,12 @@ function LotesPage({ embedded = false }: LotesPageProps) {
         }>
       )
     );
-    setLoading(false);
+    } catch (err) {
+      console.error(err);
+      toast.error(t("lotes.toast.loadError"));
+    } finally {
+      setLoading(false);
+    }
   }, [t]);
 
   useEffect(() => {
@@ -210,7 +223,7 @@ function LotesPage({ embedded = false }: LotesPageProps) {
     if (parsed?.tipo) setTipo(parsed.tipo);
   }, [searchParams]);
 
-  const lots = lotsByTipo[tipo];
+  const lots = lotsByTipo[tipo] ?? [];
   const usosLm = tipo === "marcado" ? usosMarcado : tipo === "membrana" ? usosMembrana : new Map();
   const filtered = useMemo(
     () => filterLots(lots, usosExtraido, usosLm, searchQuery, usosChip),
@@ -415,7 +428,7 @@ function LotesPage({ embedded = false }: LotesPageProps) {
             >
               {t(`lotes.tipo.${key}`)}
               <Badge variant="secondary" className="ml-2">
-                {lotsByTipo[key].length}
+                {lotsByTipo[key]?.length ?? 0}
               </Badge>
             </Button>
           ))}
@@ -604,13 +617,29 @@ function LotesPage({ embedded = false }: LotesPageProps) {
                         PN {lot.PN || t("common.empty")}
                         {lot.Exp ? ` · Exp ${lot.Exp}` : ""}
                       </p>
-                      {lot.envioSalesOrder ? (
-                        <p className="bionapp-lote-card__envio">
-                          {t("lotes.envioAssigned", { so: lot.envioSalesOrder })}
-                          {lot.envioFechaLlegada
-                            ? ` · ${formatIsoDateDisplay(lot.envioFechaLlegada)}`
-                            : ""}
-                        </p>
+                      {(lot.envioAsignados && lot.envioAsignados.length > 0) ||
+                      lot.envioSalesOrder ? (
+                        <div className="bionapp-lote-card__envio">
+                          {(lot.envioAsignados && lot.envioAsignados.length > 0
+                            ? lot.envioAsignados
+                            : [
+                                {
+                                  id: lot.idEnvio ?? 0,
+                                  Sales_Order: lot.envioSalesOrder ?? "",
+                                  Fecha_Llegada: lot.envioFechaLlegada ?? "",
+                                },
+                              ]
+                          ).map((envio) => (
+                            <p key={envio.id || envio.Sales_Order}>
+                              {envio.Fecha_Llegada
+                                ? t("lotes.envioAssignedDate", {
+                                    so: envio.Sales_Order,
+                                    date: formatIsoDateDisplay(envio.Fecha_Llegada),
+                                  })
+                                : t("lotes.envioAssigned", { so: envio.Sales_Order })}
+                            </p>
+                          ))}
+                        </div>
                       ) : null}
                     </div>
                   )}
